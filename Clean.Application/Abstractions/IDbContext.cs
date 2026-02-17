@@ -8,6 +8,8 @@ namespace Clean.Application.Abstractions;
 public interface IDbContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<Inventory> Inventories { get; set; }
+    public DbSet<Tag> Tags { get; set; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken=default);
 }
 

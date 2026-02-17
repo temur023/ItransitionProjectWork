@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="Clean.Application/Clean.Application.csproj" Id="261be0a7-4818-4b32-8308-43ed5da19afd" />
-  <Project Path="Clean.Domain/Clean.Domain.csproj" Id="96f4ce7d-6039-441c-b967-06f9cc76bc2a" />
-  <Project Path="Clean.Infrastructure/Clean.Infrastructure.csproj" Id="d013e9e3-50fc-4f01-9ec8-6595fb8e45ab" />
-  <Project Path="ProjectWork/ProjectWork.csproj" />
+  <Project Path="Clean.Application/Clean.Application.csproj" />
+  <Project Path="Clean.Domain/Clean.Domain.csproj" />
+  <Project Path="Clean.Infrastructure/Clean.Infrastructure.csproj" />
+  <Project Path="Clean.Web\Clean.Web.csproj" />
 </Solution>

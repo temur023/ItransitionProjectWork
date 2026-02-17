@@ -2685,39 +2685,32 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\irgas\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "/Users/fsdf/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\ItransitionTasks\\CSharp\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
+      "projectUniqueName": "/Users/fsdf/RiderProjects/ProjectWork/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
       "projectName": "Clean.Infrastructure",
-      "projectPath": "D:\\ItransitionTasks\\CSharp\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
-      "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
-      "outputPath": "D:\\ItransitionTasks\\CSharp\\ProjectWork\\Clean.Infrastructure\\obj\\",
+      "projectPath": "/Users/fsdf/RiderProjects/ProjectWork/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
+      "packagesPath": "/Users/fsdf/.nuget/packages/",
+      "outputPath": "/Users/fsdf/RiderProjects/ProjectWork/ItransitionProjectWork/Clean.Infrastructure/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/Users/fsdf/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "D:\\ItransitionTasks\\CSharp\\ProjectWork\\Clean.Application\\Clean.Application.csproj": {
-              "projectPath": "D:\\ItransitionTasks\\CSharp\\ProjectWork\\Clean.Application\\Clean.Application.csproj"
+            "/Users/fsdf/RiderProjects/ProjectWork/ItransitionProjectWork/Clean.Application/Clean.Application.csproj": {
+              "projectPath": "/Users/fsdf/RiderProjects/ProjectWork/ItransitionProjectWork/Clean.Application/Clean.Application.csproj"
             }
           }
         }
@@ -2769,7 +2762,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/Users/fsdf/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
