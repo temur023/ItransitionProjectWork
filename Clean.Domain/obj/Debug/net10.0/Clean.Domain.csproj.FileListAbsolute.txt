@@ -1,0 +1,12 @@
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/bin/Debug/net10.0/Clean.Domain.deps.json
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/bin/Debug/net10.0/Clean.Domain.dll
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/bin/Debug/net10.0/Clean.Domain.pdb
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.AssemblyInfoInputs.cache
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.AssemblyInfo.cs
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.csproj.CoreCompileInputs.cache
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.sourcelink.json
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.dll
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/refint/Clean.Domain.dll
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.pdb
+/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/Debug/net10.0/ref/Clean.Domain.dll

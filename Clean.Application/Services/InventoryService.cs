@@ -35,6 +35,7 @@ public class InventoryService(IInvetoryRepository repository):IInvetoryService
 
     public async Task<Response<string>> Create(InventoryCreateDto dto)
     {
+        
         var model = new Inventory()
         {
             Description = dto.Description,

@@ -5,6 +5,8 @@ namespace Clean.Domain.Entities;
 public class Inventory
 {
     public int Id { get; set; }
+    public string CustomIdFormatJson { get; set; } = "[]";
+    public int CurrentSequence { get; set; } = 0;
 
     public string Title { get; set; }
 

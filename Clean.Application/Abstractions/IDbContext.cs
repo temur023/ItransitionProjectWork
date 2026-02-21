@@ -1,15 +1,20 @@
-﻿using Clean.Domain.Entities;
+using Clean.Domain;
+using Clean.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Clean.Application.Abstractions;
+
 public interface IDbContext
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<Inventory> Inventories { get; set; }
-    public DbSet<Tag> Tags { get; set; }
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken=default);
+    DbSet<User> Users { get; set; }
+    DbSet<Inventory> Inventories { get; set; }
+    DbSet<Tag> Tags { get; set; }
+    DbSet<Item> Items { get; set; }
+    DbSet<InventoryField> InventoryFields { get; set; }
+    DbSet<ItemFieldValue> ItemFieldValues { get; set; }
+    DbSet<InventoryComment> InventoryComments { get; set; }
+    DbSet<InventoryUserAccess> InventoryUserAccesses { get; set; }
+    DbSet<ItemLike> ItemLikes { get; set; }
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

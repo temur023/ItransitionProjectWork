@@ -1,4 +1,4 @@
-using Microsoft.VisualBasic.FileIO;
+using Clean.Domain.Entities.Enums;
 
 namespace Clean.Domain.Entities;
 
