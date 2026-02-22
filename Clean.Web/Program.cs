@@ -14,6 +14,14 @@ builder.Services.AddOpenApi();
 
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
+var google = builder.Configuration.GetSection("Authentication:Google");
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = google["ClientId"]!;
+        options.ClientSecret = google["ClientSecret"]!;
+        options.CallbackPath = "/signin-google";
+    });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

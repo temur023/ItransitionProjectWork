@@ -17,6 +17,7 @@ public class ItemRepository(DataContext context):IItemRepository
         var items = await query
             .Skip((filter.PageNumber - 1) * filter.PageSize) 
             .Take(filter.PageSize)
+            .OrderBy(i => i.CreatedAt)
             .ToListAsync();
         return (items, total);
     }

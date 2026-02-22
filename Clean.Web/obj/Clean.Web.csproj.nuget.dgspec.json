@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Web/Clean.Web.csproj": {}
+    "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj": {}
   },
   "projects": {
-    "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/Clean.Application.csproj": {
+    "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/Clean.Application.csproj",
+        "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj",
         "projectName": "Clean.Application",
-        "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/Clean.Application.csproj",
-        "packagesPath": "/home/temur/.nuget/packages/",
-        "outputPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/obj/",
+        "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj",
+        "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/temur/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -26,8 +26,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/Clean.Domain.csproj": {
-                "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/Clean.Domain.csproj"
+              "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj": {
+                "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj"
               }
             }
           }
@@ -83,7 +83,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/temur/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Users\\irgas\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -361,17 +361,17 @@
         }
       }
     },
-    "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/Clean.Domain.csproj": {
+    "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/Clean.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
         "projectName": "Clean.Domain",
-        "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/Clean.Domain.csproj",
-        "packagesPath": "/home/temur/.nuget/packages/",
-        "outputPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Domain/obj/",
+        "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
+        "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/temur/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -416,7 +416,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/temur/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Users\\irgas\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -694,17 +694,17 @@
         }
       }
     },
-    "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj": {
+    "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
         "projectName": "Clean.Infrastructure",
-        "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
-        "packagesPath": "/home/temur/.nuget/packages/",
-        "outputPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/obj/",
+        "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/temur/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -716,8 +716,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/Clean.Application.csproj": {
-                "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Application/Clean.Application.csproj"
+              "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj": {
+                "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj"
               }
             }
           }
@@ -769,7 +769,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/temur/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Users\\irgas\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1047,17 +1047,17 @@
         }
       }
     },
-    "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Web/Clean.Web.csproj": {
+    "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Web/Clean.Web.csproj",
+        "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
         "projectName": "Clean.Web",
-        "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Web/Clean.Web.csproj",
-        "packagesPath": "/home/temur/.nuget/packages/",
-        "outputPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Web/obj/",
+        "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
+        "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/temur/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -1069,8 +1069,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj": {
-                "projectPath": "/home/temur/RiderProjects/ItransitionProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj"
+              "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj"
               }
             }
           }
@@ -1091,6 +1091,10 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Authentication.Google": {
+              "target": "Package",
+              "version": "[10.0.3, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[10.0.3, )"
@@ -1141,7 +1145,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/temur/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Users\\irgas\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

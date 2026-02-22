@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ItransitionProjectWork\\Clean.Domain\\Clean.Domain.csproj",
+      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
       "projectName": "Clean.Domain",
-      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ItransitionProjectWork\\Clean.Domain\\Clean.Domain.csproj",
+      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
       "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ItransitionProjectWork\\Clean.Domain\\obj\\",
+      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"

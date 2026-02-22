@@ -19,6 +19,7 @@ public class InventoryCommentRepository(DataContext context) : IInventoryComment
         var comments = await query
             .Skip((filter.PageNumber - 1) * filter.PageSize)
             .Take(filter.PageSize)
+            .OrderBy(c => c.CreatedAt)
             .ToListAsync();
         return (comments, total);
     }
