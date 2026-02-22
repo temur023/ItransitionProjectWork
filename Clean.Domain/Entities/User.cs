@@ -10,6 +10,7 @@ namespace Clean.Domain.Entities
     public class User
     {
         public int Id { get; set; }
+        public string UserName { get; set; }
         [MaxLength(60)]
         public string FullName { get; set; }
         [Required]

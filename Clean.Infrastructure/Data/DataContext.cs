@@ -38,7 +38,10 @@ public class DataContext : DbContext, IDbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
-
+        
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.UserName)
+            .IsUnique();
         modelBuilder.Entity<Tag>()
             .HasIndex(t => t.Name)
             .IsUnique();

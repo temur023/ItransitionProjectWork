@@ -1,7 +1,10 @@
 using Clean.Application.Abstractions;
 using Clean.Application.Services;
+using Clean.Application.Services.InventoryStatiticsService;
+using Clean.Application.Services.MainPage;
 using Clean.Infrastructure.Data;
 using Clean.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +51,14 @@ public static class RegisterDependencies
 
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IAuthService, AuthService>();
+        
+        services.AddScoped<IInventoryStatisticsRepository, InventoryStatisticsRepository>();
+        services.AddScoped<IInventoryStatisticsService, InventoryStatisticsService>();
+        
+        services.AddScoped<IMainPageRepository, MainPageRepository>();
+        services.AddScoped<IMainPageService, MainPageService>();
+
+        services.AddScoped<HttpContextAccessor>();
 
         return services;
     }

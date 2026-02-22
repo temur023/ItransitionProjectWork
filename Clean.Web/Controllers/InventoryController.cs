@@ -31,7 +31,7 @@ public class InventoryController(IInvetoryService service):ControllerBase
         }
         return Ok(response);
     }
-
+    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> Create(InventoryCreateDto dto)
     {
@@ -42,6 +42,7 @@ public class InventoryController(IInvetoryService service):ControllerBase
         }
         return Ok(response); 
     }
+    [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -50,7 +51,7 @@ public class InventoryController(IInvetoryService service):ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-
+    
     [HttpPost("tag-suggestions")]
     public async Task<IActionResult> GetTagSuggestions(List<string> tags)
     {

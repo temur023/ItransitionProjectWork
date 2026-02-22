@@ -41,6 +41,27 @@ public class UserRepository(DataContext context):IUserRepository
         return find.Id;
     }
 
+    public async Task<List<User>> BlockSelected(List<int> ids)
+    {
+        var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
+        return users;
+    }
+
+    public async Task<List<User>> DeleteSelected(List<int> ids)
+    {
+        var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
+        context.Users.RemoveRange(users);
+        await context.SaveChangesAsync();
+        return users;
+    }
+    
+
+    public async Task<List<User>> UnBlockSelected(List<int> ids)
+    {
+        var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
+        return users;
+    }
+
     public async Task SaveChanges()
     {
         await context.SaveChangesAsync();

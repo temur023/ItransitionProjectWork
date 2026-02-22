@@ -22,6 +22,7 @@ public class Inventory
 
     public int CreatedById { get; set; }
     public User CreatedBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 
     public ICollection<Tag> Tags { get; set; } = new HashSet<Tag>();
 

@@ -1,6 +1,7 @@
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ProjectWork.Controllers;
@@ -26,7 +27,7 @@ public class InventoryUserAccessController(IInventoryUserAccessService service) 
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-
+    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> Create(InventoryUserAccessCreateDto dto)
     {
@@ -35,7 +36,7 @@ public class InventoryUserAccessController(IInventoryUserAccessService service) 
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-
+    [Authorize]
     [HttpDelete("delete/{inventoryId}/{userId}")]
     public async Task<IActionResult> Delete(int inventoryId, int userId)
     {

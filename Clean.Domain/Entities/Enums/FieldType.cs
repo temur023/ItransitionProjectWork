@@ -2,7 +2,8 @@ namespace Clean.Domain.Entities.Enums;
 
 public enum FieldType
 {
-    Text,
+    SingleLineText,
+    MultiLineText,
     Number,
     Boolean,
     Link

@@ -26,6 +26,7 @@
         public async Task<Inventory> GetById(int id)
         {
             var find = await context.Inventories.FirstOrDefaultAsync(u=>u.Id == id);
+            var check = await context.InventoryUserAccesses.FirstOrDefaultAsync(u=>u.InventoryId == id);
             return find;
         }
 

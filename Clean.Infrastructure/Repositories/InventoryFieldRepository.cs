@@ -41,7 +41,6 @@ public class InventoryFieldRepository(DataContext context) : IInventoryFieldRepo
         await context.SaveChangesAsync();
         return find.Id;
     }
-
     public async Task SaveChanges()
     {
         await context.SaveChangesAsync();

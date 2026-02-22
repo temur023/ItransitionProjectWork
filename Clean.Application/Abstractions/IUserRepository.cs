@@ -10,5 +10,8 @@ public interface IUserRepository
     Task<User> GetById(int id);
     Task<int> Create(User user);
     Task<int> Delete(int id);
+    Task<List<User>> UnBlockSelected(List<int> ids);
+    Task<List<User>> BlockSelected(List<int> ids);
+    Task<List<User>> DeleteSelected(List<int> ids);
     Task SaveChanges();
 }

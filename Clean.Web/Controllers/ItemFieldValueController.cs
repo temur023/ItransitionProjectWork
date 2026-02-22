@@ -1,6 +1,7 @@
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ProjectWork.Controllers;
@@ -26,7 +27,7 @@ public class ItemFieldValueController(IItemFieldValueService service) : Controll
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-
+    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> Create(ItemFieldValueCreateDto dto)
     {
@@ -35,7 +36,7 @@ public class ItemFieldValueController(IItemFieldValueService service) : Controll
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-
+    [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
