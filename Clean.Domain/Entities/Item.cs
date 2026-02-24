@@ -1,9 +1,13 @@
+using NpgsqlTypes;
+
 namespace Clean.Domain.Entities;
 
 public class Item
 {
         public int Id { get; set; }
-
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public NpgsqlTsVector SearchVector { get; set; }
         public int InventoryId { get; set; }
         public Inventory Inventory { get; set; }
 

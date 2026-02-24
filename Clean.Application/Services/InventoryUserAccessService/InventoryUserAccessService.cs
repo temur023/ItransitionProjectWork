@@ -1,13 +1,20 @@
+using System.Security.Claims;
 using Clean.Application.Abstractions;
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Application.Responses;
 using Clean.Domain.Entities;
+using Clean.Domain.Entities.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Clean.Application.Services;
 
-public class InventoryUserAccessService(IInventoryUserAccessRepository repository) : IInventoryUserAccessService
+public class InventoryUserAccessService(IInventoryUserAccessRepository repository
+    , IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IInvetoryRepository invetoryRepository) : IInventoryUserAccessService
 {
+    private int? GetCurrentUserId() =>
+        int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
+            ?.Value, out var userId) ? userId : null;
     public async Task<PagedResponse<InventoryUserAccessGetDto>> GetAll(InventoryUserAccessFilter filter)
     {
         var result = await repository.GetAll(filter);
@@ -35,6 +42,18 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
 
     public async Task<Response<string>> Create(InventoryUserAccessCreateDto dto)
     {
+        var currentUserId = GetCurrentUserId();
+        var inv = await invetoryRepository.GetById(dto.InventoryId);
+        
+        if (currentUserId == null)
+        {
+            return new Response<string>(403, "Not Authorized");
+        }
+        var usr = await userRepository.GetById((int)currentUserId);
+        if (usr.Role != UserRole.Admin && inv.CreatedById != currentUserId)
+        {
+            return new Response<string>(403,"Not Authorized");
+        }
         var model = new InventoryUserAccess
         {
             InventoryId = dto.InventoryId,
@@ -47,6 +66,19 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
 
     public async Task<Response<string>> Delete(int inventoryId, int userId)
     {
+        var currentUserId = GetCurrentUserId();
+        var inv = await invetoryRepository.GetById(inventoryId);
+        
+        if (currentUserId == null)
+        {
+            return new Response<string>(403, "Not Authorized");
+        }
+        var usr = await userRepository.GetById((int)currentUserId);
+        if (usr.Role != UserRole.Admin && inv.CreatedById != currentUserId)
+        {
+            return new Response<string>(403,"Not Authorized");
+        }
+        
         var deleted = await repository.Delete(inventoryId, userId);
         if (!deleted) return new Response<string>(404, "Inventory user access not found");
         return new Response<string>(200, "Inventory user access deleted");

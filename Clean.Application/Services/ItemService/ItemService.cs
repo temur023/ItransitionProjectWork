@@ -4,12 +4,15 @@ using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Application.Responses;
 using Clean.Domain.Entities;
+using Clean.Domain.Entities.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clean.Application.Services;
 
-public class ItemService(IItemRepository repository, IInvetoryRepository invetoryRepository,  CustomIdGeneratorService customIdGenerator, HttpContextAccessor httpContextAccessor):IItemService
+public class ItemService(IItemRepository repository, IInvetoryRepository invetoryRepository,
+    IUserRepository userRepository,
+    CustomIdGeneratorService customIdGenerator, HttpContextAccessor httpContextAccessor):IItemService
 {
     private int? GetCurrentUserId() => int.TryParse(httpContextAccessor.HttpContext?.User
         .FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : null;
@@ -51,11 +54,21 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
     {
         var currentUser = GetCurrentUserId();
         var inventory = await invetoryRepository.GetById(dto.InventoryId);
+        if (currentUser == null)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
+        var user = await userRepository.GetById((int)currentUser);
+        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
+           && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
         var model = new Item()
         {
             InventoryId = dto.InventoryId,
-            CreatedById = dto.CreatedById,
-            UpdatedById = dto.UpdatedById,
+            CreatedById = (int)currentUser,
+            UpdatedById = (int)currentUser,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Version = 1,
@@ -75,8 +88,45 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
         }
     }
 
+    public async Task<Response<string>> Update(ItemCreateDto dto)
+    {
+        var itm = await repository.GetById(dto.Id);
+        var currentUser = GetCurrentUserId();
+        var inventory = await invetoryRepository.GetById(itm.InventoryId);
+        if (currentUser == null)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
+        var user = await userRepository.GetById((int)currentUser);
+        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
+           && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
+        itm.Description = dto.Description;
+        itm.Name = dto.Name;
+        itm.UpdatedAt = DateTime.UtcNow;
+        itm.UpdatedById = (int)currentUser;
+        await repository.SaveChanges();
+        return new Response<string>(200, "Success");
+    }
+
     public async Task<Response<string>> Delete(int id)
     {
+        var currentUser = GetCurrentUserId();
+        var itm =  await repository.GetById(id);
+        var inventory = await invetoryRepository.GetById(itm.InventoryId);
+        if (currentUser == null)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
+        var user = await userRepository.GetById((int)currentUser);
+        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
+           && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+        {
+            return new Response<string>(404,"You are not allowed to write");
+        }
+        
         var item = await repository.Delete(id);
         if(item == -1) return new Response<string>(404," not found");
         return new Response<string>(200, "deleted");

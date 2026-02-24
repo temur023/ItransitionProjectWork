@@ -30,8 +30,22 @@ public class DataContext : DbContext, IDbContext
         modelBuilder.Entity<Item>()
             .Property(i => i.CustomId)
             .IsRequired();
+        modelBuilder.Entity<Item>()
+            .HasGeneratedTsVectorColumn(
+                i => i.SearchVector,
+                "english",
+                i => new { i.Name, i.Description })
+            .HasIndex(i => i.SearchVector)
+            .HasMethod("GIN");
         modelBuilder.Entity<InventoryUserAccess>()
             .HasKey(i => new { i.InventoryId, i.UserId });
+        modelBuilder.Entity<Inventory>()
+            .HasGeneratedTsVectorColumn(
+                i => i.SearchVector,
+                "english",
+                i => new { i.Title, i.Description })
+            .HasIndex(i => i.SearchVector)
+            .HasMethod("GIN");
         modelBuilder.Entity<ItemLike>()
             .HasKey(i => new { i.ItemId, i.UserId });
 

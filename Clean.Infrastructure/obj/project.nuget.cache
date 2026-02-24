@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "W5XMJmZQH44=",
+  "dgSpecHash": "drTFz1/nx0U=",
   "success": true,
   "projectFilePath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\irgas\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.3\\microsoft.aspnetcore.authentication.jwtbearer.10.0.3.nupkg.sha512",
+    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.connections.abstractions\\10.0.3\\microsoft.aspnetcore.connections.abstractions.10.0.3.nupkg.sha512",
+    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.signalr.common\\10.0.3\\microsoft.aspnetcore.signalr.common.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.build.framework\\18.0.2\\microsoft.build.framework.18.0.2.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.11.0\\microsoft.codeanalysis.analyzers.3.11.0.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.codeanalysis.common\\5.0.0\\microsoft.codeanalysis.common.5.0.0.nupkg.sha512",
@@ -24,6 +26,7 @@
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\10.0.3\\microsoft.extensions.dependencyinjection.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.3\\microsoft.extensions.dependencyinjection.abstractions.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.dependencymodel\\10.0.3\\microsoft.extensions.dependencymodel.10.0.3.nupkg.sha512",
+    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.features\\10.0.3\\microsoft.extensions.features.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.logging\\10.0.3\\microsoft.extensions.logging.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.3\\microsoft.extensions.logging.abstractions.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.options\\10.0.3\\microsoft.extensions.options.10.0.3.nupkg.sha512",

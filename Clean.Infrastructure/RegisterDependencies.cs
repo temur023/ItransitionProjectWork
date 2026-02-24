@@ -1,5 +1,6 @@
 using Clean.Application.Abstractions;
 using Clean.Application.Services;
+using Clean.Application.Services.InventoryService;
 using Clean.Application.Services.InventoryStatiticsService;
 using Clean.Application.Services.MainPage;
 using Clean.Infrastructure.Data;
@@ -59,7 +60,10 @@ public static class RegisterDependencies
         services.AddScoped<IMainPageService, MainPageService>();
 
         services.AddScoped<HttpContextAccessor>();
+        
+        services.AddScoped<IInventoryCommentNotifier, InventoryCommentNotifier>();
 
+        services.AddScoped<ISearchRepository , SearchRepository>();
         return services;
     }
 }

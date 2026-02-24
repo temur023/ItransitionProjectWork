@@ -1,10 +1,12 @@
 using Clean.Domain.Entities.Enums;
+using NpgsqlTypes;
 
 namespace Clean.Domain.Entities;
 
 public class Inventory
 {
     public int Id { get; set; }
+    public NpgsqlTsVector SearchVector { get; set; }
     public string CustomIdFormatJson { get; set; } = "[]";
     public int CurrentSequence { get; set; } = 0;
 
@@ -28,4 +30,5 @@ public class Inventory
 
     public ICollection<InventoryField> Fields { get; set; }
     public ICollection<Item> Items { get; set; }
+    public ICollection<InventoryUserAccess>  UserAccesses { get; set; }
 }

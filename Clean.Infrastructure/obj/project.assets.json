@@ -34,6 +34,39 @@
           "Microsoft.AspNetCore.App"
         ]
       },
+      "Microsoft.AspNetCore.Connections.Abstractions/10.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Features": "10.0.3"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.Connections.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Connections.Abstractions.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SignalR.Common/10.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Connections.Abstractions": "10.0.3",
+          "Microsoft.Extensions.Options": "10.0.3"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.SignalR.Common.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.SignalR.Common.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.Build.Framework/18.0.2": {
         "type": "package",
         "compile": {
@@ -564,6 +597,19 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
+      "Microsoft.Extensions.Features/10.0.3": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/Microsoft.Extensions.Features.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Extensions.Features.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.Extensions.Logging/10.0.3": {
         "type": "package",
         "dependencies": {
@@ -959,6 +1005,7 @@
         "dependencies": {
           "Clean.Domain": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.3",
+          "Microsoft.AspNetCore.SignalR.Common": "10.0.3",
           "Microsoft.EntityFrameworkCore": "10.0.3",
           "Microsoft.IdentityModel.Tokens": "8.16.0"
         },
@@ -972,6 +1019,9 @@
       "Clean.Domain/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Npgsql": "10.0.0"
+        },
         "compile": {
           "bin/placeholder/Clean.Domain.dll": {}
         },
@@ -1014,6 +1064,46 @@
         "lib/net10.0/Microsoft.AspNetCore.Authentication.JwtBearer.xml",
         "microsoft.aspnetcore.authentication.jwtbearer.10.0.3.nupkg.sha512",
         "microsoft.aspnetcore.authentication.jwtbearer.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.Connections.Abstractions/10.0.3": {
+      "sha512": "i016BNW1Yqd5r+lfgWb4BiPjMuCXn+HXYgdbAPLZRkoNw9SSRP58/8AkdPOsWEXRL5BVNJ066CO60HFP99s6QQ==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.connections.abstractions/10.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net10.0/Microsoft.AspNetCore.Connections.Abstractions.dll",
+        "lib/net10.0/Microsoft.AspNetCore.Connections.Abstractions.xml",
+        "lib/net462/Microsoft.AspNetCore.Connections.Abstractions.dll",
+        "lib/net462/Microsoft.AspNetCore.Connections.Abstractions.xml",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Connections.Abstractions.dll",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Connections.Abstractions.xml",
+        "lib/netstandard2.1/Microsoft.AspNetCore.Connections.Abstractions.dll",
+        "lib/netstandard2.1/Microsoft.AspNetCore.Connections.Abstractions.xml",
+        "microsoft.aspnetcore.connections.abstractions.10.0.3.nupkg.sha512",
+        "microsoft.aspnetcore.connections.abstractions.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.SignalR.Common/10.0.3": {
+      "sha512": "oq4Eq0Nanddl9p0IJS0OPhoeiiaemt4UuI9hadettXJumHLPbCWK0bxFpjCOmH3Zz1MAI+NfGdxyLgS59be0zg==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.signalr.common/10.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net10.0/Microsoft.AspNetCore.SignalR.Common.dll",
+        "lib/net10.0/Microsoft.AspNetCore.SignalR.Common.xml",
+        "lib/net462/Microsoft.AspNetCore.SignalR.Common.dll",
+        "lib/net462/Microsoft.AspNetCore.SignalR.Common.xml",
+        "lib/netstandard2.0/Microsoft.AspNetCore.SignalR.Common.dll",
+        "lib/netstandard2.0/Microsoft.AspNetCore.SignalR.Common.xml",
+        "microsoft.aspnetcore.signalr.common.10.0.3.nupkg.sha512",
+        "microsoft.aspnetcore.signalr.common.nuspec"
       ]
     },
     "Microsoft.Build.Framework/18.0.2": {
@@ -2351,6 +2441,25 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "Microsoft.Extensions.Features/10.0.3": {
+      "sha512": "djFt1Jt+2uREWWVQiiA4ilYBDtHHY7nK08c5K8xBD9+XFNw3KDVprylrMkH08bZGK3ZHRAkS7JDV9srfLrcm/g==",
+      "type": "package",
+      "path": "microsoft.extensions.features/10.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net10.0/Microsoft.Extensions.Features.dll",
+        "lib/net10.0/Microsoft.Extensions.Features.xml",
+        "lib/net462/Microsoft.Extensions.Features.dll",
+        "lib/net462/Microsoft.Extensions.Features.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.Features.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.Features.xml",
+        "microsoft.extensions.features.10.0.3.nupkg.sha512",
+        "microsoft.extensions.features.nuspec"
+      ]
+    },
     "Microsoft.Extensions.Logging/10.0.3": {
       "sha512": "8D9Er1cGXNjNDIB+VLBNHn386L5ls2FoiG9a6o12gyn+GG3w6jdfUhzT8dtBnKcevE7/fsVA8MS3FBgFfClFtQ==",
       "type": "package",
@@ -3081,7 +3190,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Users\\irgas\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
