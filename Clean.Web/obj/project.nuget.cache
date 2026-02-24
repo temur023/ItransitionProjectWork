@@ -1,13 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "hknR+V8ay1o=",
+  "dgSpecHash": "GeGxXPCsGws=",
   "success": true,
   "projectFilePath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\irgas\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
+    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.authentication.facebook\\10.0.3\\microsoft.aspnetcore.authentication.facebook.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.authentication.google\\10.0.3\\microsoft.aspnetcore.authentication.google.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.3\\microsoft.aspnetcore.authentication.jwtbearer.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.3\\microsoft.aspnetcore.openapi.10.0.3.nupkg.sha512",
+    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.aspnetcore.signalr.common\\10.0.3\\microsoft.aspnetcore.signalr.common.10.0.3.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.build.framework\\18.0.2\\microsoft.build.framework.18.0.2.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.11.0\\microsoft.codeanalysis.analyzers.3.11.0.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\microsoft.codeanalysis.common\\5.0.0\\microsoft.codeanalysis.common.5.0.0.nupkg.sha512",
@@ -48,5 +50,18 @@
     "C:\\Users\\irgas\\.nuget\\packages\\system.composition.typedparts\\9.0.0\\system.composition.typedparts.9.0.0.nupkg.sha512",
     "C:\\Users\\irgas\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.1\\system.identitymodel.tokens.jwt.8.0.1.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference Microsoft.AspNetCore.SignalR.Common will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
+      "libraryId": "Microsoft.AspNetCore.SignalR.Common",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }

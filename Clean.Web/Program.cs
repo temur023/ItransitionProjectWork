@@ -1,4 +1,5 @@
 using System.Text;
+using Clean.Application.Services;
 using Clean.Infrastructure;
 using Clean.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
@@ -21,6 +23,13 @@ builder.Services.AddAuthentication()
         options.ClientId = google["ClientId"]!;
         options.ClientSecret = google["ClientSecret"]!;
         options.CallbackPath = "/signin-google";
+    })
+    .AddFacebook(options =>
+    {
+        options.AppId = builder.Configuration["Facebook:AppId"];
+        options.AppSecret = builder.Configuration["Facebook:AppSecret"];
+        options.Fields.Add("email");
+        options.Fields.Add("name");
     });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -50,7 +59,7 @@ if (app.Environment.IsDevelopment())
                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
 }
-
+app.MapHub<InventoryCommentHub>("/hubs/inventory-comments");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
