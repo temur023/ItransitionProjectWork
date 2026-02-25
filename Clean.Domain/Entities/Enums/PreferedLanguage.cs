@@ -5,7 +5,7 @@ using System.Text;
 namespace Clean.Domain.Entities.Enums;
 public enum PreferedLanguage
 {
-    English,
+    English = 1,
     Russian
 }
 

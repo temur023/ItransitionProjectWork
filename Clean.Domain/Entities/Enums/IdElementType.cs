@@ -2,7 +2,7 @@ namespace Clean.Domain.Entities.Enums;
 
 public enum IdElementType
 {
-    FixedText,
+    FixedText = 1,
     Random20Bit,
     Random32Bit,
     Random6Digit,

@@ -34,3 +34,4 @@ C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Do
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\refint\Clean.Domain.dll
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.pdb
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\ref\Clean.Domain.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.csproj.AssemblyReference.cache

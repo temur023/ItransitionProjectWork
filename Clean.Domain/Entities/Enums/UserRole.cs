@@ -5,6 +5,6 @@ using System.Text;
 namespace Clean.Domain.Entities.Enums;
 public enum UserRole
 {
-    Admin,
+    Admin = 1,
     User
 }

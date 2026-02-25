@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
@@ -23,14 +24,16 @@ builder.Services.AddAuthentication()
         options.ClientId = google["ClientId"]!;
         options.ClientSecret = google["ClientSecret"]!;
         options.CallbackPath = "/signin-google";
-    })
-    .AddFacebook(options =>
-    {
-        options.AppId = builder.Configuration["Facebook:AppId"];
-        options.AppSecret = builder.Configuration["Facebook:AppSecret"];
-        options.Fields.Add("email");
-        options.Fields.Add("name");
     });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -61,6 +64,7 @@ if (app.Environment.IsDevelopment())
 }
 app.MapHub<InventoryCommentHub>("/hubs/inventory-comments");
 app.UseHttpsRedirection();
+app.UseCors("AllowReact");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

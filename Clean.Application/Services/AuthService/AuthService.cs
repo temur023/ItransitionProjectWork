@@ -14,17 +14,25 @@ public class AuthService(IAuthRepository repository, IConfiguration configuratio
 {
     public async Task<Response<string>> Login(UserLoginDto user)
     {
-        var loginInput = !string.IsNullOrEmpty(user.Email) ? user.Email : user.UserName;
+        var loginInput = !string.IsNullOrEmpty(user.Email)
+            ? user.Email
+            : !string.IsNullOrEmpty(user.UserName)
+                ? user.UserName
+                : user.LoginInput;
+
+        if (string.IsNullOrWhiteSpace(loginInput) || string.IsNullOrWhiteSpace(user.PasswordHash))
+            return new Response<string>(400, "Email/username and password are required!", null);
+
         var usr = await repository.Login(loginInput);
-    if (usr == null) 
-            return new Response<string>(404, "User not found!");
+        if (usr == null) 
+            return new Response<string>(404, "User not found!", null);
         if (usr.PasswordHash != user.PasswordHash)
-            return new Response<string>(400, "The password is incorrect!");
+            return new Response<string>(400, "The password is incorrect!", null);
         if (usr.IsBlocked == true)
-            return new Response<string>(400, "You cannot login because you are blocked!");
+            return new Response<string>(400, "You cannot login because you are blocked!",null);
         var token = CreateToken(usr);
         await repository.Update();
-        return new Response<string>(200, token);
+        return new Response<string>(200,"Login successful", token);
     }
     
     

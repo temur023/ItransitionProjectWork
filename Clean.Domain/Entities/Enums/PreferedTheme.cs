@@ -5,8 +5,6 @@ using System.Text;
 namespace Clean.Domain.Entities.Enums;
 public enum PreferedTheme
 {
-    Dark,
-    Light
+    Light = 1,
+    Dark
 }
-   
-

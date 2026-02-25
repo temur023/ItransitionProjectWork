@@ -139,3 +139,5 @@ C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\obj\Debug\net10.0\refint\Clea
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\obj\Debug\net10.0\Clean.Web.pdb
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\obj\Debug\net10.0\Clean.Web.genruntimeconfig.cache
 C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\obj\Debug\net10.0\ref\Clean.Web.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.Facebook.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Web\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.Google.dll
