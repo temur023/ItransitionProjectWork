@@ -36,7 +36,7 @@ const handleLogin = async () => {
       const response = await axios.post(`${api_url}/api/Auth/login`, payload);
       const token = response.data.token;
       localStorage.setItem("userToken", token);
-      navigate("/dashboard");
+      navigate("/user-page");
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
       alert(message);

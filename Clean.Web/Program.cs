@@ -17,14 +17,14 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
-var google = builder.Configuration.GetSection("Authentication:Google");
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
-    {
-        options.ClientId = google["ClientId"]!;
-        options.ClientSecret = google["ClientSecret"]!;
-        options.CallbackPath = "/signin-google";
-    });
+// var google = builder.Configuration.GetSection("Authentication:Google");
+// builder.Services.AddAuthentication()
+//     .AddGoogle(options =>
+//     {
+//         options.ClientId = google["ClientId"]!;
+//         options.ClientSecret = google["ClientSecret"]!;
+//         options.CallbackPath = "/signin-google";
+//     });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
@@ -37,6 +37,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.UseSecurityTokenValidators = true;
         options.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
@@ -63,7 +64,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 app.MapHub<InventoryCommentHub>("/hubs/inventory-comments");
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowReact");
 app.UseAuthentication();
 app.UseAuthorization();

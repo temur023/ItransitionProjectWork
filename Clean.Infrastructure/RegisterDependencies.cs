@@ -3,6 +3,7 @@ using Clean.Application.Services;
 using Clean.Application.Services.InventoryService;
 using Clean.Application.Services.InventoryStatiticsService;
 using Clean.Application.Services.MainPage;
+using Clean.Application.Services.UserPageService;
 using Clean.Infrastructure.Data;
 using Clean.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -58,6 +59,9 @@ public static class RegisterDependencies
         
         services.AddScoped<IMainPageRepository, MainPageRepository>();
         services.AddScoped<IMainPageService, MainPageService>();
+        
+        services.AddScoped<IUserPageRepository, UserPageRepository>();
+        services.AddScoped<IUserPageService, UserPageService>();
 
         services.AddScoped<HttpContextAccessor>();
         
