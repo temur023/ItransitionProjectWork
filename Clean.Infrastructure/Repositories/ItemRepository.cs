@@ -8,16 +8,17 @@ namespace Clean.Infrastructure.Repositories;
 
 public class ItemRepository(DataContext context):IItemRepository
 {
-    public async Task<(List<Item> Items, int Total)> GetAll(ItemFilter filter)
+    public async Task<(List<Item> Items, int Total)> GetAll(ItemFilter filter, int InvId)
     {
         var query = context.Items
             .Include(i => i.CreatedBy)
-            .Include(i => i.UpdatedBy).AsNoTracking();
+            .Include(i => i.UpdatedBy)
+            .Where(i=>i.InventoryId == InvId).AsNoTracking();
         var total = await query.CountAsync();
         var items = await query
             .Skip((filter.PageNumber - 1) * filter.PageSize) 
             .Take(filter.PageSize)
-            .OrderBy(i => i.CreatedAt)
+            .OrderByDescending(i => i.CreatedAt)
             .ToListAsync();
         return (items, total);
     }

@@ -12,8 +12,16 @@ public class UserRepository(DataContext context):IUserRepository
     public async Task<(List<User> Users, int Total)> GetAll(UserFilter filter)
     {
         var query = context.Users.AsNoTracking();
+        
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.ToLower();
+            query = query.Where(u => u.UserName.ToLower().Contains(term) 
+                                     || u.Email.ToLower().Contains(term));
+        }
+        
         var total = await query.CountAsync();
-        var users =  await query.Skip((filter.PageNumber - 1) * filter.PageNumber) 
+        var users =  await query.Skip((filter.PageNumber - 1) * filter.PageSize) 
             .Take(filter.PageSize)
             .ToListAsync();
         return (users, total);
@@ -24,7 +32,12 @@ public class UserRepository(DataContext context):IUserRepository
         var find = await context.Users.FirstOrDefaultAsync(u=>u.Id == id);
         return find;
     }
-
+    public async Task<int> GetByEmailOrUsername(string input)
+    {
+        var user = await context.Users
+            .FirstOrDefaultAsync(a => a.Email.Contains(input)|| a.UserName.Contains(input));
+        return user?.Id ?? -1;
+    }
     public async Task<int> Create(User user)
     {
         context.Users.Add(user);

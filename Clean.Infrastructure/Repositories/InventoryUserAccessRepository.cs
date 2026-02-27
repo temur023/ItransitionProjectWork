@@ -35,6 +35,18 @@ public class InventoryUserAccessRepository(DataContext context) : IInventoryUser
         await context.SaveChangesAsync();
     }
 
+    public async Task<bool> Exists(int inventoryId, int userId)
+    {
+        var exists = await context.InventoryUserAccesses
+            .AnyAsync(a => a.InventoryId == inventoryId && a.UserId == userId);
+        if (exists == true)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
     public async Task<bool> Delete(int inventoryId, int userId)
     {
         var find = await context.InventoryUserAccesses

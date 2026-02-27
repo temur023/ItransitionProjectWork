@@ -8,6 +8,7 @@ public interface IInventoryUserAccessRepository
     Task<(List<InventoryUserAccess> AccessList, int Total)> GetAll(InventoryUserAccessFilter filter);
     Task<InventoryUserAccess> GetByInventoryAndUser(int inventoryId, int userId);
     Task Create(InventoryUserAccess access);
+    Task<bool> Exists(int inventoryId, int userId);
     Task<bool> Delete(int inventoryId, int userId);
     Task SaveChanges();
 }

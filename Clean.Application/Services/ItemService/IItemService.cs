@@ -6,7 +6,7 @@ namespace Clean.Application.Services;
 
 public interface IItemService
 {
-    Task<PagedResponse<ItemGetDto>> GetAll(ItemFilter filter);
+    Task<PagedResponse<ItemGetDto>> GetAll(ItemFilter filter, int invId);
     Task<Response<ItemGetDto>> GetById(int id);
     Task<Response<string>> Create(ItemCreateDto dto);
     Task<Response<string>> Update(ItemCreateDto dto);

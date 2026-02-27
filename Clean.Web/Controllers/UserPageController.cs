@@ -27,4 +27,14 @@ public class UserPageController(IUserPageService service):ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
+
+    [Authorize]
+    [HttpDelete("delete-own")]
+    public async Task<IActionResult> DeleteSelected(List<int> selectedIds)
+    {
+        var response = await service.DeleteSelected(selectedIds);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode);
+        return Ok(response);
+    }
 }

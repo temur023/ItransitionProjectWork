@@ -16,9 +16,9 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
 {
     private int? GetCurrentUserId() => int.TryParse(httpContextAccessor.HttpContext?.User
         .FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : null;
-    public async Task<PagedResponse<ItemGetDto>> GetAll(ItemFilter filter)
+    public async Task<PagedResponse<ItemGetDto>> GetAll(ItemFilter filter, int invId)
     {
-        var itms = await repository.GetAll(filter);
+        var itms = await repository.GetAll(filter, invId);
         var dto = itms.Items.Select(u=>new ItemGetDto()
         {
             Id = u.Id,

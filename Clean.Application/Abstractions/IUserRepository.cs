@@ -8,6 +8,7 @@ public interface IUserRepository
 {
     Task<(List<User> Users, int Total)> GetAll(UserFilter filter);
     Task<User> GetById(int id);
+    Task<int> GetByEmailOrUsername(string input);
     Task<int> Create(User user);
     Task<int> Delete(int id);
     Task<List<User>> UnBlockSelected(List<int> ids);

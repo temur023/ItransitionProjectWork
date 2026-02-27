@@ -10,7 +10,10 @@
     {
         public async Task<(List<Inventory> Inventories, int Total)> GetAll(InventoryFilter filter)
         {
-            var query = context.Inventories.Include(i=>i.Tags).AsNoTracking();
+            var query = context.Inventories
+                .Include(i=>i.Tags)
+                .Include(i=>i.CreatedBy)
+                .OrderByDescending(i=>i.CreatedAt).AsNoTracking();
             if (filter.Tags != null && filter.Tags.Any())
             {
                 query = query.Where(i => i.Tags.Any(t => filter.Tags.Contains(t.Name)));
@@ -19,7 +22,6 @@
             var items = await query
                 .Skip((filter.PageNumber - 1) * filter.PageSize) 
                 .Take(filter.PageSize)
-                .OrderBy(i=>i.CreatedAt)
                 .ToListAsync();
             return (items, total);
         }

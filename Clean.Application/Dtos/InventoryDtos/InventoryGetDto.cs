@@ -11,10 +11,11 @@ public class InventoryGetDto
     public string? ImageUrl { get; set; }
 
     public bool IsPublic { get; set; }
-
+    
     public int Version { get; set; }
     public Category Category { get; set; }
     public int CreatedById { get; set; }
+    public string CreatorName { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public ICollection<InventoryUserAccess>  UserAccesses { get; set; }
 }

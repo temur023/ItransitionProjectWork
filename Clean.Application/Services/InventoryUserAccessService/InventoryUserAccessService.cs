@@ -22,7 +22,6 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         {
             InventoryId = a.InventoryId,
             UserId = a.UserId,
-            CanWrite = a.CanWrite
         }).ToList();
         return new PagedResponse<InventoryUserAccessGetDto>(dto, filter.PageNumber, filter.PageSize, result.Total, "Success");
     }
@@ -35,7 +34,6 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         {
             InventoryId = access.InventoryId,
             UserId = access.UserId,
-            CanWrite = access.CanWrite
         };
         return new Response<InventoryUserAccessGetDto>(200, "Success", dto);
     }
@@ -43,23 +41,29 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
     public async Task<Response<string>> Create(InventoryUserAccessCreateDto dto)
     {
         var currentUserId = GetCurrentUserId();
-        var inv = await invetoryRepository.GetById(dto.InventoryId);
-        
         if (currentUserId == null)
-        {
             return new Response<string>(403, "Not Authorized");
-        }
+
+        var inv = await invetoryRepository.GetById(dto.InventoryId);
         var usr = await userRepository.GetById((int)currentUserId);
+
         if (usr.Role != UserRole.Admin && inv.CreatedById != currentUserId)
-        {
-            return new Response<string>(403,"Not Authorized");
-        }
+            return new Response<string>(403, "Not Authorized");
+        
+        var targetUser = await userRepository.GetByEmailOrUsername(dto.EmailOrUsername);
+        if (targetUser == -1)
+            return new Response<string>(404, "User not found");
+        
+        var alreadyExists = await repository.Exists(dto.InventoryId, targetUser);
+        if (alreadyExists)
+            return new Response<string>(409, "User already has access");
+
         var model = new InventoryUserAccess
         {
             InventoryId = dto.InventoryId,
-            UserId = dto.UserId,
-            CanWrite = dto.CanWrite
+            UserId = targetUser
         };
+
         await repository.Create(model);
         return new Response<string>(200, "Inventory user access created");
     }

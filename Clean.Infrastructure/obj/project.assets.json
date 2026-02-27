@@ -3113,19 +3113,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/fsdf/.nuget/packages/": {}
+    "C:\\Users\\irgas\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/fsdf/ProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
       "projectName": "Clean.Infrastructure",
-      "projectPath": "/Users/fsdf/ProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj",
-      "packagesPath": "/Users/fsdf/.nuget/packages/",
-      "outputPath": "/Users/fsdf/ProjectWork/Clean.Infrastructure/obj/",
+      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj",
+      "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/fsdf/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -3137,8 +3137,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "/Users/fsdf/ProjectWork/Clean.Application/Clean.Application.csproj": {
-              "projectPath": "/Users/fsdf/ProjectWork/Clean.Application/Clean.Application.csproj"
+            "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj": {
+              "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj"
             }
           }
         }
@@ -3190,7 +3190,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/Users/fsdf/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

@@ -11,9 +11,9 @@ namespace ProjectWork.Controllers;
 public class ItemController(IItemService service) : ControllerBase
 {
     [HttpGet("get-all")]
-    public async Task<IActionResult> GetAll([FromQuery] ItemFilter filter)
+    public async Task<IActionResult> GetAll([FromQuery] ItemFilter filter, int invId)
     {
-        var response = await service.GetAll(filter);
+        var response = await service.GetAll(filter, invId);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

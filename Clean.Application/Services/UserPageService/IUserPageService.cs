@@ -8,4 +8,5 @@ public interface IUserPageService
 {
     Task<PagedResponse<InventoryGetDto>> GetInvsWithAccess(InventoryFilter filter);
     Task<PagedResponse<InventoryGetDto>> GetOwnInvs(InventoryFilter filter);
+    Task<Response<string>> DeleteSelected(List<int> selectedIds);
 }

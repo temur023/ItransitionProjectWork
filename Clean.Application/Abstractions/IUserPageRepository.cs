@@ -7,4 +7,5 @@ public interface IUserPageRepository
 {
     Task<(List<Inventory> invs, int Total)> GetAllWithAccess(int userId, InventoryFilter filter);
     Task<(List<Inventory> invs, int Total)> GetAllOwn(int userId, InventoryFilter filter);
+    Task<List<Inventory>> DeleteSelected(int userId ,List<int> invIds);
 }

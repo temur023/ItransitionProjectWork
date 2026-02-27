@@ -1,65 +1,75 @@
-import React, {useState,useEffect,useCallback} from "react";
+import React, {useState,useEffect,useCallback,} from "react";
 import axios from 'axios';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate,  useParams } from "react-router-dom";
 
-function Dashboard(){
-    const [inventories, setInventories] = useState([]);
+function InventoryPage(){
+    const [items, setItems] = useState([]);
     const [total, setTotal] = useState(0);
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
     const [message, setMessage] = useState({ text: "", type: "" });
+    const { inventoryId } = useParams();
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        title: "",
+        customId: "",
+        name: "",
         description: "",
-        category: 1,
-        isPublic: true,
-        creatorName: ""
+        createdAt: "",
+        updatedAt: ""
     });
     const totalPages = Math.ceil(total / filter.pageSize);
-    const fetchInventories = useCallback(async () => {
+
+    const fetchItems = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
-            const endpoint = "/api/Inventory/get-all";
+            const endpoint = "/api/Item/get-all";
             const response = await axios.get(`${api_url}${endpoint}`, {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { PageNumber: filter.pageNumber, PageSize: filter.pageSize }
+                params: { PageNumber: filter.pageNumber, PageSize: filter.pageSize, InventoryId:inventoryId }
             });
-            setInventories(response.data.data || []);
+            setItems(response.data.data || []);
             setTotal(response.data.totalRecords || 0);
         } catch (error) {
             const msg = error.response?.data?.message || "Action failed";
             setMessage({ text: msg, type: "danger" });
             if (error.response?.status === 401) navigate("/login");
-            setInventories([]);
+            setItems([]);
         }
-    }, [filter]);
+    }, [filter, inventoryId]);
 
     useEffect(() => {
-        const delay = setTimeout(() => fetchInventories(), 500);
+        const delay = setTimeout(() => fetchItems(), 500);
         return () => clearTimeout(delay);
-    }, [fetchInventories]);
+    }, [fetchItems]);
+
     return(
-                <>
-        <div className="container-fluid w-75 mt-4 shadow-lg rounded-4">
+      <>
+        <div className="container-fluid w-75 mt-4 shadow-lg rounded-4 p-4 mb-2">
             {message.text && (
                 <div className={`alert alert-${message.type}`}>{message.text}</div>
             )}
-            <h1>Available Inventories</h1>
+            <div className="d-flex justify-content-center align-items-center">
+                <h1>Items</h1>
+            </div>
+            
             <table className="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Creator Username</th>
+                        <th>Custom Id</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {inventories.map((inv) => (
-                        <tr key={inv.id} onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>
-                            <td>{inv.title}</td>
-                            <td>{inv.category}</td>
-                            <td>{inv.creatorName}</td>
+                    {items.map((item) => (
+                        <tr key={item.id}>
+                            <td>{item.customId}</td>
+                            <td>{item.name}</td>
+                            <td>{item.description}</td>
+                            <td>{new Date(item.createdAt).toLocaleDateString()}</td>
+                            <td>{new Date(item.updatedAt).toLocaleDateString()}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -101,6 +111,6 @@ function Dashboard(){
                       </ul>
                     </nav>
         </>
-    );
+);
 }
-export default Dashboard;
+export default InventoryPage;

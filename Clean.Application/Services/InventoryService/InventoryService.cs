@@ -27,6 +27,7 @@ public class InventoryService(IInvetoryRepository repository
             Category = u.Category,
             IsPublic = u.IsPublic,
             CreatedById = u.CreatedById,
+            CreatorName = u.CreatedBy.UserName,
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
@@ -60,6 +61,7 @@ public class InventoryService(IInvetoryRepository repository
             Description = inv.Description,
             Category = inv.Category,
             IsPublic =  inv.IsPublic,
+            CreatorName = inv.CreatedBy.UserName,
             CreatedById = inv.CreatedById,
             Version = inv.Version,
             ImageUrl =  inv.ImageUrl,
@@ -81,11 +83,11 @@ public class InventoryService(IInvetoryRepository repository
         
     }
 
-public async Task<Response<string>> Create(InventoryCreateDto dto)
+public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
 {
     var currentUser = GetCurrentUserId();
     if (currentUser == null)
-        return new Response<string>(401, "Not Authorized");
+        return new Response<InventoryGetDto>(401, "Not Authorized");
 
     var model = new Inventory()
     {
@@ -98,9 +100,21 @@ public async Task<Response<string>> Create(InventoryCreateDto dto)
         ImageUrl = dto.ImageUrl,
         Title = dto.Title,
     };
-
     await repository.Create(model);
-    return new Response<string>(200, "Inventory created");
+    var inv = new InventoryGetDto()
+    {
+        Id = model.Id,
+        CreatedAt = model.CreatedAt,
+        Description = model.Description,
+        Category = model.Category,
+        IsPublic = model.IsPublic,
+        CreatorName = model.CreatedBy.UserName,
+        CreatedById = model.CreatedById,
+        Version = model.Version,
+        ImageUrl = model.ImageUrl,
+        Title = model.Title,
+    };
+    return new Response<InventoryGetDto>(200, "Inventory created",inv);
 }
 
 public async Task<Response<string>> Update(InventoryCreateDto dto)

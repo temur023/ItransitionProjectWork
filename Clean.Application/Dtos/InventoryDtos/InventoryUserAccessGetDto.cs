@@ -4,5 +4,5 @@ public class InventoryUserAccessGetDto
 {
     public int InventoryId { get; set; }
     public int UserId { get; set; }
-    public bool CanWrite { get; set; }
+    public string EmailOrUsername { get; set; }
 }

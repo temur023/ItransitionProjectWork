@@ -25,6 +25,7 @@ public class UserPageService(IUserPageRepository repository
             Category = u.Category,
             IsPublic = u.IsPublic,
             CreatedById = u.CreatedById,
+            CreatorName = u.CreatedBy.UserName,
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
@@ -45,11 +46,19 @@ public class UserPageService(IUserPageRepository repository
             Category = u.Category,
             IsPublic = u.IsPublic,
             CreatedById = u.CreatedById,
+            CreatorName = u.CreatedBy.UserName,
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
             UserAccesses = u.UserAccesses
         }).ToList();
         return new PagedResponse<InventoryGetDto>(dto,filter.PageNumber, filter.PageSize,invs.Total, "Success");
+    }
+
+    public async Task<Response<string>> DeleteSelected(List<int> selectedIds)
+    {
+        var currentUserId = GetCurrentUserId();
+        var invs = await repository.DeleteSelected((int)currentUserId , selectedIds);
+        return new Response<string>(200,"Deleted Successfully");
     }
 }

@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
 function LoginPage(){
-  const [loginInput, setLoginInput] = useState("");
+    const [loginInput, setLoginInput] = useState("");
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         userName: "",
