@@ -10,4 +10,4 @@ public enum IdElementType
     Guid,
     DateTime,
     Sequence
-}
+}   

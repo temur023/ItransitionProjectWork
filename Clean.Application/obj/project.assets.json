@@ -3060,19 +3060,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\irgas\\.nuget\\packages\\": {}
+    "/Users/fsdf/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj",
+      "projectUniqueName": "/Users/fsdf/ProjectWork/Clean.Application/Clean.Application.csproj",
       "projectName": "Clean.Application",
-      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\Clean.Application.csproj",
-      "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Application\\obj\\",
+      "projectPath": "/Users/fsdf/ProjectWork/Clean.Application/Clean.Application.csproj",
+      "packagesPath": "/Users/fsdf/.nuget/packages/",
+      "outputPath": "/Users/fsdf/ProjectWork/Clean.Application/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/Users/fsdf/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -3084,8 +3084,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj": {
-              "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj"
+            "/Users/fsdf/ProjectWork/Clean.Domain/Clean.Domain.csproj": {
+              "projectPath": "/Users/fsdf/ProjectWork/Clean.Domain/Clean.Domain.csproj"
             }
           }
         }
@@ -3145,7 +3145,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/Users/fsdf/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
