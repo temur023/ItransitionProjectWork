@@ -10,5 +10,5 @@ public interface IItemService
     Task<Response<ItemGetDto>> GetById(int id);
     Task<Response<string>> Create(ItemCreateDto dto);
     Task<Response<string>> Update(ItemCreateDto dto);
-    Task<Response<string>> Delete(int id);
+    Task<Response<string>> DeleteSelected(int invId, List<int> selectedIds);
 }

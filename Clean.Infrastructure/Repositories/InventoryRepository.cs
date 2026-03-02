@@ -28,8 +28,11 @@
 
         public async Task<Inventory> GetById(int id)
         {
-            var find = await context.Inventories.FirstOrDefaultAsync(u=>u.Id == id);
-            var check = await context.InventoryUserAccesses.FirstOrDefaultAsync(u=>u.InventoryId == id);
+            var find = await context.Inventories
+                .Include(i => i.UserAccesses)
+                .Include(i => i.CreatedBy)
+                .Include(i=> i.Fields)
+                .FirstOrDefaultAsync(u => u.Id == id);
             return find;
         }
 

@@ -23,9 +23,15 @@ public class ItemFieldValueRepository(DataContext context) : IItemFieldValueRepo
         return (values, total);
     }
 
-    public async Task<ItemFieldValue> GetById(int id)
+    public async Task<ItemFieldValue?> GetById(int id)
     {
         return await context.ItemFieldValues.FirstOrDefaultAsync(v => v.Id == id);
+    }
+
+    public async Task<ItemFieldValue?> GetByItemAndField(int itemId, int fieldId)
+    {
+        return await context.ItemFieldValues
+            .FirstOrDefaultAsync(v => v.ItemId == itemId && v.FieldId == fieldId);
     }
 
     public async Task<int> Create(ItemFieldValue value)

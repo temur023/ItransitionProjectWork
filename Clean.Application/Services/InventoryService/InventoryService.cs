@@ -27,6 +27,7 @@ public class InventoryService(IInvetoryRepository repository
             Category = u.Category,
             IsPublic = u.IsPublic,
             CreatedById = u.CreatedById,
+            CustomIdFormatJson = u.CustomIdFormatJson,
             CreatorName = u.CreatedBy.UserName,
             Version = u.Version,
             ImageUrl = u.ImageUrl,
@@ -60,6 +61,7 @@ public class InventoryService(IInvetoryRepository repository
             CreatedAt = inv.CreatedAt.ToUniversalTime(),
             Description = inv.Description,
             Category = inv.Category,
+            CustomIdFormatJson = inv.CustomIdFormatJson,
             IsPublic =  inv.IsPublic,
             CreatorName = inv.CreatedBy.UserName,
             CreatedById = inv.CreatedById,
@@ -95,12 +97,14 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         Description = dto.Description,
         Category = dto.Category,
         IsPublic = dto.IsPublic,
+        CustomIdFormatJson = dto.CustomIdFormatJson,
         CreatedById = (int)currentUser,
         Version = 1,
         ImageUrl = dto.ImageUrl,
         Title = dto.Title,
     };
     await repository.Create(model);
+    var creator = await userRepository.GetById((int)currentUser);
     var inv = new InventoryGetDto()
     {
         Id = model.Id,
@@ -108,7 +112,8 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         Description = model.Description,
         Category = model.Category,
         IsPublic = model.IsPublic,
-        CreatorName = model.CreatedBy.UserName,
+        CustomIdFormatJson = model.CustomIdFormatJson,
+        CreatorName = creator?.UserName,
         CreatedById = model.CreatedById,
         Version = model.Version,
         ImageUrl = model.ImageUrl,
@@ -117,29 +122,28 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
     return new Response<InventoryGetDto>(200, "Inventory created",inv);
 }
 
-public async Task<Response<string>> Update(InventoryCreateDto dto)
+public async Task<Response<string>> Update(InventoryUpdateDto dto)
 {
     var currentUser = GetCurrentUserId();
     if (currentUser == null)
-        return new Response<string>(401, "Not Authorized");
+        return new Response<string>(401, "Unauthorized");
 
-    var inv = await repository.GetById(dto.Id);
-
+    var inventory = await repository.GetById(dto.Id);
+    if (inventory == null)
+        return new Response<string>(404, "Inventory not found");
 
     var user = await userRepository.GetById((int)currentUser);
-    if (user.Role != UserRole.Admin && inv.UserAccesses.All(i => i.UserId != currentUser))
-        return new Response<string>(403, "Not Authorized");
+    if (inventory.CreatedById != currentUser && user.Role != UserRole.Admin)
+        return new Response<string>(403, "Forbidden");
 
-    inv.IsPublic = dto.IsPublic;
-    inv.Title = dto.Title;
-    inv.Description = dto.Description;
-    inv.Category = dto.Category;
-    inv.ImageUrl = dto.ImageUrl;
-
+    inventory.Title = dto.Title;
+    inventory.Description = dto.Description;
+    inventory.Category = dto.Category;
+    inventory.IsPublic = dto.IsPublic;
+    
     await repository.SaveChanges();
-    return new Response<string>(200, "Updated");
+    return new Response<string>(200, "Inventory updated");
 }
-
 public async Task<Response<string>> Delete(int id)
 {
     var currentUser = GetCurrentUserId();

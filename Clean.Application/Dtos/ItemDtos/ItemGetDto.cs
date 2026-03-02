@@ -18,4 +18,9 @@ public class ItemGetDto
     public DateTime UpdatedAt { get; set; }
 
     public int Version { get; set; }
+
+    /// <summary>
+    /// Custom field values for display (fieldId + single string value).
+    /// </summary>
+    public List<ItemFieldValueDisplayDto>? FieldValues { get; set; }
 }

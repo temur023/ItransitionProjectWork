@@ -54,10 +54,12 @@ function UserPage() {
         4: "Technology",
         5: "Other",
     };
-    const [checkedUsers, setCheckedUsers] = useState([]);
+    const [checkedInvs, setCheckedInvs] = useState([]);
+    const [customIdElements, setCustomIdElements] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newInventoryId, setNewInventoryId] = useState(null);
     const [fields, setFields] = useState([]);
+    const [loading, setLoading] = useState(false);
     // const [tags, setTags] = useState([]);
     const [activeTab, setActiveTab] = useState("own");
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
@@ -70,15 +72,98 @@ function UserPage() {
     const api_url = "http://localhost:5137";
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
-
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setNewInventoryId(null);
         setFields([]);
+        setCustomIdElements([]);
         setAccessUsers([]);
         setUserSuggestions([]);
         setActiveSuggestionIndex(-1);
         setFormData({ title: "", description: "", category: 1, isPublic: true });
+    };
+
+    const idElementTypes = {
+        1: "FixedText",
+        2: "Random20Bit",
+        3: "Random32Bit",
+        4: "Random6Digit",
+        5: "Random9Digit",
+        6: "Guid",
+        7: "DateTime",
+        8: "Sequence"
+    };
+
+    const deleteSelected = async () => {
+    const token = localStorage.getItem("userToken");
+    if (!token) return navigate("/login");
+
+    try {
+        setLoading(true);
+        const response = await axios.delete(`${api_url}/api/UserPage/delete-own`, {
+            headers: { Authorization: `Bearer ${token}` },
+            data: checkedInvs
+        });
+
+
+        setMessage({ text: response.data.message || "Inventories deleted", type: "success" });
+        setCheckedInvs([]);
+        await fetchInventories()
+    } catch (error) {
+        console.error("Delete failed:", error); 
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            localStorage.removeItem("userToken");
+            navigate("/login");
+        } else {
+            setMessage({ text: "Failed to delete inventories", type: "error" });
+        }
+    } finally {
+        setLoading(false);
+    }
+};
+    function handleCheckingInvs(id){
+        setCheckedInvs(c=>c.includes(id)?c.filter((invId)=>invId!==id):[...c, id]);
+    }
+
+    function handleCheckingAllInvs(){
+        if(checkedInvs.length===inventories.length&&inventories.length>0){
+            setCheckedInvs([]);
+        }
+        else{
+           const allIds = inventories.map(u => u.id);
+            setCheckedInvs(allIds);
+        }
+    }
+
+    const addIdElement = () => {
+        setCustomIdElements([...customIdElements, { type: 1, value: "", format: "" }]);
+    };
+
+    const updateIdElement = (index, key, val) => {
+        const updated = [...customIdElements];
+        updated[index] = { ...updated[index], [key]: val };
+        setCustomIdElements(updated);
+    };
+
+    const removeIdElement = (index) => {
+        setCustomIdElements(customIdElements.filter((_, i) => i !== index));
+    };
+
+    const generatePreview = () => {
+        return customIdElements.map(el => {
+            const t = parseInt(el.type);
+            switch (t) {
+                case 1: return el.value || "TEXT";
+                case 2: return "A1B2C";
+                case 3: return "F3E2D1A0";
+                case 4: return "123456";
+                case 5: return "123456789";
+                case 6: return "a1b2c3d4";
+                case 7: return new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                case 8: return (el.format ? "1".padStart(parseInt(el.format.replace(/\D/g, "")) || 1, "0") : "1");
+                default: return "?";
+            }
+        }).join("");
     };
 
     function handleChange(e) {
@@ -113,7 +198,13 @@ function UserPage() {
                 Version: 1,
                 CreatedById: 0,
                 ImageUrl: null,
-
+                CustomIdFormatJson: JSON.stringify(
+                    customIdElements.map(el => ({
+                        Type: parseInt(el.type),
+                        Value: el.value || null,
+                        Format: el.format || null
+                    }))
+                ),
             };
             console.log("Payload:", payload);
             console.log("Token:", token);
@@ -286,6 +377,9 @@ function UserPage() {
         return () => clearTimeout(delay);
     }, [fetchInventories]);
 
+    useEffect(() => {
+    setCheckedInvs([]);
+}, [inventories]);
     return (
         <>
             <div className="container-fluid w-75 mt-4 shadow-lg rounded-4 p-4">
@@ -293,7 +387,17 @@ function UserPage() {
                     <div className={`alert alert-${message.type}`}>{message.text}</div>
                 )}
 
-                <div className="d-flex justify-content-end mt-2">
+                <div className="d-flex justify-content-end mt-2 gap-2">
+                    <button 
+                         className="btn btn-danger"
+                         onClick={deleteSelected}
+                         disabled={loading || checkedInvs.length === 0}
+                         title="delete selected inventories"
+                    >
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" clasname="bi bi-trash3-fill" viewBox="0 0 16 16">
+                           <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                         </svg>
+                    </button>
                     <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
                         + New Inventory
                     </button>
@@ -319,6 +423,14 @@ function UserPage() {
                 <table className="table table-striped table-hover mb-3">
                     <thead>
                         <tr>
+                            <th>
+                                <input 
+                                    type="checkbox" 
+                                    className="form-check-input" 
+                                    onChange={handleCheckingAllInvs}
+                                    checked={inventories.length > 0 && checkedInvs.length === inventories.length}
+                                />
+                                </th>
                             <th>Title</th>
                             <th>Category</th>
                             <th>Creator Username</th>
@@ -326,10 +438,18 @@ function UserPage() {
                     </thead>
                     <tbody>
                         {inventories.filter(inv => inv !== null).map((inv) => (
-                            <tr key={inv.id} onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>
-                                <td>{inv.title}</td>
-                                <td>{categoryLabels[inv.category] || inv.category}</td>
-                                <td>{inv.creatorName}</td>
+                            <tr key={inv.id}>
+                                 <td>
+                                        <input 
+                                            type="checkbox" 
+                                            className="form-check-input" 
+                                            checked={checkedInvs.includes(inv.id)}
+                                            onChange={() => handleCheckingInvs(inv.id)}
+                                        />
+                                    </td> 
+                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.title}</td>
+                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{categoryLabels[inv.category] || inv.category}</td>
+                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.creatorName}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -447,6 +567,74 @@ function UserPage() {
                             onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                         />
                         <label className="form-check-label">Public</label>
+                    </div>
+
+                    {/* Custom ID Format Builder */}
+                    <div className="mb-3">
+                        <label className="form-label fw-bold">Custom ID Format</label>
+                        <p className="text-muted small mb-2">Define how item IDs will be auto-generated for this inventory.</p>
+                        {customIdElements.map((el, index) => (
+                            <div key={index} className="border rounded p-2 mb-2 position-relative">
+                                <button
+                                    type="button"
+                                    className="btn-close position-absolute top-0 end-0 m-1"
+                                    style={{ fontSize: "0.6rem" }}
+                                    onClick={() => removeIdElement(index)}
+                                />
+                                <div className="row g-2 align-items-end">
+                                    <div className="col">
+                                        <label className="form-label small">Type</label>
+                                        <select
+                                            className="form-select form-select-sm"
+                                            value={el.type}
+                                            onChange={(e) => updateIdElement(index, "type", e.target.value)}
+                                        >
+                                            <option value={1}>Fixed Text</option>
+                                            <option value={2}>Random 20-Bit</option>
+                                            <option value={3}>Random 32-Bit</option>
+                                            <option value={4}>Random 6-Digit</option>
+                                            <option value={5}>Random 9-Digit</option>
+                                            <option value={6}>GUID</option>
+                                            <option value={7}>DateTime</option>
+                                            <option value={8}>Sequence</option>
+                                        </select>
+                                    </div>
+                                    {parseInt(el.type) === 1 && (
+                                        <div className="col">
+                                            <label className="form-label small">Value</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder='e.g. INV-'
+                                                value={el.value}
+                                                onChange={(e) => updateIdElement(index, "value", e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                    {(parseInt(el.type) === 7 || parseInt(el.type) === 8) && (
+                                        <div className="col">
+                                            <label className="form-label small">Format</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder={parseInt(el.type) === 7 ? 'e.g. yyyyMMdd' : 'e.g. D5'}
+                                                value={el.format}
+                                                onChange={(e) => updateIdElement(index, "format", e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={addIdElement}>
+                            + Add Element
+                        </button>
+                        {customIdElements.length > 0 && (
+                            <div className="mt-2 p-2 bg-light rounded">
+                                <small className="text-muted">Preview: </small>
+                                <code>{generatePreview()}</code>
+                            </div>
+                        )}
                     </div>
                 </fieldset>
 

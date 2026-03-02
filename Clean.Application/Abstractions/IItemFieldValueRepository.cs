@@ -6,7 +6,8 @@ namespace Clean.Application.Abstractions;
 public interface IItemFieldValueRepository
 {
     Task<(List<ItemFieldValue> Values, int Total)> GetAll(ItemFieldValueFilter filter);
-    Task<ItemFieldValue> GetById(int id);
+    Task<ItemFieldValue?> GetById(int id);
+    Task<ItemFieldValue?> GetByItemAndField(int itemId, int fieldId);
     Task<int> Create(ItemFieldValue value);
     Task<int> Delete(int id);
     Task SaveChanges();

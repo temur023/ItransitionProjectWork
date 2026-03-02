@@ -8,6 +8,6 @@ public interface IItemRepository
     Task<(List<Item> Items, int Total)> GetAll(ItemFilter filter, int invId);
     Task<Item> GetById(int id);
     Task<(int ItemId, string FinalCustomId)> Create(Item item, Func<int, string> idGenerator);
-    Task<int> Delete(int id);
+    Task<List<Item>> DeleteSelected(int invId ,List<int> itemIds);
     Task SaveChanges();
 }

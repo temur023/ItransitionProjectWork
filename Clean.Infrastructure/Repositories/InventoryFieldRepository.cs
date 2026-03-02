@@ -8,13 +8,15 @@ namespace Clean.Infrastructure.Repositories;
 
 public class InventoryFieldRepository(DataContext context) : IInventoryFieldRepository
 {
-    public async Task<(List<InventoryField> Fields, int Total)> GetAll(InventoryFieldFilter filter)
+    public async Task<(List<InventoryField> Fields, int Total)> GetAll(InventoryFieldFilter filter, int invId)
     {
-        var query = context.InventoryFields.AsNoTracking();
+        var query = context.InventoryFields
+            .Where(i=>i.InventoryId == invId).AsNoTracking();
         if (filter.InventoryId.HasValue)
             query = query.Where(f => f.InventoryId == filter.InventoryId.Value);
         var total = await query.CountAsync();
         var fields = await query
+            .OrderBy(f => f.Order)
             .Skip((filter.PageNumber - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .ToListAsync();

@@ -13,6 +13,7 @@ public class ItemRepository(DataContext context):IItemRepository
         var query = context.Items
             .Include(i => i.CreatedBy)
             .Include(i => i.UpdatedBy)
+            .Include(i => i.FieldValues)
             .Where(i=>i.InventoryId == InvId).AsNoTracking();
         var total = await query.CountAsync();
         var items = await query
@@ -25,7 +26,9 @@ public class ItemRepository(DataContext context):IItemRepository
 
     public async Task<Item> GetById(int id)
     {
-        var find = await context.Items.FirstOrDefaultAsync(u=>u.Id == id);
+        var find = await context.Items
+            .Include(i => i.FieldValues)
+            .FirstOrDefaultAsync(u=>u.Id == id);
         return find;
     }
 
@@ -40,13 +43,13 @@ public class ItemRepository(DataContext context):IItemRepository
         return (item.Id, item.CustomId);
     }
 
-    public async Task<int> Delete(int id)
+    public async Task<List<Item>> DeleteSelected(int invId, List<int> itemIds)
     {
-        var find = await context.Items.FirstOrDefaultAsync(u=>u.Id == id);
-        if (find == null) return -1;
-        context.Items.Remove(find);
+        var items = await context.Items
+            .Where(i => i.InventoryId == invId && itemIds.Contains(i.Id)).ToListAsync();
+        context.Items.RemoveRange(items);
         await context.SaveChangesAsync();
-        return find.Id;
+        return items;
     }
 
     public async Task SaveChanges()

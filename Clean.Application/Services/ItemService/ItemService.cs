@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using Clean.Application.Abstractions;
 using Clean.Application.Dtos;
@@ -16,6 +17,16 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
 {
     private int? GetCurrentUserId() => int.TryParse(httpContextAccessor.HttpContext?.User
         .FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : null;
+
+    private static string? ToDisplayValue(ItemFieldValue fv)
+    {
+        if (!string.IsNullOrEmpty(fv.ValueText)) return fv.ValueText;
+        if (fv.ValueNumber.HasValue) return fv.ValueNumber.Value.ToString(CultureInfo.InvariantCulture);
+        if (fv.ValueBool.HasValue) return fv.ValueBool.Value ? "true" : "false";
+        if (!string.IsNullOrEmpty(fv.ValueLink)) return fv.ValueLink;
+        return null;
+    }
+
     public async Task<PagedResponse<ItemGetDto>> GetAll(ItemFilter filter, int invId)
     {
         var itms = await repository.GetAll(filter, invId);
@@ -24,11 +35,18 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             Id = u.Id,
             InventoryId = u.InventoryId,
             CustomId = u.CustomId,
+            Name = u.Name,
+            Description = u.Description,
             CreatedById =  u.CreatedById,
             CreatedAt = DateTime.UtcNow,
             UpdatedById =  u.UpdatedById,
             UpdatedAt = DateTime.UtcNow,
             Version = u.Version,
+            FieldValues = u.FieldValues?.Select(fv => new ItemFieldValueDisplayDto
+            {
+                FieldId = fv.FieldId,
+                Value = ToDisplayValue(fv)
+            }).ToList()
         }).ToList();
         return new PagedResponse<ItemGetDto>(dto,filter.PageNumber, filter.PageSize,itms.Total,"Success");
     }
@@ -40,18 +58,26 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
         {
             Id = itm.Id,
             CustomId = itm.CustomId,
+            Name = itm.Name,
+            Description = itm.Description,
             InventoryId = itm.InventoryId,
             CreatedById =  itm.CreatedById,
             CreatedAt = DateTime.UtcNow,
             UpdatedById =  itm.UpdatedById,
             UpdatedAt = itm.UpdatedAt,
             Version = itm.Version,
+            FieldValues = itm.FieldValues?.Select(fv => new ItemFieldValueDisplayDto
+            {
+                FieldId = fv.FieldId,
+                Value = ToDisplayValue(fv)
+            }).ToList()
         };
         return new Response<ItemGetDto>(200, "Success", dto);
     }
 
     public async Task<Response<string>> Create(ItemCreateDto dto)
     {
+        Console.WriteLine($"DTO received: InventoryId={dto.InventoryId}, Name={dto.Name}");
         var currentUser = GetCurrentUserId();
         var inventory = await invetoryRepository.GetById(dto.InventoryId);
         if (currentUser == null)
@@ -59,13 +85,16 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             return new Response<string>(404,"You are not allowed to write");
         }
         var user = await userRepository.GetById((int)currentUser);
-        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
-           && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+       if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
+          && inventory.CreatedById != currentUser && user.Role != UserRole.Admin)
         {
             return new Response<string>(404,"You are not allowed to write");
         }
         var model = new Item()
         {
+            CustomId =  dto.CustomId,
+            Name = dto.Name,
+            Description = dto.Description,
             InventoryId = dto.InventoryId,
             CreatedById = (int)currentUser,
             UpdatedById = (int)currentUser,
@@ -98,7 +127,7 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             return new Response<string>(404,"You are not allowed to write");
         }
         var user = await userRepository.GetById((int)currentUser);
-        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
+        if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
            && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
         {
             return new Response<string>(404,"You are not allowed to write");
@@ -111,24 +140,21 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
         return new Response<string>(200, "Success");
     }
 
-    public async Task<Response<string>> Delete(int id)
+    public async Task<Response<string>> DeleteSelected(int invId,List<int> selectedIds)
     {
         var currentUser = GetCurrentUserId();
-        var itm =  await repository.GetById(id);
-        var inventory = await invetoryRepository.GetById(itm.InventoryId);
+        var inventory = await invetoryRepository.GetById(invId);
         if (currentUser == null)
         {
             return new Response<string>(404,"You are not allowed to write");
         }
         var user = await userRepository.GetById((int)currentUser);
-        if(inventory.UserAccesses.Any (u => u.UserId != currentUser)
+        if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
            && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
         {
             return new Response<string>(404,"You are not allowed to write");
         }
-        
-        var item = await repository.Delete(id);
-        if(item == -1) return new Response<string>(404," not found");
+        var items = await repository.DeleteSelected(invId, selectedIds);
         return new Response<string>(200, "deleted");
     }
 }

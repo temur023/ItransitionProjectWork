@@ -43,6 +43,17 @@ public class InventoryController(IInvetoryService service):ControllerBase
         return Ok(response); 
     }
     [Authorize]
+    [HttpPut("update/{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] InventoryUpdateDto dto)
+    {
+        dto.Id = id;
+        var response = await service.Update(dto);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode);
+        return Ok(response);
+    }
+    
+    [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {

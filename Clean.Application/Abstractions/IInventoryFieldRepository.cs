@@ -5,7 +5,7 @@ namespace Clean.Application.Abstractions;
 
 public interface IInventoryFieldRepository
 {
-    Task<(List<InventoryField> Fields, int Total)> GetAll(InventoryFieldFilter filter);
+    Task<(List<InventoryField> Fields, int Total)> GetAll(InventoryFieldFilter filter, int invId);
     Task<InventoryField> GetById(int id);
     Task<int> Create(InventoryField field);
     Task<int> Delete(int id);

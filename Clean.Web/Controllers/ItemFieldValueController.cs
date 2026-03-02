@@ -36,6 +36,17 @@ public class ItemFieldValueController(IItemFieldValueService service) : Controll
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
+
+    [Authorize]
+    [HttpPost("set")]
+    public async Task<IActionResult> Set([FromBody] ItemFieldValueSetDto dto)
+    {
+        var response = await service.Set(dto);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode, new { message = response.Message });
+        return Ok(response);
+    }
+
     [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)

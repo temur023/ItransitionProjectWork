@@ -9,5 +9,6 @@ public interface IItemFieldValueService
     Task<PagedResponse<ItemFieldValueGetDto>> GetAll(ItemFieldValueFilter filter);
     Task<Response<ItemFieldValueGetDto>> GetById(int id);
     Task<Response<string>> Create(ItemFieldValueCreateDto dto);
+    Task<Response<string>> Set(ItemFieldValueSetDto dto);
     Task<Response<string>> Delete(int id);
 }

@@ -9,9 +9,9 @@ namespace Clean.Application.Services;
 
 public class InventoryFieldService(IInventoryFieldRepository repository,IInvetoryRepository invetoryRepository) : IInventoryFieldService
 {
-    public async Task<PagedResponse<InventoryFieldGetDto>> GetAll(InventoryFieldFilter filter)
+    public async Task<PagedResponse<InventoryFieldGetDto>> GetAll(InventoryFieldFilter filter, int invId)
     {
-        var result = await repository.GetAll(filter);
+        var result = await repository.GetAll(filter, invId);
         var dto = result.Fields.Select(f => new InventoryFieldGetDto
         {
             Id = f.Id,
