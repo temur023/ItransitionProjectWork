@@ -5,6 +5,7 @@ import RegisterPage from './RegisterPage';
 import UserPage from './UserPage';
 import Dashboard from './Dashboard';
 import InventoryPage from './InventoryPage';
+import AdminPage from './AdminPage';
 function App() {
 
   return (
@@ -16,6 +17,7 @@ function App() {
             <Route path="/user-page" element={<UserPage/>}></Route>
             <Route path="/dashboard" element={<Dashboard/>}></Route>
             <Route path="/inventory/:inventoryId" element={<InventoryPage/>}></Route>
+            <Route path='/admin-page' element={<AdminPage/>}></Route>
             <Route path="/" element={<Navigate to={"/login"} />}></Route>
         </Routes>
       </BrowserRouter>

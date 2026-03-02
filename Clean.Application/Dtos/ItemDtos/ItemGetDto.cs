@@ -4,7 +4,7 @@ public class ItemGetDto
 {
     public int Id { get; set; }
 
-    public int InventoryId { get; set; }
+    public int InvId { get; set; }
 
     public string CustomId { get; set; }
     public string Name { get; set; }

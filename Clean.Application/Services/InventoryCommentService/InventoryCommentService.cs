@@ -21,7 +21,7 @@ public class InventoryCommentService(IInventoryCommentRepository repository
         var dto = result.Comments.Select(c => new InventoryCommentGetDto
         {
             Id = c.Id,
-            InventoryId = c.InventoryId,
+            InvId = c.InventoryId,
             UserId = c.UserId,
             Content = c.Content,
             CreatedAt = c.CreatedAt
@@ -36,7 +36,7 @@ public class InventoryCommentService(IInventoryCommentRepository repository
         var dto = new InventoryCommentGetDto
         {
             Id = comment.Id,
-            InventoryId = comment.InventoryId,
+            InvId = comment.InventoryId,
             UserId = comment.UserId,
             Content = comment.Content,
             CreatedAt = comment.CreatedAt,
@@ -51,20 +51,20 @@ public class InventoryCommentService(IInventoryCommentRepository repository
             return new Response<string>(400,"Not Authorized");
         var model = new InventoryComment
         {
-            InventoryId = dto.InventoryId,
+            InventoryId = dto.InvId,
             UserId = dto.UserId,
             Content = dto.Content,
             CreatedAt = DateTime.UtcNow
         };
         var commentDto = new InventoryCommentGetDto
         {
-            InventoryId = model.InventoryId,
+            InvId = model.InventoryId,
             UserId = model.UserId,
             Content = model.Content,
             CreatedAt = model.CreatedAt
         };
 
-        await notifier.NotifyCommentCreated(dto.InventoryId, commentDto);
+        await notifier.NotifyCommentCreated(dto.InvId, commentDto);
         await repository.Create(model);
         return new Response<string>(200, "Inventory comment created");
     }

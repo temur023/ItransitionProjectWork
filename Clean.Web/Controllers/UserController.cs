@@ -47,7 +47,7 @@ public class UserController(IUserService service) : ControllerBase
         return Ok(response);
     }
     [Authorize(Roles = "Admin")]
-    [HttpDelete("delete")]
+    [HttpDelete("delete-selected")]
     public async Task<IActionResult> DeleteSelected(List<int> ids)
     {
         var response = await service.DeleteSelected(ids);
@@ -56,7 +56,7 @@ public class UserController(IUserService service) : ControllerBase
         return Ok(response);
     }
     [Authorize(Roles = "Admin")]
-    [HttpDelete("ublock")]
+    [HttpPut("unblock")]
     public async Task<IActionResult> UnBlockSelected(List<int> ids)
     {
         var response = await service.UnBlockSelected(ids);
@@ -75,18 +75,18 @@ public class UserController(IUserService service) : ControllerBase
     }
     [Authorize(Roles = "Admin")]
     [HttpPut("making-admin")]
-    public async Task<IActionResult> MakingAdmin(int id)
+    public async Task<IActionResult> MakingAdmin(UserRoleDto dto)
     {
-        var response = await service.MakingAdmin(id);
+        var response = await service.CreateAdmin(dto);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
     [Authorize(Roles = "Admin")]
     [HttpPut("removing-admin")]
-    public async Task<IActionResult> RemovingAdmin(int id)
+    public async Task<IActionResult> RemovingAdmin(UserRoleDto dto)
     {
-        var response = await service.RemovingAdmin(id);
+        var response = await service.RemoveAdmin(dto);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

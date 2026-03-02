@@ -1,14 +1,19 @@
+using System.Security.Claims;
 using Clean.Application.Abstractions;
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Application.Responses;
 using Clean.Domain.Entities;
 using Clean.Domain.Entities.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Clean.Application.Services;
 
-public class UserService(IUserRepository repository):IUserService
+public class UserService(IUserRepository repository, IHttpContextAccessor httpContextAccessor):IUserService
 {
+    private int? GetCurrentUserId() =>
+        int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
+            ?.Value, out var userId) ? userId : null;
     public async Task<PagedResponse<UserGetDto>> GetAll(UserFilter filter)
     {
         var users = await repository.GetAll(filter);
@@ -62,6 +67,34 @@ public class UserService(IUserRepository repository):IUserService
         return new Response<string>(200, "User created");
     }
 
+    public async Task<Response<string>> CreateAdmin(UserRoleDto dto)
+    {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var user = await repository.GetById(dto.Id);
+        user.Role = UserRole.Admin;
+        await repository.SaveChanges();
+        return new Response<string>(200, "Admin created");
+    }
+
+    public async Task<Response<string>> RemoveAdmin(UserRoleDto dto)
+    {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var user = await repository.GetById(dto.Id);
+        user.Role = UserRole.User;
+        await repository.SaveChanges();
+        return new Response<string>(200, "Admin role removed");
+    }
+
     public async Task<Response<string>> Update(UserCreateDto dto, int id)
     {
         var user = await repository.GetById(id);
@@ -99,20 +132,6 @@ public class UserService(IUserRepository repository):IUserService
     public async Task<Response<string>> DeleteSelected(List<int> ids)
     {
         var users = await repository.DeleteSelected(ids);
-        return new Response<string>(200, "Success");
-    }
-
-    public async Task<Response<string>> MakingAdmin(int id)
-    {
-        var user = await repository.GetById(id);
-        user.Role = UserRole.Admin;
-        return new Response<string>(200, "Success");
-    }
-
-    public async Task<Response<string>> RemovingAdmin(int id)
-    {
-        var user = await repository.GetById(id);
-        user.Role = UserRole.User;
         return new Response<string>(200, "Success");
     }
 }

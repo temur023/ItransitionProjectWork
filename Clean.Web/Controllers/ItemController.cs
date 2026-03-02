@@ -11,9 +11,9 @@ namespace ProjectWork.Controllers;
 public class ItemController(IItemService service) : ControllerBase
 {
     [HttpGet("get-all")]
-    public async Task<IActionResult> GetAll([FromQuery] ItemFilter filter,[FromQuery] int invId)
+    public async Task<IActionResult> GetAll([FromQuery] ItemFilter filter,[FromQuery] int InvId)
     {
-        var response = await service.GetAll(filter, invId);
+        var response = await service.GetAll(filter, InvId);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);
@@ -56,9 +56,9 @@ public class ItemController(IItemService service) : ControllerBase
     
     [Authorize]
     [HttpDelete("delete-selected")]
-    public async Task<IActionResult> DeleteSelected([FromQuery] int invId,[FromBody] List<int> selectedIds)
+    public async Task<IActionResult> DeleteSelected([FromQuery] int InvId,[FromBody] List<int> selectedIds)
     {
-        var response = await service.DeleteSelected(invId, selectedIds);
+        var response = await service.DeleteSelected(InvId, selectedIds);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

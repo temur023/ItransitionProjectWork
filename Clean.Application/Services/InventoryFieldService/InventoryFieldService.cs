@@ -15,7 +15,7 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         var dto = result.Fields.Select(f => new InventoryFieldGetDto
         {
             Id = f.Id,
-            InventoryId = f.InventoryId,
+            InvId = f.InventoryId,
             Title = f.Title,
             Description = f.Description,
             Type = f.Type,
@@ -32,7 +32,7 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         var dto = new InventoryFieldGetDto
         {
             Id = field.Id,
-            InventoryId = field.InventoryId,
+            InvId = field.InventoryId,
             Title = field.Title,
             Description = field.Description,
             Type = field.Type,
@@ -44,7 +44,7 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
 
     public async Task<Response<string>> Create(InventoryFieldCreateDto dto)
     {
-        var inv = await invetoryRepository.GetById(dto.InventoryId);
+        var inv = await invetoryRepository.GetById(dto.InvId);
         var numOfField = inv.Fields.Count(f => f.Type==dto.Type);
         if (numOfField >= 3)
         {
@@ -52,7 +52,7 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         }
         var model = new InventoryField
         {
-            InventoryId = dto.InventoryId,
+            InventoryId = dto.InvId,
             Title = dto.Title,
             Description = dto.Description,
             Type = dto.Type,

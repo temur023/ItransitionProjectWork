@@ -44,7 +44,7 @@ public class UserRepository(DataContext context):IUserRepository
         await context.SaveChangesAsync();
         return user.Id;
     }
-
+    
     public async Task<int> Delete(int id)
     {
         var find = await context.Users.FirstOrDefaultAsync(u=>u.Id == id);

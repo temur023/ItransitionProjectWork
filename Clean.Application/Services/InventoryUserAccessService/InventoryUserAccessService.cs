@@ -20,7 +20,7 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         var result = await repository.GetAll(filter);
         var dto = result.AccessList.Select(a => new InventoryUserAccessGetDto
         {
-            InventoryId = a.InventoryId,
+            InvId = a.InventoryId,
             UserId = a.UserId,
         }).ToList();
         return new PagedResponse<InventoryUserAccessGetDto>(dto, filter.PageNumber, filter.PageSize, result.Total, "Success");
@@ -32,7 +32,7 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         if (access == null) return new Response<InventoryUserAccessGetDto>(404, "Inventory user access not found", null);
         var dto = new InventoryUserAccessGetDto
         {
-            InventoryId = access.InventoryId,
+            InvId = access.InventoryId,
             UserId = access.UserId,
         };
         return new Response<InventoryUserAccessGetDto>(200, "Success", dto);
@@ -44,7 +44,7 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         if (currentUserId == null)
             return new Response<string>(403, "Not Authorized");
 
-        var inv = await invetoryRepository.GetById(dto.InventoryId);
+        var inv = await invetoryRepository.GetById(dto.InvId);
         var usr = await userRepository.GetById((int)currentUserId);
 
         if (usr.Role != UserRole.Admin && inv.CreatedById != currentUserId)
@@ -54,13 +54,13 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         if (targetUser == -1)
             return new Response<string>(404, "User not found");
         
-        var alreadyExists = await repository.Exists(dto.InventoryId, targetUser);
+        var alreadyExists = await repository.Exists(dto.InvId, targetUser);
         if (alreadyExists)
             return new Response<string>(409, "User already has access");
 
         var model = new InventoryUserAccess
         {
-            InventoryId = dto.InventoryId,
+            InventoryId = dto.InvId,
             UserId = targetUser
         };
 

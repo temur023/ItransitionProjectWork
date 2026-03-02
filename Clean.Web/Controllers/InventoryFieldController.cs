@@ -11,9 +11,9 @@ namespace ProjectWork.Controllers;
 public class InventoryFieldController(IInventoryFieldService service) : ControllerBase
 {
     [HttpGet("get-all")]
-    public async Task<IActionResult> GetAll([FromQuery] InventoryFieldFilter filter, [FromQuery] int invId)
+    public async Task<IActionResult> GetAll([FromQuery] InventoryFieldFilter filter, [FromQuery] int InvId)
     {
-        var response = await service.GetAll(filter, invId);
+        var response = await service.GetAll(filter, InvId);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

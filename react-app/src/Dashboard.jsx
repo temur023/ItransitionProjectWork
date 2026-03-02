@@ -41,6 +41,29 @@ function Dashboard(){
     }, [fetchInventories]);
     return(
                 <>
+                <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
+               <ul className="nav nav-pills w-100 align-items-center">
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className="nav-link active"
+                      onClick={() => navigate("/dashboard")}
+                    >
+                      Dashboard
+                    </button>
+                  </li>
+                    
+                  <li className="ms-auto nav-item">
+                    <button
+                      type="button"
+                      className="nav-link"
+                      onClick={() => navigate("/user-page")}
+                    >
+                      AA
+                    </button>
+                  </li>
+                </ul>
+            </div>
         <div className="container-fluid w-75 mt-4 shadow-lg rounded-4">
             {message.text && (
                 <div className={`alert alert-${message.type}`}>{message.text}</div>

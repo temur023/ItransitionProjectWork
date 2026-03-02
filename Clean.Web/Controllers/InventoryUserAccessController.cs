@@ -20,9 +20,9 @@ public class InventoryUserAccessController(IInventoryUserAccessService service) 
     }
 
     [HttpGet("get/{inventoryId}/{userId}")]
-    public async Task<IActionResult> GetByInventoryAndUser(int inventoryId, int userId)
+    public async Task<IActionResult> GetByInventoryAndUser(int InventoryId, int UserId)
     {
-        var response = await service.GetByInventoryAndUser(inventoryId, userId);
+        var response = await service.GetByInventoryAndUser(InventoryId, UserId);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);
@@ -38,9 +38,9 @@ public class InventoryUserAccessController(IInventoryUserAccessService service) 
     }
     [Authorize]
     [HttpDelete("delete/{inventoryId}/{userId}")]
-    public async Task<IActionResult> Delete(int inventoryId, int userId)
+    public async Task<IActionResult> Delete(int InventoryId, int UserId)
     {
-        var response = await service.Delete(inventoryId, userId);
+        var response = await service.Delete(InventoryId, UserId);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

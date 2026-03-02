@@ -33,7 +33,7 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
         var dto = itms.Items.Select(u=>new ItemGetDto()
         {
             Id = u.Id,
-            InventoryId = u.InventoryId,
+            InvId = u.InventoryId,
             CustomId = u.CustomId,
             Name = u.Name,
             Description = u.Description,
@@ -60,7 +60,7 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             CustomId = itm.CustomId,
             Name = itm.Name,
             Description = itm.Description,
-            InventoryId = itm.InventoryId,
+            InvId = itm.InventoryId,
             CreatedById =  itm.CreatedById,
             CreatedAt = DateTime.UtcNow,
             UpdatedById =  itm.UpdatedById,
@@ -77,9 +77,9 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
 
     public async Task<Response<string>> Create(ItemCreateDto dto)
     {
-        Console.WriteLine($"DTO received: InventoryId={dto.InventoryId}, Name={dto.Name}");
+        Console.WriteLine($"DTO received: InventoryId={dto.InvId}, Name={dto.Name}");
         var currentUser = GetCurrentUserId();
-        var inventory = await invetoryRepository.GetById(dto.InventoryId);
+        var inventory = await invetoryRepository.GetById(dto.InvId);
         if (currentUser == null)
         {
             return new Response<string>(404,"You are not allowed to write");
@@ -95,7 +95,7 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             CustomId =  dto.CustomId,
             Name = dto.Name,
             Description = dto.Description,
-            InventoryId = dto.InventoryId,
+            InventoryId = dto.InvId,
             CreatedById = (int)currentUser,
             UpdatedById = (int)currentUser,
             CreatedAt = DateTime.UtcNow,

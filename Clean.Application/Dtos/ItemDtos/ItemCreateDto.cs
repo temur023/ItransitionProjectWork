@@ -4,7 +4,7 @@ public class ItemCreateDto
 {
     public int Id { get; set; }
 
-    public int InventoryId { get; set; }
+    public int InvId { get; set; }
     public string? Name { get; set; }
     public string? Description { get; set; }
     public string? CustomId { get; set; }

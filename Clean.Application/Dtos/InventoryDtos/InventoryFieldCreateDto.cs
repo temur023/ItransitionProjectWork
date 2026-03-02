@@ -4,7 +4,7 @@ namespace Clean.Application.Dtos;
 
 public class InventoryFieldCreateDto
 {
-    public int InventoryId { get; set; }
+    public int InvId { get; set; }
     public string Title { get; set; }
     public string? Description { get; set; }
     public FieldType Type { get; set; }

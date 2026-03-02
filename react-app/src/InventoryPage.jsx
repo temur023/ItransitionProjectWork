@@ -50,6 +50,18 @@ function InventoryPage() {
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
 
+    // Comments
+    const [comments, setComments] = useState([]);
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [commentText, setCommentText] = useState("");
+    const [commentSubmitting, setCommentSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState("items"); // items | discussion
+
+    // Likes
+    const [likeCounts, setLikeCounts] = useState({}); // { [itemId]: number }
+    const [likedByMe, setLikedByMe] = useState({}); // { [itemId]: boolean }
+    const [likeBusy, setLikeBusy] = useState({}); // { [itemId]: boolean }
+
     // Create Item Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "", description: "" });
@@ -71,6 +83,59 @@ function InventoryPage() {
 
     const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
     const totalPages = Math.ceil(total / filter.pageSize);
+
+    const getUserIdFromToken = () => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return null;
+        try {
+            const payloadB64 = token.split(".")[1];
+            if (!payloadB64) return null;
+            const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
+            const payload = JSON.parse(atob(padded));
+            const id =
+                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
+                payload.nameid ??
+                payload.sub;
+            const parsed = parseInt(id, 10);
+            return Number.isFinite(parsed) ? parsed : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const fetchLikeMetaForItem = async (itemId) => {
+        try {
+            const countRes = await axios.get(`${api_url}/api/ItemLike/get-all`, {
+                params: { ItemId: itemId, PageNumber: 1, PageSize: 1 }
+            });
+            const count = countRes.data.totalRecords ?? 0;
+            setLikeCounts(prev => ({ ...prev, [itemId]: count }));
+        } catch {
+            setLikeCounts(prev => ({ ...prev, [itemId]: 0 }));
+        }
+
+        const me = getUserIdFromToken();
+        if (!me) {
+            setLikedByMe(prev => ({ ...prev, [itemId]: false }));
+            return;
+        }
+
+        try {
+            await axios.get(`${api_url}/api/ItemLike/get/${itemId}/${me}`);
+            setLikedByMe(prev => ({ ...prev, [itemId]: true }));
+        } catch (e) {
+            if (e.response?.status === 404) {
+                setLikedByMe(prev => ({ ...prev, [itemId]: false }));
+            }
+        }
+    };
+
+    const refreshLikesForVisibleItems = useCallback(async () => {
+        if (!items || items.length === 0) return;
+        const ids = items.map(i => i.id);
+        await Promise.all(ids.map(id => fetchLikeMetaForItem(id)));
+    }, [items]);
 
     // ─── Search Users ───────────────────────────────────────────────────────────
     const searchUsers = async (searchTerm) => {
@@ -123,6 +188,128 @@ useEffect(() => { fetchFields(); }, [fetchFields]);
     }, [fetchItems]);
 
     useEffect(() => { setCheckedItems([]); }, [items]);
+    useEffect(() => { refreshLikesForVisibleItems(); }, [refreshLikesForVisibleItems]);
+
+    const fetchComments = useCallback(async () => {
+        try {
+            setCommentsLoading(true);
+            const response = await axios.get(`${api_url}/api/InventoryComment/get-all`, {
+                params: { InventoryId: parseInt(inventoryId), PageNumber: 1, PageSize: 50 }
+            });
+            const list = response.data.data || [];
+            list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            setComments(list);
+        } catch {
+            setComments([]);
+        } finally {
+            setCommentsLoading(false);
+        }
+    }, [inventoryId]);
+
+    useEffect(() => { fetchComments(); }, [fetchComments]);
+
+    const createComment = async () => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return navigate("/login");
+        const userId = getUserIdFromToken();
+        if (!userId) {
+            setMessage({ text: "Could not determine current user.", type: "danger" });
+            return;
+        }
+        const content = commentText.trim();
+        if (!content) {
+            setMessage({ text: "Comment cannot be empty.", type: "danger" });
+            return;
+        }
+        try {
+            setCommentSubmitting(true);
+            await axios.post(`${api_url}/api/InventoryComment/create`, {
+                InvId: parseInt(inventoryId),
+                UserId: userId,
+                Content: content
+            }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+            setCommentText("");
+            await fetchComments();
+        } catch (error) {
+            const msg = error.response?.data?.message || "Failed to create comment";
+            setMessage({ text: msg, type: "danger" });
+        } finally {
+            setCommentSubmitting(false);
+        }
+    };
+
+    const deleteComment = async (commentId) => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return navigate("/login");
+        try {
+            await axios.delete(`${api_url}/api/InventoryComment/delete/${commentId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            await fetchComments();
+        } catch (error) {
+            const msg = error.response?.data?.message || "Failed to delete comment";
+            setMessage({ text: msg, type: "danger" });
+        }
+    };
+
+    const toggleLike = async (itemId) => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return navigate("/login");
+
+        const me = getUserIdFromToken();
+        if (!me) {
+            setMessage({ text: "Could not determine current user.", type: "danger" });
+            return;
+        }
+
+        try {
+            setLikeBusy(prev => ({ ...prev, [itemId]: true }));
+
+            const isLiked = !!likedByMe[itemId];
+            if (isLiked) {
+                await axios.delete(`${api_url}/api/ItemLike/delete/${itemId}/${me}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setLikedByMe(prev => ({ ...prev, [itemId]: false }));
+                setLikeCounts(prev => ({ ...prev, [itemId]: Math.max(0, (prev[itemId] ?? 0) - 1) }));
+            } else {
+                await axios.post(`${api_url}/api/ItemLike/create`, {
+                    ItemId: itemId,
+                    UserId: me
+                }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+                setLikedByMe(prev => ({ ...prev, [itemId]: true }));
+                setLikeCounts(prev => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }));
+            }
+        } catch (error) {
+            const msg = error.response?.data?.message || "Failed to update like";
+            setMessage({ text: msg, type: "danger" });
+            await fetchLikeMetaForItem(itemId);
+        } finally {
+            setLikeBusy(prev => ({ ...prev, [itemId]: false }));
+        }
+    };
+
+    const ThumbsUpIcon = ({ filled = false }) => {
+        if (filled) {
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="me-1" aria-hidden="true">
+                    <path
+                        fill="currentColor"
+                        d="M6.956 1.745C7.021.81 7.908.087 8.864.325l.261.066c.463.116.874.456 1.012.965.22.816.533 2.511.062 4.51a9.84 9.84 0 0 1 .443-.051c.713-.065 1.669-.072 2.516.21.518.173.994.681 1.2 1.273.184.532.16 1.162-.234 1.733.058.119.103.242.138.363.077.27.113.567.113.856 0 .289-.036.586-.113.856-.039.135-.09.273-.16.404.169.387.107.819-.003 1.148a3.163 3.163 0 0 1-.488.901c.054.152.076.312.076.465 0 .305-.089.625-.253.912C13.1 15.522 12.437 16 11.5 16v-1c.563 0 .901-.272 1.066-.56a.865.865 0 0 0 .121-.416c0-.12-.035-.165-.04-.17l-.354-.354.353-.354c.202-.201.407-.511.505-.804.104-.312.043-.441-.005-.488l-.353-.354.353-.354c.043-.042.105-.14.154-.315.048-.167.075-.37.075-.581 0-.211-.027-.414-.075-.581-.05-.174-.111-.273-.154-.315L12.793 9l.353-.354c.353-.352.373-.713.267-1.02-.122-.35-.396-.593-.571-.652-.653-.217-1.447-.224-2.11-.164a8.907 8.907 0 0 0-1.094.171l-.014.003-.003.001a.5.5 0 0 1-.595-.643 8.34 8.34 0 0 0 .145-4.726c-.03-.111-.128-.215-.288-.255l-.262-.065c-.306-.077-.642.156-.667.518-.075 1.082-.239 2.15-.482 2.85-.174.502-.603 1.268-1.238 1.977-.637.712-1.519 1.41-2.614 1.708-.394.108-.62.396-.62.65v4.002c0 .26.22.515.553.55 1.293.137 1.936.53 2.491.868l.04.025c.27.164.495.296.776.393.277.095.63.163 1.14.163h3.5v1H8c-.605 0-1.07-.081-1.466-.218a4.82 4.82 0 0 1-.97-.484l-.048-.03c-.504-.307-.999-.609-2.068-.722C2.682 14.464 2 13.846 2 13V9c0-.85.685-1.432 1.357-1.615.849-.232 1.574-.787 2.132-1.41.56-.627.914-1.28 1.039-1.639.199-.575.356-1.539.428-2.59z"
+                    />
+                </svg>
+            );
+        }
+
+        return (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" className="me-1" aria-hidden="true">
+                <path
+                    fill="currentColor"
+                    d="M8.864.046C7.908-.193 7.02.53 6.956 1.466c-.072 1.051-.23 2.016-.428 2.59-.125.36-.479 1.013-1.04 1.639-.557.623-1.282 1.178-2.131 1.41C2.685 7.288 2 7.87 2 8.72v4.001c0 .845.682 1.464 1.448 1.545 1.07.114 1.564.415 2.068.723l.048.03c.272.165.578.348.97.484.397.136.861.217 1.466.217h3.5c.937 0 1.599-.477 1.934-1.064a1.86 1.86 0 0 0 .254-.912c0-.152-.023-.312-.077-.464.201-.263.38-.578.488-.901.11-.33.172-.762.004-1.149.069-.13.12-.269.159-.403.077-.27.113-.568.113-.857 0-.288-.036-.585-.113-.856a2 2 0 0 0-.138-.362 1.9 1.9 0 0 0 .234-1.734c-.206-.592-.682-1.1-1.2-1.272-.847-.282-1.803-.276-2.516-.211a10 10 0 0 0-.443.05 9.4 9.4 0 0 0-.062-4.509A1.38 1.38 0 0 0 9.125.111zM11.5 14.721H8c-.51 0-.863-.069-1.14-.164-.281-.097-.506-.228-.776-.393l-.04-.024c-.555-.339-1.198-.731-2.49-.868-.333-.036-.554-.29-.554-.55V8.72c0-.254.226-.543.62-.65 1.095-.3 1.977-.996 2.614-1.708.635-.71 1.064-1.475 1.238-1.978.243-.7.407-1.768.482-2.85.025-.362.36-.594.667-.518l.262.066c.16.04.258.143.288.255a8.34 8.34 0 0 1-.145 4.725.5.5 0 0 0 .595.644l.003-.001.014-.003.058-.014a9 9 0 0 1 1.036-.157c.663-.06 1.457-.054 2.11.164.175.058.45.3.57.65.107.308.087.67-.266 1.022l-.353.353.353.354c.043.043.105.141.154.315.048.167.075.37.075.581 0 .212-.027.414-.075.582-.05.174-.111.272-.154.315l-.353.353.353.354c.047.047.109.177.005.488a2.2 2.2 0 0 1-.505.805l-.353.353.353.354c.006.005.041.05.041.17a.9.9 0 0 1-.121.416c-.165.288-.503.56-1.066.56z"
+                />
+            </svg>
+        );
+    };
 
     // ─── Create Item ─────────────────────────────────────────────────────────────
     const createItem = async () => {
@@ -130,7 +317,7 @@ useEffect(() => { fetchFields(); }, [fetchFields]);
             const token = localStorage.getItem("userToken");
             if (!token) return navigate("/login");
             const response = await axios.post(`${api_url}/api/Item/create`, {
-                InventoryId: parseInt(inventoryId),
+                InvId: parseInt(inventoryId),
                 Name: formData.name,
                 Description: formData.description,
             }, { headers: { Authorization: `Bearer ${token}` } });
@@ -227,8 +414,8 @@ const updateItem = async () => {
         try {
             const [invRes, fieldsRes, accessRes] = await Promise.all([
                 axios.get(`${api_url}/api/Inventory/get/${inventoryId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${api_url}/api/InventoryField/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InventoryId: inventoryId } }),
-                axios.get(`${api_url}/api/InventoryUserAccess/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InventoryId: inventoryId } })
+                axios.get(`${api_url}/api/InventoryField/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } }),
+                axios.get(`${api_url}/api/InventoryUserAccess/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } })
             ]);
             const inv = invRes.data.data;
             setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic });
@@ -265,7 +452,7 @@ const updateItem = async () => {
             // Save new fields only
             for (const field of fields.filter(f => !f.isExisting)) {
                 await axios.post(`${api_url}/api/InventoryField/create`, {
-                    InventoryId: parseInt(inventoryId),
+                    InvId: parseInt(inventoryId),
                     Title: field.title,
                     Description: field.description,
                     Type: parseInt(field.type),
@@ -277,7 +464,7 @@ const updateItem = async () => {
             // Save new access users only
             for (const user of accessUsers.filter(u => !u.isExisting)) {
                 await axios.post(`${api_url}/api/InventoryUserAccess/create`, {
-                    InventoryId: parseInt(inventoryId),
+                    InvId: parseInt(inventoryId),
                     UserId: user.userId,
                     EmailOrUsername: user.emailOrUsername
                 }, { headers: { Authorization: `Bearer ${token}` } });
@@ -285,6 +472,8 @@ const updateItem = async () => {
 
             setMessage({ text: "Inventory updated!", type: "success" });
             setIsEditModalOpen(false);
+            await fetchFields();
+            await fetchItems();  
         } catch (error) {
             const msg = error.response?.data?.message || "Failed to update";
             setMessage({ text: msg, type: "danger" });
@@ -349,7 +538,7 @@ const updateItem = async () => {
                 const token = localStorage.getItem("userToken");
                 await axios.delete(`${api_url}/api/InventoryUserAccess/delete`, {
                     headers: { Authorization: `Bearer ${token}` },
-                    params: { inventoryId: parseInt(inventoryId), userId: user.userId }
+                    params: { InvId: parseInt(inventoryId), UserId: user.userId }
                 });
             } catch {
                 setMessage({ text: "Failed to remove user access", type: "danger" });
@@ -361,10 +550,61 @@ const updateItem = async () => {
         setActiveSuggestionIndex(-1);
     };
 
-    // ─── Render ───────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!message.text) return;
+        const timer = setTimeout(() => setMessage({ text: "", type: "" }), 5000);
+        return () => clearTimeout(timer); // cleanup if message changes before 5s
+    }, [message.text]);
+
     return (
         <>
-            <div className="container-fluid w-75 mt-4 shadow-lg rounded-4 p-4 mb-2">
+            <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
+               <ul className="nav nav-pills w-100 align-items-center">
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className="nav-link active"
+                      onClick={() => navigate("/dashboard")}
+                    >
+                      Dashboard
+                    </button>
+                  </li>
+                    
+                  <li className="ms-auto nav-item">
+                    <button
+                      type="button"
+                      className="nav-link"
+                      onClick={() => navigate("/user-page")}
+                    >
+                      AA
+                    </button>
+                  </li>
+                </ul>
+            </div>
+            <div className="container-fluid d-flex justify-content-start gap-3 w-100 p-0">
+                <div className="col-sm-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
+                     <ul className="nav nav-underline nav-fill flex-column mt-4">
+                        <li className="nav-item">
+                            <button
+                                type="button"
+                                className={`nav-link text-dark fw-bolder ${activeTab === "items" ? "active" : ""}`}
+                                onClick={() => setActiveTab("items")}
+                            >
+                                Items
+                            </button>
+                        </li>
+                        <li className="nav-item">
+                            <button
+                                type="button"
+                                className={`nav-link text-dark fw-bolder ${activeTab === "discussion" ? "active" : ""}`}
+                                onClick={() => setActiveTab("discussion")}
+                            >
+                                Discussion
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div className=" mt-4 shadow-lg rounded-4 p-4 mb-2 col-sm-9">
                 {message.text && (
                     <div className={`alert alert-${message.type}`}>{message.text}</div>
                 )}
@@ -372,78 +612,157 @@ const updateItem = async () => {
                     <h1>{`Inventory ${inventoryId}`}</h1>
                 </div>
 
-                <div className="d-flex justify-content-end mt-2 gap-2 mb-4">
-                    <button
-                        className="btn btn-danger"
-                        onClick={deleteSelected}
-                        disabled={loading || checkedItems.length === 0}
-                        title="Delete selected items"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
-                        </svg>
-                    </button>
-                    <button className="btn btn-primary" onClick={openEditModal}>Edit Inventory</button>
-                    <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>+ New Item</button>
-                </div>
+                <div className="pt-3">
+                    {activeTab === "items" && (
+                        <>
+                            <div className="d-flex justify-content-end mt-2 gap-2 mb-4">
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={deleteSelected}
+                                    disabled={loading || checkedItems.length === 0}
+                                    title="Delete selected items"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                                    </svg>
+                                </button>
+                                <button className="btn btn-primary" onClick={openEditModal}>Edit Inventory</button>
+                                <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>+ New Item</button>
+                            </div>
 
-                <table className="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input type="checkbox" className="form-check-input"
-                                    onChange={handleCheckingAllItems}
-                                    checked={items.length > 0 && checkedItems.length === items.length}
-                                />
-                            </th>
-                            <th>Custom Id</th>
-                            <th>Name</th>
-                            {inventoryFields.map(f => (
-                              <th key={f.id}>{f.title}</th>
-                          ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items.map((item) => (
-                          <tr key={item.id} style={{ cursor: "pointer" }}>
-                              <td onClick={(e) => e.stopPropagation()}>
-                                  <input type="checkbox" className="form-check-input"
-                                      checked={checkedItems.includes(item.id)}
-                                      onChange={() => handleCheckingItems(item.id)}
-                                  />
-                              </td>
-                              <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.customId}</td>
-                              <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.name}</td>
-                              {inventoryFields.map(f => (
-                                  <td key={f.id} onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>
-                                      {item.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
-                                  </td>
-                              ))}
-                          </tr>
-                      ))}
-                    </tbody>
-                </table>
+                            <table className="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" className="form-check-input"
+                                                onChange={handleCheckingAllItems}
+                                                checked={items.length > 0 && checkedItems.length === items.length}
+                                            />
+                                        </th>
+                                        <th>Custom Id</th>
+                                        <th>Name</th>
+                                        {inventoryFields.map(f => (
+                                            <th key={f.id}>{f.title}</th>
+                                        ))}
+                                        <th style={{ width: 120 }}>Likes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {items.map((item) => (
+                                        <tr key={item.id} style={{ cursor: "pointer" }}>
+                                            <td onClick={(e) => e.stopPropagation()}>
+                                                <input type="checkbox" className="form-check-input"
+                                                    checked={checkedItems.includes(item.id)}
+                                                    onChange={() => handleCheckingItems(item.id)}
+                                                />
+                                            </td>
+                                            <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.customId}</td>
+                                            <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.name}</td>
+                                            {inventoryFields.map(f => (
+                                                <td key={f.id} onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>
+                                                    {item.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
+                                                </td>
+                                            ))}
+                                            <td onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    className={`btn btn-sm ${likedByMe[item.id] ? "btn-danger" : "btn-outline-danger"}`}
+                                                    onClick={() => toggleLike(item.id)}
+                                                    disabled={!!likeBusy[item.id]}
+                                                    title={likedByMe[item.id] ? "Unlike" : "Like"}
+                                                >
+                                                    <ThumbsUpIcon filled={!!likedByMe[item.id]} /> {likeCounts[item.id] ?? 0}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </>
+                    )}
+
+                    {activeTab === "discussion" && (
+                        <div className="card h-100">
+                            <div className="card-header d-flex justify-content-between align-items-center">
+                                <div>Discussion</div>
+                                <button className="btn btn-sm btn-outline-secondary" onClick={fetchComments} disabled={commentsLoading}>
+                                    Refresh
+                                </button>
+                            </div>
+                            <div className="card-body">
+                                <div className="mb-3" style={{ maxHeight: 600, overflowY: "auto" }}>
+                                    {commentsLoading ? (
+                                        <div className="text-muted">Loading comments...</div>
+                                    ) : comments.length === 0 ? (
+                                        <div className="text-muted">No comments yet.</div>
+                                    ) : (
+                                        comments.map(c => {
+                                            const me = getUserIdFromToken();
+                                            const author = c.userId === me ? "You" : `User #${c.userId}`;
+                                            return (
+                                                <div key={c.id} className="border rounded p-2 mb-2">
+                                                    <div className="d-flex justify-content-between">
+                                                        <small className="text-muted">{author}</small>
+                                                        <small className="text-muted">{new Date(c.createdAt).toLocaleString()}</small>
+                                                    </div>
+                                                    <div style={{ whiteSpace: "pre-wrap" }}>{c.content}</div>
+                                                    <div className="mt-2 d-flex justify-content-end">
+                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => deleteComment(c.id)}>
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                <div className="input-group">
+                                    <input
+                                        className="form-control"
+                                        placeholder="Write a comment..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                createComment();
+                                            }
+                                        }}
+                                        disabled={commentSubmitting}
+                                    />
+                                    <button className="btn btn-primary" onClick={createComment} disabled={commentSubmitting || !commentText.trim()}>
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                </div>
             </div>
 
             {/* Pagination */}
-            <nav>
-                <ul className="pagination d-flex justify-content-center">
-                    <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
-                        <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>Previous</button>
-                    </li>
-                    {[...Array(totalPages)].map((_, index) => {
-                        const pageNum = index + 1;
-                        return (
-                            <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>{pageNum}</button>
-                            </li>
-                        );
-                    })}
-                    <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
-                        <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>Next</button>
-                    </li>
-                </ul>
-            </nav>
+            {activeTab === "items" && (
+                <nav>
+                    <ul className="pagination d-flex justify-content-center">
+                        <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>Previous</button>
+                        </li>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const pageNum = index + 1;
+                            return (
+                                <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? 'active' : ''}`}>
+                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>{pageNum}</button>
+                                </li>
+                            );
+                        })}
+                        <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            )}
 
             {/* Create Item Modal */}
             <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormData({ name: "", description: "" }); }} title="Create New Item"
@@ -596,6 +915,17 @@ const updateItem = async () => {
                 
                 footer={
                     <div className="d-flex gap-2 justify-content-center align-items-center">
+                      {selectedItem && (
+                        <button
+                            type="button"
+                            className={`btn ${likedByMe[selectedItem.id] ? "btn-danger" : "btn-outline-danger"}`}
+                            onClick={() => toggleLike(selectedItem.id)}
+                            disabled={!!likeBusy[selectedItem.id]}
+                            title={likedByMe[selectedItem.id] ? "Unlike" : "Like"}
+                        >
+                            <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} /> {likeCounts[selectedItem.id] ?? 0}
+                        </button>
+                      )}
                       <button className="btn btn-primary" onClick={openEditItemModal}>
                           Edit
                       </button>
@@ -612,6 +942,21 @@ const updateItem = async () => {
                             <label className="fw-bold">Description</label>
                             <p className="text-muted">{selectedItem.description || "-"}</p>
                         </div>
+                    {inventoryFields.length > 0 && (
+                <>
+                    <hr />
+                         <h6>Fields</h6>
+                         {inventoryFields.map(f => (
+                             <div className="mb-3" key={f.id}>
+                                 <label className="fw-bold">{f.title}</label>
+                                 <p className="text-muted">
+                                     {selectedItem.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
+                                 </p>
+                             </div>
+                         ))}
+                         <hr />
+                     </>
+                    )}
                         <div className="mb-3">
                             <label className="fw-bold">Created At</label>
                             <p className="text-muted">{new Date(selectedItem.createdAt).toLocaleString()}</p>
@@ -650,6 +995,7 @@ const updateItem = async () => {
                     onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })}
                 />
             </div>
+            
 
             {/* Dynamic field values */}
             {editItemData.fieldValues.length > 0 && (
