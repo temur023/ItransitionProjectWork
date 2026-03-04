@@ -53,13 +53,6 @@ public class UserRepository(DataContext context):IUserRepository
         await context.SaveChangesAsync();
         return find.Id;
     }
-
-    public async Task<List<User>> BlockSelected(List<int> ids)
-    {
-        var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
-        return users;
-    }
-
     public async Task<List<User>> DeleteSelected(List<int> ids)
     {
         var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
@@ -67,9 +60,8 @@ public class UserRepository(DataContext context):IUserRepository
         await context.SaveChangesAsync();
         return users;
     }
-    
 
-    public async Task<List<User>> UnBlockSelected(List<int> ids)
+    public async Task<List<User>> SelectUsers(List<int> ids)
     {
         var users = await context.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
         return users;

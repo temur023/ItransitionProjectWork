@@ -58,7 +58,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
             Email = dto.Email,
             FullName = dto.FullName,
             Language = dto.Language,
-            Role = dto.Role,
+            Role = UserRole.User,
             IsBlocked = false,
             PasswordHash = dto.PasswordHash,
             Theme = dto.Theme,
@@ -66,44 +66,27 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         var user = await repository.Create(model);
         return new Response<string>(200, "User created");
     }
-
-    public async Task<Response<string>> CreateAdmin(UserRoleDto dto)
-    {
-        var currentUserId = GetCurrentUserId();
-        if(currentUserId == null)
-            return new Response<string>(409, "You are not authorized");
-        var currentUser = await repository.GetById((int)currentUserId);
-        if(currentUser.Role!=UserRole.Admin)
-            return new Response<string>(409, "You are not authorized");
-        var user = await repository.GetById(dto.Id);
-        user.Role = UserRole.Admin;
-        await repository.SaveChanges();
-        return new Response<string>(200, "Admin created");
-    }
-
-    public async Task<Response<string>> RemoveAdmin(UserRoleDto dto)
-    {
-        var currentUserId = GetCurrentUserId();
-        if(currentUserId == null)
-            return new Response<string>(409, "You are not authorized");
-        var currentUser = await repository.GetById((int)currentUserId);
-        if(currentUser.Role!=UserRole.Admin)
-            return new Response<string>(409, "You are not authorized");
-        var user = await repository.GetById(dto.Id);
-        user.Role = UserRole.User;
-        await repository.SaveChanges();
-        return new Response<string>(200, "Admin role removed");
-    }
-
     public async Task<Response<string>> Update(UserCreateDto dto, int id)
     {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
         var user = await repository.GetById(id);
-        user.UserName = dto.UserName;
-        user.Email = dto.Email;
+        if (currentUserId != user.Id && currentUser.Role != UserRole.Admin)
+        {
+            return new Response<string>(409, "You are not authorized");
+        }
         user.FullName = dto.FullName;
         user.Language = dto.Language;
-        user.PasswordHash = dto.PasswordHash;
+        if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
+            user.PasswordHash = dto.PasswordHash;
         user.Theme = dto.Theme;
+        if (currentUser.Role == UserRole.Admin)
+        {
+            user.Role = dto.Role;
+            user.IsBlocked = dto.IsBlocked;
+        }
         await repository.SaveChanges();
         return new Response<string>(200, "User updated");
     }
@@ -111,7 +94,13 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
 
     public async Task<Response<string>> BlockSelected(List<int> ids)
     {
-        var users = await repository.BlockSelected(ids);
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var users = await repository.SelectUsers(ids);
         foreach (var user in users)
         {
             user.IsBlocked = true;
@@ -121,16 +110,58 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
 
     public async Task<Response<string>> UnBlockSelected(List<int> ids)
     {
-        var users = await repository.UnBlockSelected(ids);
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var users = await repository.SelectUsers(ids);
         foreach (var user in users)
         {
             user.IsBlocked = false;
         }
         return new Response<string>(200, "Success");
     }
-
+    public async Task<Response<string>> MakeAdminSelected(List<int> ids)
+    {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var users = await repository.SelectUsers(ids);
+        foreach (var user in users)
+        {
+            user.Role = UserRole.Admin;
+        }
+        return new Response<string>(200, "Success");
+    }
+    public async Task<Response<string>> RemoveAdminSelected(List<int> ids)
+    {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
+        var users = await repository.SelectUsers(ids);
+        foreach (var user in users)
+        {
+            user.Role = UserRole.Admin;
+        }
+        return new Response<string>(200, "Success");
+    }
+    
     public async Task<Response<string>> DeleteSelected(List<int> ids)
     {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        if(currentUser.Role!=UserRole.Admin)
+            return new Response<string>(409, "You are not authorized");
         var users = await repository.DeleteSelected(ids);
         return new Response<string>(200, "Success");
     }

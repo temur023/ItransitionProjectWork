@@ -75,18 +75,18 @@ public class UserController(IUserService service) : ControllerBase
     }
     [Authorize(Roles = "Admin")]
     [HttpPut("making-admin")]
-    public async Task<IActionResult> MakingAdmin(UserRoleDto dto)
+    public async Task<IActionResult> MakingAdminSelected(List<int> ids)
     {
-        var response = await service.CreateAdmin(dto);
+        var response = await service.MakeAdminSelected(ids);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
     [Authorize(Roles = "Admin")]
     [HttpPut("removing-admin")]
-    public async Task<IActionResult> RemovingAdmin(UserRoleDto dto)
+    public async Task<IActionResult> RemoveAdminSelected(List<int> ids)
     {
-        var response = await service.RemoveAdmin(dto);
+        var response = await service.RemoveAdminSelected(ids);
         if (response.StatusCode != 200)
             return StatusCode(response.StatusCode);
         return Ok(response);

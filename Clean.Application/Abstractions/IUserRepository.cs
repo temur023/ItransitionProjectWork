@@ -11,8 +11,7 @@ public interface IUserRepository
     Task<int> GetByEmailOrUsername(string input);
     Task<int> Create(User user);
     Task<int> Delete(int id);
-    Task<List<User>> UnBlockSelected(List<int> ids);
-    Task<List<User>> BlockSelected(List<int> ids);
+    Task<List<User>> SelectUsers(List<int> ids);
     Task<List<User>> DeleteSelected(List<int> ids);
     Task SaveChanges();
 }
