@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
+using NpgsqlTypes;
 
 namespace Clean.Domain.Entities
 {
     public class User
     {
         public int Id { get; set; }
+        public NpgsqlTsVector SearchVector { get; set; }
         public string UserName { get; set; }
         [MaxLength(60)]
         public string FullName { get; set; }

@@ -66,7 +66,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         var user = await repository.Create(model);
         return new Response<string>(200, "User created");
     }
-    public async Task<Response<string>> Update(UserCreateDto dto, int id)
+    public async Task<Response<string>> Update(UserEditDto dto, int id)
     {
         var currentUserId = GetCurrentUserId();
         if(currentUserId == null)
@@ -77,6 +77,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         {
             return new Response<string>(409, "You are not authorized");
         }
+
         user.FullName = dto.FullName;
         user.Language = dto.Language;
         if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
@@ -105,6 +106,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         {
             user.IsBlocked = true;
         }
+        await repository.SaveChanges();
         return new Response<string>(200, "Success");
     }
 
@@ -121,6 +123,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         {
             user.IsBlocked = false;
         }
+        await repository.SaveChanges();
         return new Response<string>(200, "Success");
     }
     public async Task<Response<string>> MakeAdminSelected(List<int> ids)
@@ -136,6 +139,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         {
             user.Role = UserRole.Admin;
         }
+        await repository.SaveChanges();
         return new Response<string>(200, "Success");
     }
     public async Task<Response<string>> RemoveAdminSelected(List<int> ids)
@@ -149,8 +153,9 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         var users = await repository.SelectUsers(ids);
         foreach (var user in users)
         {
-            user.Role = UserRole.Admin;
+            user.Role = UserRole.User;
         }
+        await repository.SaveChanges();
         return new Response<string>(200, "Success");
     }
     

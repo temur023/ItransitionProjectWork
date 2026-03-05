@@ -11,9 +11,11 @@ public class MainPageService(IMainPageRepository repository):IMainPageService
         var invs = await repository.GetLatestInventories();
         var dto = invs.Select(i=>new LatestInventoriesDto()
         {
+            Id = i.Id,
             Creator = i.CreatedBy.UserName,
             Name = i.Title,
-            Description =  i.Description
+            Category = i.Category,
+            NumOfItems = i.Items.Count
         }).ToList();
         return new Response<List<LatestInventoriesDto>>(200,"Success",dto);
     }
@@ -23,9 +25,10 @@ public class MainPageService(IMainPageRepository repository):IMainPageService
         var invs = await repository.GetTopInventories();
         var dto = invs.Select(i=>new GetTopInventoriesDto()
         {
+            Id = i.Id,
             Creator = i.CreatedBy.UserName,
             Name = i.Title,
-            Description =  i.Description,
+            Category = i.Category,
             NumOfItems = i.Items.Count
         }).ToList();
         return new Response<List<GetTopInventoriesDto>>(200,"Success",dto);

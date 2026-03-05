@@ -7,24 +7,87 @@ namespace Clean.Infrastructure.Repositories;
 
 public class SearchRepository(DataContext context):ISearchRepository
 {
+    private static string BuildTsQueryString(string query)
+    {
+        var words = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" & ", words.Select(w => w + ":*"));
+    }
+
     public async Task<List<Item>> SearchItems(string query, int? tagId = null)
     {
-        var tsQuery = EF.Functions.ToTsQuery("english", string.Join(" & ", query.Split(' ')));
+        var tsQuery = BuildTsQueryString(query);
 
-        return await context.Items.Where(i => i.SearchVector.Matches(tsQuery))
-            .OrderByDescending(i => i.SearchVector.RankCoverDensity(tsQuery))
+        var results = await context.Items
+            .AsNoTracking()
+            .Include(i => i.Inventory)
+            .Where(i => i.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQuery)))
+            .OrderByDescending(i => i.SearchVector.RankCoverDensity(EF.Functions.ToTsQuery("english", tsQuery)))
             .Take(50)
             .ToListAsync();
+
+        if (results.Count == 0)
+        {
+            var pattern = $"%{query}%";
+            results = await context.Items
+                .AsNoTracking()
+                .Include(i => i.Inventory)
+                .Where(i => EF.Functions.ILike(i.Name, pattern) ||
+                             EF.Functions.ILike(i.CustomId, pattern))
+                .Take(50)
+                .ToListAsync();
+        }
+
+        return results;
     }
 
     public async Task<List<Inventory>> SearchInventories(string query)
     {
-        var tsQuery = EF.Functions.ToTsQuery("english", string.Join(" & ", query.Split(' ')));
+        var tsQuery = BuildTsQueryString(query);
 
-        return await context.Inventories
-            .Where(i => i.SearchVector.Matches(tsQuery))
-            .OrderByDescending(i => i.SearchVector.RankCoverDensity(tsQuery))
+        var results = await context.Inventories
+            .AsNoTracking()
+            .Include(i => i.CreatedBy)
+            .Where(i => i.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQuery)))
+            .OrderByDescending(i => i.SearchVector.RankCoverDensity(EF.Functions.ToTsQuery("english", tsQuery)))
             .Take(50)
             .ToListAsync();
+
+        if (results.Count == 0)
+        {
+            var pattern = $"%{query}%";
+            results = await context.Inventories
+                .AsNoTracking()
+                .Include(i => i.CreatedBy)
+                .Where(i => EF.Functions.ILike(i.Title, pattern) ||
+                             EF.Functions.ILike(i.Description, pattern))
+                .Take(50)
+                .ToListAsync();
+        }
+
+        return results;
+    }
+
+    public async Task<List<User>> SearchUsers(string query)
+    {
+        var tsQuery = BuildTsQueryString(query);
+
+        var results = await context.Users
+            .Where(i => i.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQuery)))
+            .OrderByDescending(i => i.SearchVector.RankCoverDensity(EF.Functions.ToTsQuery("english", tsQuery)))
+            .Take(50)
+            .ToListAsync();
+
+        if (results.Count == 0)
+        {
+            var pattern = $"%{query}%";
+            results = await context.Users
+                .Where(u => EF.Functions.ILike(u.UserName, pattern) ||
+                             EF.Functions.ILike(u.Email, pattern) ||
+                             EF.Functions.ILike(u.FullName, pattern))
+                .Take(50)
+                .ToListAsync();
+        }
+
+        return results;
     }
 }

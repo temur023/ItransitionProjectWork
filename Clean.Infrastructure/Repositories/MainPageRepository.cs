@@ -10,9 +10,11 @@ public class MainPageRepository(DataContext context):IMainPageRepository
 {
     public async Task<List<Inventory>> GetLatestInventories()
     {
-        var invs = await context.Inventories.Include(i=>i.CreatedBy)
+        var invs = await context.Inventories
+            .Include(i=>i.CreatedBy)
+            .Include(i => i.Items)
             .OrderByDescending(i => i.CreatedAt)
-            .Take(5).ToListAsync();
+            .Take(10).ToListAsync();
         return invs;
     }
 
@@ -20,8 +22,9 @@ public class MainPageRepository(DataContext context):IMainPageRepository
     {
         var invs = await context.Inventories
             .Include(i => i.Items)
+            .Include(i => i.CreatedBy)
             .OrderByDescending(i => i.Items.Count)
-            .Take(5)
+            .Take(10)
             .ToListAsync();
         return invs;
     }

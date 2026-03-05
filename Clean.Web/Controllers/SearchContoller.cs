@@ -14,7 +14,25 @@ public class SearchContoller(ISearchRepository repository):ControllerBase
     
         var items = await repository.SearchItems(q, tagId);
         var inventories = await repository.SearchInventories(q);
-    
-        return Ok(new { items, inventories });
+
+        var itemDtos = items.Select(i => new
+        {
+            i.Id,
+            i.Name,
+            i.CustomId,
+            i.Description,
+            i.InventoryId,
+            InventoryTitle = i.Inventory?.Title ?? ""
+        });
+
+        var inventoryDtos = inventories.Select(i => new
+        {
+            i.Id,
+            i.Title,
+            Category = i.Category.ToString(),
+            CreatorName = i.CreatedBy?.UserName ?? ""
+        });
+
+        return Ok(new { items = itemDtos, inventories = inventoryDtos });
     }
 }

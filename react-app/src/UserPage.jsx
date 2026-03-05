@@ -62,6 +62,7 @@ function UserPage() {
     const [loading, setLoading] = useState(false);
     // const [tags, setTags] = useState([]);
     const [activeTab, setActiveTab] = useState("own");
+    const [inventorySearch, setInventorySearch] = useState("");
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
     const [total, setTotal] = useState(0);
     const [message, setMessage] = useState({ text: "", type: "" });
@@ -382,8 +383,8 @@ function UserPage() {
 }, [inventories]);
     return (
         <>
-                        <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-               <ul className="nav nav-pills w-100 align-items-center">
+            <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
+               <ul className="nav nav-pills w-100 gap-2 align-items-center">
                   <li className="nav-item">
                     <button
                       type="button"
@@ -391,6 +392,15 @@ function UserPage() {
                       onClick={() => navigate("/dashboard")}
                     >
                       Dashboard
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className="nav-link active"
+                      onClick={() => navigate("/statistics")}
+                    >
+                      Statistics
                     </button>
                   </li>
                     
@@ -434,7 +444,18 @@ function UserPage() {
                 </div>
 
                 <div className="col-md-9 mt-4 shadow-lg rounded-4 p-4">
-                    <h1 className="justify-content-center ps-5">User Page</h1>
+                    <div className="d-flex justify-content-between align-items-center pb-1">
+                        <h1 className="mb-0">User Page</h1>
+                        <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
+                            <input
+                                type="search"
+                                className="form-control"
+                                placeholder={activeTab === "own" ? "Search my inventories..." : "Search shared inventories..."}
+                                value={inventorySearch}
+                                onChange={(e) => setInventorySearch(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 <div className="d-flex justify-content-end mt-2 gap-2">
                     <button 
                          className="btn btn-danger"
@@ -467,7 +488,18 @@ function UserPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {inventories.filter(inv => inv !== null).map((inv) => (
+                        {inventories
+                            .filter(inv => inv !== null)
+                            .filter(inv => {
+                                const q = inventorySearch.trim().toLowerCase();
+                                if (!q) return true;
+                                return (
+                                    inv.title?.toLowerCase().includes(q) ||
+                                    String(inv.category ?? "").toLowerCase().includes(q) ||
+                                    inv.creatorName?.toLowerCase().includes(q)
+                                );
+                            })
+                            .map((inv) => (
                             <tr key={inv.id}>
                                  <td>
                                         <input 

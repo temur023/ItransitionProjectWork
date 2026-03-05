@@ -50,11 +50,21 @@ public class DataContext : DbContext, IDbContext
             .HasKey(i => new { i.ItemId, i.UserId });
 
         modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
+            .HasGeneratedTsVectorColumn(
+                i => i.SearchVector,
+                "english",
+                i => new { i.UserName, i.Email });
+        
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.SearchVector)
+            .HasMethod("GIN");
         
         modelBuilder.Entity<User>()
             .HasIndex(u => u.UserName)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
             .IsUnique();
         modelBuilder.Entity<Tag>()
             .HasIndex(t => t.Name)

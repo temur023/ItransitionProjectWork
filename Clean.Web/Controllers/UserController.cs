@@ -39,7 +39,7 @@ public class UserController(IUserService service) : ControllerBase
     }
     [Authorize(Roles = "Admin")]
     [HttpPut("update/{id}")]
-    public async Task<IActionResult> Update(int id,UserCreateDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UserEditDto dto)
     {
         var response = await service.Update(dto, id);
         if (response.StatusCode != 200)

@@ -9,7 +9,7 @@ public interface IUserService
     Task<PagedResponse<UserGetDto>> GetAll(UserFilter filter);
     Task<Response<UserGetDto>> GetById(int id);
     Task<Response<string>> Create(UserCreateDto dto);
-    Task<Response<string>> Update(UserCreateDto dto, int id);
+    Task<Response<string>> Update(UserEditDto dto, int id);
     Task<Response<string>> BlockSelected(List<int> ids);
     Task<Response<string>> UnBlockSelected(List<int> ids);
     Task<Response<string>> MakeAdminSelected(List<int> ids);

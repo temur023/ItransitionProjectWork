@@ -6,6 +6,7 @@ import UserPage from './UserPage';
 import Dashboard from './Dashboard';
 import InventoryPage from './InventoryPage';
 import AdminPage from './AdminPage';
+import StatisticsPage from './StatisticsPage';
 function App() {
 
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard/>}></Route>
             <Route path="/inventory/:inventoryId" element={<InventoryPage/>}></Route>
             <Route path='/admin-page' element={<AdminPage/>}></Route>
+            <Route path='/statistics' element={<StatisticsPage/>}></Route>
             <Route path="/" element={<Navigate to={"/login"} />}></Route>
         </Routes>
       </BrowserRouter>

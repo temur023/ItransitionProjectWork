@@ -61,6 +61,7 @@ function InventoryPage() {
     const [likeCounts, setLikeCounts] = useState({}); // { [itemId]: number }
     const [likedByMe, setLikedByMe] = useState({}); // { [itemId]: boolean }
     const [likeBusy, setLikeBusy] = useState({}); // { [itemId]: boolean }
+    const [itemSearch, setItemSearch] = useState("");
 
     // Create Item Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,18 +152,18 @@ function InventoryPage() {
     };
 
     const fetchFields = useCallback(async () => {
-    try {
-        const token = localStorage.getItem("userToken");
-        const response = await axios.get(`${api_url}/api/InventoryField/get-all`, {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { InvId: inventoryId }
-        });
-        // Only show fields marked as showInTable
-        setInventoryFields((response.data.data || []).filter(f => f.showInTable));
-    } catch { setInventoryFields([]); }
-}, [inventoryId]);
+        try {
+            const token = localStorage.getItem("userToken");
+            const response = await axios.get(`${api_url}/api/InventoryField/get-all`, {
+                headers: { Authorization: `Bearer ${token}` },
+                params: { InvId: inventoryId }
+            });
+            // Only show fields marked as showInTable
+            setInventoryFields((response.data.data || []).filter(f => f.showInTable));
+        } catch { setInventoryFields([]); }
+    }, [inventoryId]);
 
-useEffect(() => { fetchFields(); }, [fetchFields]);
+    useEffect(() => { fetchFields(); }, [fetchFields]);
 
     // ─── Fetch Items ─────────────────────────────────────────────────────────────
     const fetchItems = useCallback(async () => {
@@ -365,48 +366,48 @@ useEffect(() => { fetchFields(); }, [fetchFields]);
         else setCheckedItems(items.map(i => i.id));
     }
     const openEditItemModal = () => {
-    setEditItemData({
-        name: selectedItem.name,
-        description: selectedItem.description,
-        fieldValues: inventoryFields.map(f => ({
-            fieldId: f.id,
-            fieldTitle: f.title,
-            fieldType: f.type,
-            value: selectedItem.fieldValues?.find(v => v.fieldId === f.id)?.value || ""
-        }))
-    });
-    setIsItemModalOpen(false);
-    setIsEditItemModalOpen(true);
-};
+        setEditItemData({
+            name: selectedItem.name,
+            description: selectedItem.description,
+            fieldValues: inventoryFields.map(f => ({
+                fieldId: f.id,
+                fieldTitle: f.title,
+                fieldType: f.type,
+                value: selectedItem.fieldValues?.find(v => v.fieldId === f.id)?.value || ""
+            }))
+        });
+        setIsItemModalOpen(false);
+        setIsEditItemModalOpen(true);
+    };
 
-const updateItem = async () => {
-    try {
-        const token = localStorage.getItem("userToken");
-        await axios.put(`${api_url}/api/Item/update/${selectedItem.id}`, {
-            Name: editItemData.name,
-            Description: editItemData.description,
-        }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+    const updateItem = async () => {
+        try {
+            const token = localStorage.getItem("userToken");
+            await axios.put(`${api_url}/api/Item/update/${selectedItem.id}`, {
+                Name: editItemData.name,
+                Description: editItemData.description,
+            }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
 
-        // Save field values
-        for (const fv of editItemData.fieldValues) {
-            if (fv.value !== "") {
-                await axios.post(`${api_url}/api/ItemFieldValue/set`, {
-                    ItemId: selectedItem.id,
-                    FieldId: fv.fieldId,
-                    Value: fv.value
-                }, { headers: { Authorization: `Bearer ${token}` } });
+            // Save field values
+            for (const fv of editItemData.fieldValues) {
+                if (fv.value !== "") {
+                    await axios.post(`${api_url}/api/ItemFieldValue/set`, {
+                        ItemId: selectedItem.id,
+                        FieldId: fv.fieldId,
+                        Value: fv.value
+                    }, { headers: { Authorization: `Bearer ${token}` } });
+                }
             }
-        }
 
-        setMessage({ text: "Item updated!", type: "success" });
-        setIsEditItemModalOpen(false);
-        setSelectedItem(null);
-        await fetchItems();
-    } catch (error) {
-        const msg = error.response?.data?.message || "Failed to update item";
-        setMessage({ text: msg, type: "danger" });
-    }
-};
+            setMessage({ text: "Item updated!", type: "success" });
+            setIsEditItemModalOpen(false);
+            setSelectedItem(null);
+            await fetchItems();
+        } catch (error) {
+            const msg = error.response?.data?.message || "Failed to update item";
+            setMessage({ text: msg, type: "danger" });
+        }
+    };
 
     // ─── Open Edit Modal ──────────────────────────────────────────────────────────
     const openEditModal = async () => {
@@ -442,11 +443,11 @@ const updateItem = async () => {
                 Description: editFormData.description,
                 Category: parseInt(editFormData.category),
                 IsPublic: editFormData.isPublic
-            }, { 
-                headers: { 
+            }, {
+                headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
-                } 
+                }
             });
 
             // Save new fields only
@@ -473,7 +474,7 @@ const updateItem = async () => {
             setMessage({ text: "Inventory updated!", type: "success" });
             setIsEditModalOpen(false);
             await fetchFields();
-            await fetchItems();  
+            await fetchItems();
         } catch (error) {
             const msg = error.response?.data?.message || "Failed to update";
             setMessage({ text: msg, type: "danger" });
@@ -553,13 +554,13 @@ const updateItem = async () => {
     useEffect(() => {
         if (!message.text) return;
         const timer = setTimeout(() => setMessage({ text: "", type: "" }), 5000);
-        return () => clearTimeout(timer); // cleanup if message changes before 5s
+        return () => clearTimeout(timer);
     }, [message.text]);
 
     return (
         <>
             <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-               <ul className="nav nav-pills w-100 align-items-center">
+               <ul className="nav nav-pills w-100 gap-2 align-items-center">
                   <li className="nav-item">
                     <button
                       type="button"
@@ -567,6 +568,15 @@ const updateItem = async () => {
                       onClick={() => navigate("/dashboard")}
                     >
                       Dashboard
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className="nav-link active"
+                      onClick={() => navigate("/statistics")}
+                    >
+                      Statistics
                     </button>
                   </li>
                     
@@ -583,7 +593,7 @@ const updateItem = async () => {
             </div>
             <div className="container-fluid d-flex justify-content-start gap-3 w-100 p-0">
                 <div className="col-sm-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
-                     <ul className="nav nav-underline nav-fill flex-column mt-4">
+                    <ul className="nav nav-underline nav-fill flex-column mt-4">
                         <li className="nav-item">
                             <button
                                 type="button"
@@ -605,140 +615,166 @@ const updateItem = async () => {
                     </ul>
                 </div>
                 <div className=" mt-4 shadow-lg rounded-4 p-4 mb-2 col-sm-9">
-                {message.text && (
-                    <div className={`alert alert-${message.type}`}>{message.text}</div>
-                )}
-                <div className="d-flex justify-content-center align-items-center">
-                    <h1>{`Inventory ${inventoryId}`}</h1>
-                </div>
-
-                <div className="pt-3">
-                    {activeTab === "items" && (
-                        <>
-                            <div className="d-flex justify-content-end mt-2 gap-2 mb-4">
-                                <button
-                                    className="btn btn-danger"
-                                    onClick={deleteSelected}
-                                    disabled={loading || checkedItems.length === 0}
-                                    title="Delete selected items"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
-                                    </svg>
-                                </button>
-                                <button className="btn btn-primary" onClick={openEditModal}>Edit Inventory</button>
-                                <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>+ New Item</button>
-                            </div>
-
-                            <table className="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <input type="checkbox" className="form-check-input"
-                                                onChange={handleCheckingAllItems}
-                                                checked={items.length > 0 && checkedItems.length === items.length}
-                                            />
-                                        </th>
-                                        <th>Custom Id</th>
-                                        <th>Name</th>
-                                        {inventoryFields.map(f => (
-                                            <th key={f.id}>{f.title}</th>
-                                        ))}
-                                        <th style={{ width: 120 }}>Likes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {items.map((item) => (
-                                        <tr key={item.id} style={{ cursor: "pointer" }}>
-                                            <td onClick={(e) => e.stopPropagation()}>
-                                                <input type="checkbox" className="form-check-input"
-                                                    checked={checkedItems.includes(item.id)}
-                                                    onChange={() => handleCheckingItems(item.id)}
-                                                />
-                                            </td>
-                                            <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.customId}</td>
-                                            <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.name}</td>
-                                            {inventoryFields.map(f => (
-                                                <td key={f.id} onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>
-                                                    {item.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
-                                                </td>
-                                            ))}
-                                            <td onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${likedByMe[item.id] ? "btn-danger" : "btn-outline-danger"}`}
-                                                    onClick={() => toggleLike(item.id)}
-                                                    disabled={!!likeBusy[item.id]}
-                                                    title={likedByMe[item.id] ? "Unlike" : "Like"}
-                                                >
-                                                    <ThumbsUpIcon filled={!!likedByMe[item.id]} /> {likeCounts[item.id] ?? 0}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </>
+                    {message.text && (
+                        <div className={`alert alert-${message.type}`}>{message.text}</div>
                     )}
+                    <div className="d-flex justify-content-center align-items-center">
+                        <h1>{`Inventory ${inventoryId}`}</h1>
+                    </div>
 
-                    {activeTab === "discussion" && (
-                        <div className="card h-100">
-                            <div className="card-header d-flex justify-content-between align-items-center">
-                                <div>Discussion</div>
-                                <button className="btn btn-sm btn-outline-secondary" onClick={fetchComments} disabled={commentsLoading}>
-                                    Refresh
-                                </button>
-                            </div>
-                            <div className="card-body">
-                                <div className="mb-3" style={{ maxHeight: 600, overflowY: "auto" }}>
-                                    {commentsLoading ? (
-                                        <div className="text-muted">Loading comments...</div>
-                                    ) : comments.length === 0 ? (
-                                        <div className="text-muted">No comments yet.</div>
-                                    ) : (
-                                        comments.map(c => {
-                                            const me = getUserIdFromToken();
-                                            const author = c.userId === me ? "You" : `User #${c.userId}`;
-                                            return (
-                                                <div key={c.id} className="border rounded p-2 mb-2">
-                                                    <div className="d-flex justify-content-between">
-                                                        <small className="text-muted">{author}</small>
-                                                        <small className="text-muted">{new Date(c.createdAt).toLocaleString()}</small>
-                                                    </div>
-                                                    <div style={{ whiteSpace: "pre-wrap" }}>{c.content}</div>
-                                                    <div className="mt-2 d-flex justify-content-end">
-                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => deleteComment(c.id)}>
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
+                    <div className="pt-3">
+                        {activeTab === "items" && (
+                            <>
+                                    
+                                
+                                <div className="d-flex justify-content-end mt-2 gap-2 mb-4">
+                                    
+                                    <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
+                                        <input
+                                            type="search"
+                                            className="form-control"
+                                            placeholder="Search items..."
+                                            value={itemSearch}
+                                            onChange={(e) => setItemSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    <button
+                                        className="btn btn-danger"
+                                        onClick={deleteSelected}
+                                        disabled={loading || checkedItems.length === 0}
+                                        title="Delete selected items"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                                        </svg>
+                                    </button>
+                                    <button className="btn btn-primary" onClick={openEditModal}>Edit Inventory</button>
+                                    <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>+ New Item</button>
                                 </div>
 
-                                <div className="input-group">
-                                    <input
-                                        className="form-control"
-                                        placeholder="Write a comment..."
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" && !e.shiftKey) {
-                                                e.preventDefault();
-                                                createComment();
-                                            }
-                                        }}
-                                        disabled={commentSubmitting}
-                                    />
-                                    <button className="btn btn-primary" onClick={createComment} disabled={commentSubmitting || !commentText.trim()}>
-                                        Send
+                                <table className="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <input type="checkbox" className="form-check-input"
+                                                    onChange={handleCheckingAllItems}
+                                                    checked={items.length > 0 && checkedItems.length === items.length}
+                                                />
+                                            </th>
+                                            <th>Custom Id</th>
+                                            <th>Name</th>
+                                            {inventoryFields.map(f => (
+                                                <th key={f.id}>{f.title}</th>
+                                            ))}
+                                            <th style={{ width: 120 }}>Likes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {items
+                                            .filter(item => {
+                                                const q = itemSearch.trim().toLowerCase();
+                                                if (!q) return true;
+                                                const baseMatch =
+                                                    item.customId?.toLowerCase().includes(q) ||
+                                                    item.name?.toLowerCase().includes(q);
+                                                const fieldMatch = (item.fieldValues || []).some(v =>
+                                                    String(v.value ?? "")
+                                                        .toLowerCase()
+                                                        .includes(q)
+                                                );
+                                                return baseMatch || fieldMatch;
+                                            })
+                                            .map((item) => (
+                                                <tr key={item.id} style={{ cursor: "pointer" }}>
+                                                    <td onClick={(e) => e.stopPropagation()}>
+                                                        <input type="checkbox" className="form-check-input"
+                                                            checked={checkedItems.includes(item.id)}
+                                                            onChange={() => handleCheckingItems(item.id)}
+                                                        />
+                                                    </td>
+                                                    <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.customId}</td>
+                                                    <td onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>{item.name}</td>
+                                                    {inventoryFields.map(f => (
+                                                        <td key={f.id} onClick={() => { setSelectedItem(item); setIsItemModalOpen(true); }}>
+                                                            {item.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
+                                                        </td>
+                                                    ))}
+                                                    <td onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            type="button"
+                                                            className={`btn btn-sm ${likedByMe[item.id] ? "btn-danger" : "btn-outline-danger"}`}
+                                                            onClick={() => toggleLike(item.id)}
+                                                            disabled={!!likeBusy[item.id]}
+                                                            title={likedByMe[item.id] ? "Unlike" : "Like"}
+                                                        >
+                                                            <ThumbsUpIcon filled={!!likedByMe[item.id]} /> {likeCounts[item.id] ?? 0}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </>
+                        )}
+
+                        {activeTab === "discussion" && (
+                            <div className="card h-100">
+                                <div className="card-header d-flex justify-content-between align-items-center">
+                                    <div>Discussion</div>
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={fetchComments} disabled={commentsLoading}>
+                                        Refresh
                                     </button>
                                 </div>
+                                <div className="card-body">
+                                    <div className="mb-3" style={{ maxHeight: 600, overflowY: "auto" }}>
+                                        {commentsLoading ? (
+                                            <div className="text-muted">Loading comments...</div>
+                                        ) : comments.length === 0 ? (
+                                            <div className="text-muted">No comments yet.</div>
+                                        ) : (
+                                            comments.map(c => {
+                                                const me = getUserIdFromToken();
+                                                const author = c.userId === me ? "You" : `User #${c.userId}`;
+                                                return (
+                                                    <div key={c.id} className="border rounded p-2 mb-2">
+                                                        <div className="d-flex justify-content-between">
+                                                            <small className="text-muted">{author}</small>
+                                                            <small className="text-muted">{new Date(c.createdAt).toLocaleString()}</small>
+                                                        </div>
+                                                        <div style={{ whiteSpace: "pre-wrap" }}>{c.content}</div>
+                                                        <div className="mt-2 d-flex justify-content-end">
+                                                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteComment(c.id)}>
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    <div className="input-group">
+                                        <input
+                                            className="form-control"
+                                            placeholder="Write a comment..."
+                                            value={commentText}
+                                            onChange={(e) => setCommentText(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    createComment();
+                                                }
+                                            }}
+                                            disabled={commentSubmitting}
+                                        />
+                                        <button className="btn btn-primary" onClick={createComment} disabled={commentSubmitting || !commentText.trim()}>
+                                            Send
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -912,28 +948,28 @@ const updateItem = async () => {
                 isOpen={isItemModalOpen}
                 onClose={() => { setIsItemModalOpen(false); setSelectedItem(null); }}
                 title={selectedItem?.name || "Item Details"}
-                
+
                 footer={
                     <div className="d-flex gap-2 justify-content-center align-items-center">
-                      {selectedItem && (
-                        <button
-                            type="button"
-                            className={`btn ${likedByMe[selectedItem.id] ? "btn-danger" : "btn-outline-danger"}`}
-                            onClick={() => toggleLike(selectedItem.id)}
-                            disabled={!!likeBusy[selectedItem.id]}
-                            title={likedByMe[selectedItem.id] ? "Unlike" : "Like"}
-                        >
-                            <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} /> {likeCounts[selectedItem.id] ?? 0}
+                        {selectedItem && (
+                            <button
+                                type="button"
+                                className={`btn ${likedByMe[selectedItem.id] ? "btn-danger" : "btn-outline-danger"}`}
+                                onClick={() => toggleLike(selectedItem.id)}
+                                disabled={!!likeBusy[selectedItem.id]}
+                                title={likedByMe[selectedItem.id] ? "Unlike" : "Like"}
+                            >
+                                <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} /> {likeCounts[selectedItem.id] ?? 0}
+                            </button>
+                        )}
+                        <button className="btn btn-primary" onClick={openEditItemModal}>
+                            Edit
                         </button>
-                      )}
-                      <button className="btn btn-primary" onClick={openEditItemModal}>
-                          Edit
-                      </button>
-                      <button className="btn btn-secondary" onClick={() => { setIsItemModalOpen(false); setSelectedItem(null); }}>
-                          Close
-                      </button>
+                        <button className="btn btn-secondary" onClick={() => { setIsItemModalOpen(false); setSelectedItem(null); }}>
+                            Close
+                        </button>
                     </div>
-                    
+
                 }
             >
                 {selectedItem && (
@@ -942,21 +978,21 @@ const updateItem = async () => {
                             <label className="fw-bold">Description</label>
                             <p className="text-muted">{selectedItem.description || "-"}</p>
                         </div>
-                    {inventoryFields.length > 0 && (
-                <>
-                    <hr />
-                         <h6>Fields</h6>
-                         {inventoryFields.map(f => (
-                             <div className="mb-3" key={f.id}>
-                                 <label className="fw-bold">{f.title}</label>
-                                 <p className="text-muted">
-                                     {selectedItem.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
-                                 </p>
-                             </div>
-                         ))}
-                         <hr />
-                     </>
-                    )}
+                        {inventoryFields.length > 0 && (
+                            <>
+                                <hr />
+                                <h6>Fields</h6>
+                                {inventoryFields.map(f => (
+                                    <div className="mb-3" key={f.id}>
+                                        <label className="fw-bold">{f.title}</label>
+                                        <p className="text-muted">
+                                            {selectedItem.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
+                                        </p>
+                                    </div>
+                                ))}
+                                <hr />
+                            </>
+                        )}
                         <div className="mb-3">
                             <label className="fw-bold">Created At</label>
                             <p className="text-muted">{new Date(selectedItem.createdAt).toLocaleString()}</p>
@@ -969,94 +1005,94 @@ const updateItem = async () => {
                 )}
             </Modal>
             <Modal
-    isOpen={isEditItemModalOpen}
-    onClose={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}
-    title={`Edit: ${selectedItem?.name || ""}`}
-    footer={
-        <div className="d-flex gap-2">
-            <button className="btn btn-primary" onClick={updateItem}>Save</button>
-            <button className="btn btn-secondary" onClick={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}>Cancel</button>
-        </div>
-    }
->
-    {selectedItem && (
-        <div>
-            <div className="mb-3">
-                <label className="form-label">Name</label>
-                <input type="text" className="form-control"
-                    value={editItemData.name}
-                    onChange={(e) => setEditItemData({ ...editItemData, name: e.target.value })}
-                />
-            </div>
-            <div className="mb-3">
-                <label className="form-label">Description</label>
-                <textarea className="form-control"
-                    value={editItemData.description}
-                    onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })}
-                />
-            </div>
-            
-
-            {/* Dynamic field values */}
-            {editItemData.fieldValues.length > 0 && (
-                <>
-                    <hr />
-                    <h6>Field Values</h6>
-                    {editItemData.fieldValues.map((fv, index) => (
-                        <div key={fv.fieldId} className="mb-3">
-                            <label className="form-label">{fv.fieldTitle}</label>
-                            {fv.fieldType === 2 ? (
-                                // Multi-line text
-                                <textarea className="form-control"
-                                    value={fv.value}
-                                    onChange={(e) => {
-                                        const updated = [...editItemData.fieldValues];
-                                        updated[index].value = e.target.value;
-                                        setEditItemData({ ...editItemData, fieldValues: updated });
-                                    }}
-                                />
-                            ) : fv.fieldType === 4 ? (
-                                // Boolean
-                                <div className="form-check">
-                                    <input type="checkbox" className="form-check-input"
-                                        checked={fv.value === "true"}
-                                        onChange={(e) => {
-                                            const updated = [...editItemData.fieldValues];
-                                            updated[index].value = e.target.checked ? "true" : "false";
-                                            setEditItemData({ ...editItemData, fieldValues: updated });
-                                        }}
-                                    />
-                                </div>
-                            ) : fv.fieldType === 5 ? (
-                                // Link
-                                <input type="url" className="form-control"
-                                    value={fv.value}
-                                    onChange={(e) => {
-                                        const updated = [...editItemData.fieldValues];
-                                        updated[index].value = e.target.value;
-                                        setEditItemData({ ...editItemData, fieldValues: updated });
-                                    }}
-                                />
-                            ) : (
-                                // Single line text or number
-                                <input
-                                    type={fv.fieldType === 3 ? "number" : "text"}
-                                    className="form-control"
-                                    value={fv.value}
-                                    onChange={(e) => {
-                                        const updated = [...editItemData.fieldValues];
-                                        updated[index].value = e.target.value;
-                                        setEditItemData({ ...editItemData, fieldValues: updated });
-                                    }}
-                                />
-                            )}
+                isOpen={isEditItemModalOpen}
+                onClose={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}
+                title={`Edit: ${selectedItem?.name || ""}`}
+                footer={
+                    <div className="d-flex gap-2">
+                        <button className="btn btn-primary" onClick={updateItem}>Save</button>
+                        <button className="btn btn-secondary" onClick={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}>Cancel</button>
+                    </div>
+                }
+            >
+                {selectedItem && (
+                    <div>
+                        <div className="mb-3">
+                            <label className="form-label">Name</label>
+                            <input type="text" className="form-control"
+                                value={editItemData.name}
+                                onChange={(e) => setEditItemData({ ...editItemData, name: e.target.value })}
+                            />
                         </div>
-                    ))}
-                </>
-            )}
-        </div>
-    )}
-</Modal>
+                        <div className="mb-3">
+                            <label className="form-label">Description</label>
+                            <textarea className="form-control"
+                                value={editItemData.description}
+                                onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })}
+                            />
+                        </div>
+
+
+                        {/* Dynamic field values */}
+                        {editItemData.fieldValues.length > 0 && (
+                            <>
+                                <hr />
+                                <h6>Field Values</h6>
+                                {editItemData.fieldValues.map((fv, index) => (
+                                    <div key={fv.fieldId} className="mb-3">
+                                        <label className="form-label">{fv.fieldTitle}</label>
+                                        {fv.fieldType === 2 ? (
+                                            // Multi-line text
+                                            <textarea className="form-control"
+                                                value={fv.value}
+                                                onChange={(e) => {
+                                                    const updated = [...editItemData.fieldValues];
+                                                    updated[index].value = e.target.value;
+                                                    setEditItemData({ ...editItemData, fieldValues: updated });
+                                                }}
+                                            />
+                                        ) : fv.fieldType === 4 ? (
+                                            // Boolean
+                                            <div className="form-check">
+                                                <input type="checkbox" className="form-check-input"
+                                                    checked={fv.value === "true"}
+                                                    onChange={(e) => {
+                                                        const updated = [...editItemData.fieldValues];
+                                                        updated[index].value = e.target.checked ? "true" : "false";
+                                                        setEditItemData({ ...editItemData, fieldValues: updated });
+                                                    }}
+                                                />
+                                            </div>
+                                        ) : fv.fieldType === 5 ? (
+                                            // Link
+                                            <input type="url" className="form-control"
+                                                value={fv.value}
+                                                onChange={(e) => {
+                                                    const updated = [...editItemData.fieldValues];
+                                                    updated[index].value = e.target.value;
+                                                    setEditItemData({ ...editItemData, fieldValues: updated });
+                                                }}
+                                            />
+                                        ) : (
+                                            // Single line text or number
+                                            <input
+                                                type={fv.fieldType === 3 ? "number" : "text"}
+                                                className="form-control"
+                                                value={fv.value}
+                                                onChange={(e) => {
+                                                    const updated = [...editItemData.fieldValues];
+                                                    updated[index].value = e.target.value;
+                                                    setEditItemData({ ...editItemData, fieldValues: updated });
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                )}
+            </Modal>
         </>
     );
 }
