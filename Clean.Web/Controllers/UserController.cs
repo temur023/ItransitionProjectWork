@@ -19,7 +19,7 @@ public class UserController(IUserService service) : ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet("get/{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -37,7 +37,7 @@ public class UserController(IUserService service) : ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPut("update/{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UserEditDto dto)
     {

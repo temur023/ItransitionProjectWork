@@ -49,6 +49,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         };
         return new Response<UserGetDto>(200, "User fond", dto);
     }
+    
 
     public async Task<Response<string>> Create(UserCreateDto dto)
     {

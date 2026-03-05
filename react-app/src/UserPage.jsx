@@ -66,6 +66,14 @@ function UserPage() {
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
     const [total, setTotal] = useState(0);
     const [message, setMessage] = useState({ text: "", type: "" });
+    const [profileData, setProfileData] = useState(null);
+    const [profileForm, setProfileForm] = useState({
+        fullName: "",
+        language: 1,
+        theme: 1,
+        password: ""
+    });
+    const [profileSaving, setProfileSaving] = useState(false);
     const [accessUsers, setAccessUsers] = useState([]);
     const [userSuggestions, setUserSuggestions] = useState([]);
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -82,6 +90,81 @@ function UserPage() {
         setUserSuggestions([]);
         setActiveSuggestionIndex(-1);
         setFormData({ title: "", description: "", category: 1, isPublic: true });
+        fetchInventories();
+    };
+
+    const getUserIdFromToken = useCallback(() => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return null;
+        try {
+            const payloadB64 = token.split(".")[1];
+            if (!payloadB64) return null;
+            const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
+            const payload = JSON.parse(atob(padded));
+            const id =
+                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
+                payload.nameid ??
+                payload.sub;
+            const parsed = parseInt(id, 10);
+            return Number.isFinite(parsed) ? parsed : null;
+        } catch {
+            return null;
+        }
+    }, []);
+
+    const fetchProfile = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("userToken");
+            if (!token) return;
+            const userId = getUserIdFromToken();
+            if (!userId) return;
+            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const user = response.data.data;
+            setProfileData(user);
+            setProfileForm({
+                fullName: user.fullName || "",
+                language: user.language ?? 1,
+                theme: user.theme ?? 1,
+                password: ""
+            });
+        } catch (error) {
+            if (error.response?.status === 401) navigate("/login");
+        }
+    }, [api_url, navigate, getUserIdFromToken]);
+
+    const updateProfile = async () => {
+        const token = localStorage.getItem("userToken");
+        if (!token) return navigate("/login");
+        try {
+            setProfileSaving(true);
+            const userId = getUserIdFromToken();
+            if (!userId) throw new Error("Cannot determine current user id from token.");
+            const payload = {
+                fullName: profileForm.fullName,
+                passwordHash: profileForm.password,
+                language: Number(profileForm.language),
+                theme: Number(profileForm.theme),
+            };
+            const response = await axios.put(`${api_url}/api/User/update/${userId}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMessage({ text: response.data.message || "Profile updated", type: "success" });
+            setProfileForm(f => ({ ...f, password: "" }));
+            await fetchProfile();
+        } catch (error) {
+            if (error.response?.status === 401) {
+                localStorage.removeItem("userToken");
+                navigate("/login");
+            } else {
+                const msg = error.response?.data?.message || "Failed to update profile";
+                setMessage({ text: msg, type: "danger" });
+            }
+        } finally {
+            setProfileSaving(false);
+        }
     };
 
     const idElementTypes = {
@@ -96,42 +179,42 @@ function UserPage() {
     };
 
     const deleteSelected = async () => {
-    const token = localStorage.getItem("userToken");
-    if (!token) return navigate("/login");
+        const token = localStorage.getItem("userToken");
+        if (!token) return navigate("/login");
 
-    try {
-        setLoading(true);
-        const response = await axios.delete(`${api_url}/api/UserPage/delete-own`, {
-            headers: { Authorization: `Bearer ${token}` },
-            data: checkedInvs
-        });
+        try {
+            setLoading(true);
+            const response = await axios.delete(`${api_url}/api/UserPage/delete-own`, {
+                headers: { Authorization: `Bearer ${token}` },
+                data: checkedInvs
+            });
 
 
-        setMessage({ text: response.data.message || "Inventories deleted", type: "success" });
-        setCheckedInvs([]);
-        await fetchInventories()
-    } catch (error) {
-        console.error("Delete failed:", error); 
-        if (error.response?.status === 401 || error.response?.status === 403) {
-            localStorage.removeItem("userToken");
-            navigate("/login");
-        } else {
-            setMessage({ text: "Failed to delete inventories", type: "error" });
+            setMessage({ text: response.data.message || "Inventories deleted", type: "success" });
+            setCheckedInvs([]);
+            await fetchInventories()
+        } catch (error) {
+            console.error("Delete failed:", error);
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                localStorage.removeItem("userToken");
+                navigate("/login");
+            } else {
+                setMessage({ text: "Failed to delete inventories", type: "error" });
+            }
+        } finally {
+            setLoading(false);
         }
-    } finally {
-        setLoading(false);
-    }
-};
-    function handleCheckingInvs(id){
-        setCheckedInvs(c=>c.includes(id)?c.filter((invId)=>invId!==id):[...c, id]);
+    };
+    function handleCheckingInvs(id) {
+        setCheckedInvs(c => c.includes(id) ? c.filter((invId) => invId !== id) : [...c, id]);
     }
 
-    function handleCheckingAllInvs(){
-        if(checkedInvs.length===inventories.length&&inventories.length>0){
+    function handleCheckingAllInvs() {
+        if (checkedInvs.length === inventories.length && inventories.length > 0) {
             setCheckedInvs([]);
         }
-        else{
-           const allIds = inventories.map(u => u.id);
+        else {
+            const allIds = inventories.map(u => u.id);
             setCheckedInvs(allIds);
         }
     }
@@ -207,19 +290,12 @@ function UserPage() {
                     }))
                 ),
             };
-            console.log("Payload:", payload);
-            console.log("Token:", token);
             const response = await axios.post(`${api_url}/api/Inventory/create`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            console.log("Response:", response.data);
-            const created = response.data.data;
-            setNewInventoryId(created.id);
-            setMessage({ text: "Inventory created! You can now add fields.", type: "success" });
+            setMessage({ text: "Inventory created!", type: "success" });
+            handleCloseModal();
         } catch (error) {
-            console.log("Full error:", error);
-            console.log("Response data:", error.response?.data);
-            console.log("Status:", error.response?.status);
             const msg = error.response?.data?.message || error.message || "Failed to create inventory";
             setMessage({ text: msg, type: "danger" });
         }
@@ -379,49 +455,57 @@ function UserPage() {
     }, [fetchInventories]);
 
     useEffect(() => {
-    setCheckedInvs([]);
-}, [inventories]);
+        setCheckedInvs([]);
+    }, [inventories]);
+
+    useEffect(() => {
+        if (!message.text) return;
+        const timer = setTimeout(() => setMessage({ text: "", type: "" }), 5000);
+        return () => clearTimeout(timer);
+    }, [message]);
+
+    useEffect(() => {
+        if (activeTab === "profile") fetchProfile();
+    }, [activeTab, fetchProfile]);
+
     return (
         <>
             <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-               <ul className="nav nav-pills w-100 gap-2 align-items-center">
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/dashboard")}
-                    >
-                      Dashboard
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/statistics")}
-                    >
-                      Statistics
-                    </button>
-                  </li>
-                    
-                  <li className="ms-auto nav-item">
-                    <button
-                      type="button"
-                      className="nav-link"
-                      onClick={() => navigate("/user-page")}
-                    >
-                      AA
-                    </button>
-                  </li>
+                <ul className="nav nav-pills w-100 gap-2 align-items-center">
+                    <li className="nav-item">
+                        <button
+                            type="button"
+                            className="nav-link active"
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            Dashboard
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            type="button"
+                            className="nav-link active"
+                            onClick={() => navigate("/statistics")}
+                        >
+                            Statistics
+                        </button>
+                    </li>
+
+                    <li className="ms-auto nav-item">
+                        <button
+                            type="button"
+                            className="nav-link"
+                            onClick={() => navigate("/user-page")}
+                        >
+                            AA
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div className="container-fluid d-flex">
-                {message.text && (
-                    <div className={`alert alert-${message.type}`}>{message.text}</div>
-                )}
-                
+
                 <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
-                     <ul className="nav nav-underline nav-fill flex-column mt-4">
+                    <ul className="nav nav-underline nav-fill flex-column mt-4">
                         <li className="nav-item">
                             <button
                                 type="button"
@@ -440,82 +524,157 @@ function UserPage() {
                                 Shared With Me
                             </button>
                         </li>
+                        <li className="nav-item">
+                            <button
+                                type="button"
+                                className={`nav-link text-dark fw-bolder ${activeTab === "profile" ? "active" : ""}`}
+                                onClick={() => setActiveTab("profile")}
+                            >
+                                My Profile
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
                 <div className="col-md-9 mt-4 shadow-lg rounded-4 p-4">
-                    <div className="d-flex justify-content-between align-items-center pb-1">
-                        <h1 className="mb-0">User Page</h1>
-                        <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
-                            <input
-                                type="search"
-                                className="form-control"
-                                placeholder={activeTab === "own" ? "Search my inventories..." : "Search shared inventories..."}
-                                value={inventorySearch}
-                                onChange={(e) => setInventorySearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                <div className="d-flex justify-content-end mt-2 gap-2">
-                    <button 
-                         className="btn btn-danger"
-                         onClick={deleteSelected}
-                         disabled={loading || checkedInvs.length === 0}
-                         title="delete selected inventories"
-                    >
-                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" clasname="bi bi-trash3-fill" viewBox="0 0 16 16">
-                           <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
-                         </svg>
-                    </button>
-                    <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
-                        + New Inventory
-                    </button>
-                </div>
-                <table className=" table table-striped table-hover mb-3">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input 
-                                    type="checkbox" 
-                                    className="form-check-input" 
-                                    onChange={handleCheckingAllInvs}
-                                    checked={inventories.length > 0 && checkedInvs.length === inventories.length}
-                                />
-                                </th>
-                            <th>Title</th>
-                            <th>Category</th>
-                            <th>Creator Username</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {inventories
-                            .filter(inv => inv !== null)
-                            .filter(inv => {
-                                const q = inventorySearch.trim().toLowerCase();
-                                if (!q) return true;
-                                return (
-                                    inv.title?.toLowerCase().includes(q) ||
-                                    String(inv.category ?? "").toLowerCase().includes(q) ||
-                                    inv.creatorName?.toLowerCase().includes(q)
-                                );
-                            })
-                            .map((inv) => (
-                            <tr key={inv.id}>
-                                 <td>
-                                        <input 
-                                            type="checkbox" 
-                                            className="form-check-input" 
-                                            checked={checkedInvs.includes(inv.id)}
-                                            onChange={() => handleCheckingInvs(inv.id)}
+                    {message.text && (
+                        <div className={`alert alert-${message.type} mb-3`}>{message.text}</div>
+                    )}
+
+                    {/* ── Profile Tab ── */}
+                    {activeTab === "profile" && (
+                        <>
+                            <h4 className="mb-4">My Profile</h4>
+                            {profileData && (
+                                <div className="row g-3" style={{ maxWidth: 600 }}>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Username</label>
+                                        <input className="form-control" value={profileData.userName || ""} disabled
+                                            title="Username cannot be changed" />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Email</label>
+                                        <input className="form-control" value={profileData.email || ""} disabled
+                                            title="Email cannot be changed" />
+                                    </div>
+                                    <div className="col-12">
+                                        <label className="form-label">Full Name</label>
+                                        <input className="form-control"
+                                            value={profileForm.fullName}
+                                            onChange={(e) => setProfileForm(f => ({ ...f, fullName: e.target.value }))}
                                         />
-                                    </td> 
-                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.title}</td>
-                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{categoryLabels[inv.category] || inv.category}</td>
-                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.creatorName}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Language</label>
+                                        <select className="form-select"
+                                            value={profileForm.language}
+                                            onChange={(e) => setProfileForm(f => ({ ...f, language: Number(e.target.value) }))}
+                                        >
+                                            <option value={1}>English</option>
+                                            <option value={2}>Russian</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Theme</label>
+                                        <select className="form-select"
+                                            value={profileForm.theme}
+                                            onChange={(e) => setProfileForm(f => ({ ...f, theme: Number(e.target.value) }))}
+                                        >
+                                            <option value={1}>Light</option>
+                                            <option value={2}>Dark</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-12">
+                                        <label className="form-label">New Password (leave blank to keep current)</label>
+                                        <input type="password" className="form-control"
+                                            value={profileForm.password}
+                                            onChange={(e) => setProfileForm(f => ({ ...f, password: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="col-12 mt-3">
+                                        <button className="btn btn-primary" onClick={updateProfile} disabled={profileSaving}>
+                                            {profileSaving ? "Saving..." : "Save Changes"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* ── Inventories Tab ── */}
+                    {(activeTab === "own" || activeTab === "access") && (
+                        <>
+                            <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
+                                <input
+                                    type="search"
+                                    className="form-control"
+                                    placeholder={activeTab === "own" ? "Search my inventories..." : "Search shared inventories..."}
+                                    value={inventorySearch}
+                                    onChange={(e) => setInventorySearch(e.target.value)}
+                                />
+                            </div>
+                            <div className="d-flex justify-content-end mt-2 gap-2">
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={deleteSelected}
+                                    disabled={loading || checkedInvs.length === 0}
+                                    title="delete selected inventories"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                                    </svg>
+                                </button>
+                                <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
+                                    + New Inventory
+                                </button>
+                            </div>
+                            <table className=" table table-striped table-hover mb-3">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input"
+                                                onChange={handleCheckingAllInvs}
+                                                checked={inventories.length > 0 && checkedInvs.length === inventories.length}
+                                            />
+                                        </th>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Creator Username</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {inventories
+                                        .filter(inv => inv !== null)
+                                        .filter(inv => {
+                                            const q = inventorySearch.trim().toLowerCase();
+                                            if (!q) return true;
+                                            return (
+                                                inv.title?.toLowerCase().includes(q) ||
+                                                String(inv.category ?? "").toLowerCase().includes(q) ||
+                                                inv.creatorName?.toLowerCase().includes(q)
+                                            );
+                                        })
+                                        .map((inv) => (
+                                            <tr key={inv.id}>
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="form-check-input"
+                                                        checked={checkedInvs.includes(inv.id)}
+                                                        onChange={() => handleCheckingInvs(inv.id)}
+                                                    />
+                                                </td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.title}</td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{categoryLabels[inv.category] || inv.category}</td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.creatorName}</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </>
+                    )}
                 </div>
             </div>
 

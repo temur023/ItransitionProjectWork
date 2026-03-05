@@ -79,44 +79,47 @@ function Dashboard() {
     return () => clearTimeout(searchTimerRef.current);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (!message.text) return;
+    const timer = setTimeout(() => setMessage({ text: "", type: "" }), 5000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
   return (
     <>
       <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-               <ul className="nav nav-pills w-100 gap-2 align-items-center">
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/dashboard")}
-                    >
-                      Dashboard
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/statistics")}
-                    >
-                      Statistics
-                    </button>
-                  </li>
-                    
-                  <li className="ms-auto nav-item">
-                    <button
-                      type="button"
-                      className="nav-link"
-                      onClick={() => navigate("/user-page")}
-                    >
-                      AA
-                    </button>
-                  </li>
-                </ul>
-            </div>
+        <ul className="nav nav-pills w-100 gap-2 align-items-center">
+          <li className="nav-item">
+            <button
+              type="button"
+              className="nav-link active"
+              onClick={() => navigate("/dashboard")}
+            >
+              Dashboard
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className="nav-link active"
+              onClick={() => navigate("/statistics")}
+            >
+              Statistics
+            </button>
+          </li>
+
+          <li className="ms-auto nav-item">
+            <button
+              type="button"
+              className="nav-link"
+              onClick={() => navigate("/user-page")}
+            >
+              AA
+            </button>
+          </li>
+        </ul>
+      </div>
       <div className="container-fluid d-flex">
-        {message.text && (
-          <div className={`alert alert-${message.type}`}>{message.text}</div>
-        )}
         <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
           <ul className="nav nav-underline nav-fill flex-column mt-4">
             <li className="nav-item">
@@ -142,6 +145,9 @@ function Dashboard() {
           </ul>
         </div>
         <div className=" col-md-9 mt-4 shadow-lg rounded-4 p-4  ">
+          {message.text && (
+            <div className={`alert alert-${message.type} mb-3`}>{message.text}</div>
+          )}
           {isSearching ? (
             <>
               <div className="d-flex justify-content-between align-items-center pb-2">
