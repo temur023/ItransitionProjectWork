@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
-
+import useTheme from './useTheme';
 function Dashboard() {
   const [inventories, setInventories] = useState([]);
   const [total, setTotal] = useState(0);
@@ -10,6 +10,9 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [inventoriesByTag, setInventoriesByTag] = useState([]);
   const api_url = "http://localhost:5137";
   const [activeTab, setActiveTab] = useState("dashboard");
   const searchTimerRef = useRef(null);
@@ -19,16 +22,22 @@ function Dashboard() {
       const token = localStorage.getItem("userToken");
       if (!token) return null;
       const payload = JSON.parse(atob(token.split(".")[1]));
-      const roleClaim = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-      return roleClaim;
+      const role = payload.role ?? payload.Role ?? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      if (role != null) return role;
+      if (Array.isArray(payload.roles)) return payload.roles[0];
+      if (Array.isArray(payload.role)) return payload.role[0];
+      return null;
     } catch { return null; }
   };
-  const isAdmin = getUserRole() === "Admin";
+  const isAdmin = () => {
+    const role = getUserRole();
+    return role === "Admin" || role === "admin" || Number(role) === 0 || Number(role) === 1;
+  };
 
   const navigate = useNavigate();
   const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
   const totalPages = Math.ceil(total / filter.pageSize);
-
+  const { theme, toggleTheme } = useTheme();
   const fetchInventories = useCallback(async () => {
     try {
       const token = localStorage.getItem("userToken");
@@ -51,9 +60,58 @@ function Dashboard() {
     fetchInventories();
   }, [fetchInventories]);
 
-  // Auto-search with debounce
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await axios.get(`${api_url}/api/Tag/get-all`, {
+        params: { PageNumber: 1, PageSize: 200 }
+      });
+      setTags(response.data.data || []);
+    } catch {
+      setTags([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  const fetchInventoriesByTags = useCallback(async (tagNames) => {
+    if (!tagNames || tagNames.length === 0) {
+      setInventoriesByTag([]);
+      return;
+    }
+    try {
+      const token = localStorage.getItem("userToken");
+      // Serialize Tags as repeated query keys (Tags=1&Tags=samsung) so backend receives List<string>
+      const params = new URLSearchParams();
+      params.append("PageNumber", "1");
+      params.append("PageSize", "50");
+      tagNames.forEach((t) => params.append("Tags", t));
+      const response = await axios.get(`${api_url}/api/Inventory/get-all?${params.toString()}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+      });
+      setInventoriesByTag(response.data.data || []);
+    } catch (error) {
+      setMessage({ text: error.response?.data?.message || "Failed to load inventories by tag", type: "danger" });
+      setInventoriesByTag([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedTags.length > 0) fetchInventoriesByTags(selectedTags);
+    else setInventoriesByTag([]);
+  }, [selectedTags, fetchInventoriesByTags]);
+
+  const toggleTag = (tagName) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
+    );
+  };
+
+  // Auto-search with debounce (clear tags when searching)
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (searchQuery.trim()) setSelectedTags([]);
 
     const q = searchQuery.trim();
     if (!q) {
@@ -117,32 +175,39 @@ function Dashboard() {
               AA
             </button>
           </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className="nav-link"
+              onClick={toggleTheme}
+              title="Toggle theme"
+            >
+              {theme === "light" ? "🌙" : "☀️"}
+            </button>
+          </li>
         </ul>
       </div>
       <div className="container-fluid d-flex">
         <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
-          <ul className="nav nav-underline nav-fill flex-column mt-4">
-            <li className="nav-item">
+          <div className="d-flex flex-column gap-2 mt-4">
+            <button
+              type="button"
+              className={`btn ${activeTab === "dashboard" ? "btn-primary" : "btn-outline-secondary"}`}
+              onClick={() => setActiveTab("dashboard")}
+            >
+              All Inventories
+            </button>
+            
+            {isAdmin() && (
               <button
                 type="button"
-                className={`nav-link text-dark fw-bolder ${activeTab === "dashboard" ? "admin" : ""}`}
-                onClick={() => setActiveTab("dashboard")}
+                className="btn btn-outline-secondary"
+                onClick={() => navigate("/admin-page")}
               >
-                All Inventories
+                Admin Page
               </button>
-            </li>
-            {isAdmin && (
-              <li className="nav-item">
-                <button
-                  type="button"
-                  className={`nav-link text-dark fw-bolder`}
-                  onClick={() => navigate("/admin-page")}
-                >
-                  Admin Page
-                </button>
-              </li>
             )}
-          </ul>
+          </div>
         </div>
         <div className=" col-md-9 mt-4 shadow-lg rounded-4 p-4  ">
           {message.text && (
@@ -167,19 +232,75 @@ function Dashboard() {
                   <tr>
                     <th>Title</th>
                     <th>Category</th>
+                    <th>Tags</th>
                     <th>Creator Username</th>
                   </tr>
                 </thead>
                 <tbody>
                   {searchResults.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="text-muted">No inventories found.</td>
+                      <td colSpan={4} className="text-muted">No inventories found.</td>
                     </tr>
                   ) : (
                     searchResults.map((inv) => (
                       <tr key={inv.id} onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>
                         <td>{inv.title}</td>
                         <td>{categoryLabels[inv.category] || inv.category}</td>
+                        <td>{(inv.tags && inv.tags.length) ? inv.tags.map((t) => <span key={t} className="badge bg-secondary me-1">{t}</span>) : "—"}</td>
+                        <td>{inv.creatorName}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </>
+          ) : selectedTags.length > 0 ? (
+            <>
+              {tags.length > 0 && (
+                <div className="mb-2">
+                  <span className="me-2 text-muted small">Tags (click to toggle):</span>
+                  <div className="d-flex flex-wrap gap-1">
+                    {tags.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className={`btn btn-sm ${selectedTags.includes(t.name) ? "btn-primary" : "btn-outline-primary"}`}
+                        onClick={() => toggleTag(t.name)}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="d-flex justify-content-between align-items-center pb-2 flex-wrap gap-2">
+                <h4 className="mb-0">
+                  Inventories with tag{selectedTags.length !== 1 ? "s" : ""}: &quot;{selectedTags.join(", ")}&quot;
+                </h4>
+                <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedTags([])}>
+                  Clear tags
+                </button>
+              </div>
+              <table className="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Tags</th>
+                    <th>Creator Username</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventoriesByTag.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-muted">No inventories with these tags.</td>
+                    </tr>
+                  ) : (
+                    inventoriesByTag.map((inv) => (
+                      <tr key={inv.id} onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>
+                        <td>{inv.title}</td>
+                        <td>{categoryLabels[inv.category] || inv.category}</td>
+                        <td>{(inv.tags && inv.tags.length) ? inv.tags.map((t) => <span key={t} className="badge bg-secondary me-1">{t}</span>) : "—"}</td>
                         <td>{inv.creatorName}</td>
                       </tr>
                     ))
@@ -201,11 +322,29 @@ function Dashboard() {
                   />
                 </div>
               </div>
+              {tags.length > 0 && (
+                <div className="mb-3">
+                  <span className="me-2 text-muted small">Tags:</span>
+                  <div className="d-flex flex-wrap gap-1">
+                    {tags.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => setSelectedTags([t.name])}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <table className="table table-striped table-hover">
                 <thead>
                   <tr>
                     <th>Title</th>
                     <th>Category</th>
+                    <th>Tags</th>
                     <th>Creator Username</th>
                   </tr>
                 </thead>
@@ -214,6 +353,7 @@ function Dashboard() {
                     <tr key={inv.id} onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>
                       <td>{inv.title}</td>
                       <td>{categoryLabels[inv.category] || inv.category}</td>
+                      <td>{(inv.tags && inv.tags.length) ? inv.tags.map((t) => <span key={t} className="badge bg-secondary me-1">{t}</span>) : "—"}</td>
                       <td>{inv.creatorName}</td>
                     </tr>
                   ))}

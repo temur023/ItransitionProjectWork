@@ -1,4 +1,4 @@
-﻿using Clean.Domain.Entities.Enums;
+using Clean.Domain.Entities.Enums;
 
 namespace Clean.Application.Dtos;
 
@@ -9,4 +9,5 @@ public class InventoryUpdateDto
     public string Description { get; set; }
     public Category Category { get; set; }
     public bool IsPublic { get; set; }
+    public List<string>? Tags { get; set; }
 }

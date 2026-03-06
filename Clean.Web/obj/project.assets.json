@@ -3134,19 +3134,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/fsdf/.nuget/packages/": {}
+    "C:\\Users\\irgas\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/fsdf/ProjectWork/Clean.Web/Clean.Web.csproj",
+      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
       "projectName": "Clean.Web",
-      "projectPath": "/Users/fsdf/ProjectWork/Clean.Web/Clean.Web.csproj",
-      "packagesPath": "/Users/fsdf/.nuget/packages/",
-      "outputPath": "/Users/fsdf/ProjectWork/Clean.Web/obj/",
+      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\Clean.Web.csproj",
+      "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Web\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/fsdf/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -3158,8 +3158,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "/Users/fsdf/ProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj": {
-              "projectPath": "/Users/fsdf/ProjectWork/Clean.Infrastructure/Clean.Infrastructure.csproj"
+            "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Infrastructure\\Clean.Infrastructure.csproj"
             }
           }
         }
@@ -3242,7 +3242,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/Users/fsdf/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

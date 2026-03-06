@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from "react-router-dom";
+import TagInput from "./TagInput";
+import useTheme from "./useTheme"
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -54,13 +56,14 @@ function UserPage() {
         4: "Technology",
         5: "Other",
     };
+    const { theme, toggleTheme, setPreferredTheme } = useTheme();
     const [checkedInvs, setCheckedInvs] = useState([]);
     const [customIdElements, setCustomIdElements] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newInventoryId, setNewInventoryId] = useState(null);
     const [fields, setFields] = useState([]);
     const [loading, setLoading] = useState(false);
-    // const [tags, setTags] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]);
     const [activeTab, setActiveTab] = useState("own");
     const [inventorySearch, setInventorySearch] = useState("");
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
@@ -90,8 +93,10 @@ function UserPage() {
         setUserSuggestions([]);
         setActiveSuggestionIndex(-1);
         setFormData({ title: "", description: "", category: 1, isPublic: true });
+        setSelectedTags([]);
         fetchInventories();
     };
+    
 
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
@@ -124,16 +129,18 @@ function UserPage() {
             });
             const user = response.data.data;
             setProfileData(user);
+            const themeVal = user.theme ?? user.Theme ?? 1;
             setProfileForm({
                 fullName: user.fullName || "",
-                language: user.language ?? 1,
-                theme: user.theme ?? 1,
+                language: user.language ?? user.Language ?? 1,
+                theme: themeVal,
                 password: ""
             });
+            setPreferredTheme(themeVal);
         } catch (error) {
             if (error.response?.status === 401) navigate("/login");
         }
-    }, [api_url, navigate, getUserIdFromToken]);
+    }, [api_url, navigate, getUserIdFromToken, setPreferredTheme]);
 
     const updateProfile = async () => {
         const token = localStorage.getItem("userToken");
@@ -153,6 +160,7 @@ function UserPage() {
             });
             setMessage({ text: response.data.message || "Profile updated", type: "success" });
             setProfileForm(f => ({ ...f, password: "" }));
+            setPreferredTheme(Number(profileForm.theme));
             await fetchProfile();
         } catch (error) {
             if (error.response?.status === 401) {
@@ -279,6 +287,7 @@ function UserPage() {
                 Description: formData.description,
                 Category: parseInt(formData.category),
                 IsPublic: formData.isPublic,
+                Tags: selectedTags,
                 Version: 1,
                 CreatedById: 0,
                 ImageUrl: null,
@@ -291,7 +300,7 @@ function UserPage() {
                 ),
             };
             const response = await axios.post(`${api_url}/api/Inventory/create`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
             });
             setMessage({ text: "Inventory created!", type: "success" });
             handleCloseModal();
@@ -500,6 +509,16 @@ function UserPage() {
                             AA
                         </button>
                     </li>
+                    <li className="nav-item">
+                      <button
+                        type="button"
+                        className="nav-link"
+                        onClick={toggleTheme}
+                        title="Toggle theme"
+                      >
+                        {theme === "light" ? "🌙" : "☀️"}
+                      </button>
+                    </li>
                 </ul>
             </div>
             <div className="container-fluid d-flex">
@@ -509,7 +528,7 @@ function UserPage() {
                         <li className="nav-item">
                             <button
                                 type="button"
-                                className={`nav-link text-dark fw-bolder ${activeTab === "own" ? "active" : ""}`}
+                                className={`nav-link fw-bolder ${activeTab === "own" ? "active" : ""}`}
                                 onClick={() => setActiveTab("own")}
                             >
                                 My Inventories
@@ -518,7 +537,7 @@ function UserPage() {
                         <li className="nav-item">
                             <button
                                 type="button"
-                                className={`nav-link text-dark fw-bolder ${activeTab === "access" ? "active" : ""}`}
+                                className={`nav-link fw-bolder ${activeTab === "access" ? "active" : ""}`}
                                 onClick={() => setActiveTab("access")}
                             >
                                 Shared With Me
@@ -527,7 +546,7 @@ function UserPage() {
                         <li className="nav-item">
                             <button
                                 type="button"
-                                className={`nav-link text-dark fw-bolder ${activeTab === "profile" ? "active" : ""}`}
+                                className={`nav-link fw-bolder ${activeTab === "profile" ? "active" : ""}`}
                                 onClick={() => setActiveTab("profile")}
                             >
                                 My Profile
@@ -578,7 +597,11 @@ function UserPage() {
                                         <label className="form-label">Theme</label>
                                         <select className="form-select"
                                             value={profileForm.theme}
-                                            onChange={(e) => setProfileForm(f => ({ ...f, theme: Number(e.target.value) }))}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value);
+                                                setProfileForm(f => ({ ...f, theme: v }));
+                                                setPreferredTheme(v);
+                                            }}
                                         >
                                             <option value={1}>Light</option>
                                             <option value={2}>Dark</option>
@@ -788,6 +811,15 @@ function UserPage() {
                             onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                         />
                         <label className="form-check-label">Public</label>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label">Tags</label>
+                        <TagInput
+                            value={selectedTags}
+                            onChange={setSelectedTags}
+                            apiUrl={api_url}
+                            placeholder="Type to search or add tags..."
+                        />
                     </div>
 
                     {/* Custom ID Format Builder */}

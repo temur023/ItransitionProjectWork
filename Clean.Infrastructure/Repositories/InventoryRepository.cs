@@ -14,9 +14,10 @@
                 .Include(i=>i.Tags)
                 .Include(i=>i.CreatedBy)
                 .OrderByDescending(i=>i.CreatedAt).AsNoTracking();
+            // AND logic: only inventories that have ALL selected tags
             if (filter.Tags != null && filter.Tags.Any())
             {
-                query = query.Where(i => i.Tags.Any(t => filter.Tags.Contains(t.Name)));
+                query = query.Where(i => filter.Tags.All(ft => i.Tags.Any(t => t.Name == ft)));
             }
             var total = await query.CountAsync();
             var items = await query
@@ -31,7 +32,8 @@
             var find = await context.Inventories
                 .Include(i => i.UserAccesses)
                 .Include(i => i.CreatedBy)
-                .Include(i=> i.Fields)
+                .Include(i => i.Fields)
+                .Include(i => i.Tags)
                 .FirstOrDefaultAsync(u => u.Id == id);
             return find;
         }

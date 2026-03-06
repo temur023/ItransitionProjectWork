@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from 'axios';
 import { useNavigate, useParams } from "react-router-dom";
+import TagInput from "./TagInput";
+import useTheme from "./useTheme"
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -37,6 +39,7 @@ function Modal({ isOpen, onClose, title, children, footer }) {
 }
 
 function InventoryPage() {
+    const { theme, toggleTheme } = useTheme();
     const [items, setItems] = useState([]);
     const [checkedItems, setCheckedItems] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -77,7 +80,7 @@ function InventoryPage() {
 
     // Edit Inventory Modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editFormData, setEditFormData] = useState({ title: "", description: "", category: 1, isPublic: true });
+    const [editFormData, setEditFormData] = useState({ title: "", description: "", category: 1, isPublic: true, tags: [] });
 
     // Edit Item Modal
     const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
@@ -124,10 +127,10 @@ function InventoryPage() {
             const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
             const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
             const payload = JSON.parse(atob(padded));
-            const role =
-                payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ??
-                payload.role ?? "";
-            return role === "Admin";
+            let role = payload.role ?? payload.Role ?? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+            if (role == null && Array.isArray(payload.roles)) role = payload.roles[0];
+            if (role == null && Array.isArray(payload.role)) role = payload.role[0];
+            return role === "Admin" || role === "admin" || Number(role) === 0 || Number(role) === 1;
         } catch {
             return false;
         }
@@ -453,7 +456,7 @@ function InventoryPage() {
                 axios.get(`${api_url}/api/InventoryUserAccess/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } })
             ]);
             const inv = invRes.data.data;
-            setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic });
+            setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic, tags: inv.tags || [] });
             setFields((fieldsRes.data.data || []).map(f => ({
                 id: f.id, title: f.title, description: f.description,
                 type: f.type, showInTable: f.showInTable, order: f.order, isExisting: true
@@ -476,7 +479,8 @@ function InventoryPage() {
                 Title: editFormData.title,
                 Description: editFormData.description,
                 Category: parseInt(editFormData.category),
-                IsPublic: editFormData.isPublic
+                IsPublic: editFormData.isPublic,
+                Tags: editFormData.tags || []
             }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
 
             const newFields = fields.filter(f => !f.isExisting);
@@ -596,7 +600,17 @@ function InventoryPage() {
                         <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>Statistics</button>
                     </li>
                     <li className="ms-auto nav-item">
-                        <button type="button" className="nav-link" onClick={() => navigate("/user-page")}>My Page</button>
+                        <button type="button" className="nav-link" onClick={() => navigate("/user-page")}>AA</button>
+                    </li>
+                    <li className="nav-item">
+                      <button
+                        type="button"
+                        className="nav-link"
+                        onClick={toggleTheme}
+                        title="Toggle theme"
+                      >
+                        {theme === "light" ? "🌙" : "☀️"}
+                      </button>
                     </li>
                 </ul>
             </div>
@@ -609,7 +623,7 @@ function InventoryPage() {
                             <li className="nav-item" key={tab}>
                                 <button
                                     type="button"
-                                    className={`nav-link text-dark fw-bolder ${activeTab === tab ? "active" : ""}`}
+                                    className={`nav-link fw-bolder ${activeTab === tab ? "active" : ""}`}
                                     onClick={() => setActiveTab(tab)}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -874,6 +888,15 @@ function InventoryPage() {
                     <input type="checkbox" className="form-check-input" checked={editFormData.isPublic}
                         onChange={(e) => setEditFormData({ ...editFormData, isPublic: e.target.checked })} />
                     <label className="form-check-label">Public</label>
+                </div>
+                <div className="mb-3">
+                    <label className="form-label">Tags</label>
+                    <TagInput
+                        value={editFormData.tags || []}
+                        onChange={(tags) => setEditFormData({ ...editFormData, tags })}
+                        apiUrl={api_url}
+                        placeholder="Type to search or add tags..."
+                    />
                 </div>
                 <hr />
                 <h6 className="mb-3">Fields</h6>

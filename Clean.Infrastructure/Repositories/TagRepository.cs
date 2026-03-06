@@ -19,9 +19,20 @@ public class TagRepository(DataContext context) : ITagRepository
         return (tags, total);
     }
 
-    public async Task<Tag> GetById(int id)
+    public async Task<Tag?> GetById(int id)
     {
         return await context.Tags.FirstOrDefaultAsync(t => t.Id == id);
+    }
+
+    public async Task<Tag?> GetByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        return await context.Tags.FirstOrDefaultAsync(t => t.Name == name.Trim());
+    }
+
+    public void Add(Tag tag)
+    {
+        context.Tags.Add(tag);
     }
 
     public async Task<int> Create(Tag tag)

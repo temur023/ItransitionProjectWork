@@ -11,7 +11,8 @@ namespace Clean.Application.Services.InventoryService;
 
 public class InventoryService(IInvetoryRepository repository
     , IHttpContextAccessor httpContextAccessor
-    , IUserRepository userRepository):IInvetoryService
+    , IUserRepository userRepository
+    , ITagRepository tagRepository) : IInvetoryService
 {
     private int? GetCurrentUserId() =>
         int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
@@ -32,7 +33,8 @@ public class InventoryService(IInvetoryRepository repository
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
-            UserAccesses = u.UserAccesses
+            UserAccesses = u.UserAccesses,
+            Tags = u.Tags?.Select(t => t.Name).ToList()
         });
         if (GetCurrentUserId() == null)
         {
@@ -62,12 +64,13 @@ public class InventoryService(IInvetoryRepository repository
             Description = inv.Description,
             Category = inv.Category,
             CustomIdFormatJson = inv.CustomIdFormatJson,
-            IsPublic =  inv.IsPublic,
+            IsPublic = inv.IsPublic,
             CreatorName = inv.CreatedBy.UserName,
             CreatedById = inv.CreatedById,
             Version = inv.Version,
-            ImageUrl =  inv.ImageUrl,
-            Title =  inv.Title,
+            ImageUrl = inv.ImageUrl,
+            Title = inv.Title,
+            Tags = inv.Tags?.Select(t => t.Name).ToList()
         };
         if (inv.IsPublic)
         {
@@ -103,6 +106,19 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         ImageUrl = dto.ImageUrl,
         Title = dto.Title,
     };
+    if (dto.Tags != null && dto.Tags.Count > 0)
+    {
+        foreach (var name in dto.Tags.Where(n => !string.IsNullOrWhiteSpace(n)))
+        {
+            var tag = await tagRepository.GetByName(name.Trim());
+            if (tag == null)
+            {
+                tag = new Tag { Name = name.Trim() };
+                tagRepository.Add(tag);
+            }
+            model.Tags.Add(tag);
+        }
+    }
     await repository.Create(model);
     var creator = await userRepository.GetById((int)currentUser);
     var inv = new InventoryGetDto()
@@ -118,8 +134,9 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         Version = model.Version,
         ImageUrl = model.ImageUrl,
         Title = model.Title,
+        Tags = model.Tags?.Select(t => t.Name).ToList()
     };
-    return new Response<InventoryGetDto>(200, "Inventory created",inv);
+    return new Response<InventoryGetDto>(200, "Inventory created", inv);
 }
 
 public async Task<Response<string>> Update(InventoryUpdateDto dto)
@@ -140,7 +157,22 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
     inventory.Description = dto.Description;
     inventory.Category = dto.Category;
     inventory.IsPublic = dto.IsPublic;
-    
+
+    inventory.Tags.Clear();
+    if (dto.Tags != null && dto.Tags.Count > 0)
+    {
+        foreach (var name in dto.Tags.Where(n => !string.IsNullOrWhiteSpace(n)))
+        {
+            var tag = await tagRepository.GetByName(name.Trim());
+            if (tag == null)
+            {
+                tag = new Tag { Name = name.Trim() };
+                tagRepository.Add(tag);
+            }
+            inventory.Tags.Add(tag);
+        }
+    }
+
     await repository.SaveChanges();
     return new Response<string>(200, "Inventory updated");
 }

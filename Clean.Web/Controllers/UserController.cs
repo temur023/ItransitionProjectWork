@@ -10,7 +10,7 @@ namespace ProjectWork.Controllers;
 [Route("api/[controller]")]
 public class UserController(IUserService service) : ControllerBase
 {
-    
+    [Authorize(Roles = "Admin")]
     [HttpGet("get-all")]
     public async Task<IActionResult> GetAll([FromQuery] UserFilter filter)
     {

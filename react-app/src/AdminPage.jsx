@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from "react-router-dom";
-
+import useTheme from "./useTheme"
 function AdminPage() {
+    const { theme, toggleTheme } = useTheme();
     const [users, setUsers] = useState([]);
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
@@ -10,14 +11,16 @@ function AdminPage() {
     const [checkedUsers, setCheckedUsers] = useState([]);
     const [message, setMessage] = useState({ text: "", type: "" });
     const [selectedUser, setSelectedUser] = useState(null);
+    const [activeTab, setActiveTab] = useState("admin-page  ");
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
     const [editForm, setEditForm] = useState({
         id: "",
         fullName: "",
         userName: "",
         email: "",
         password: "",
-        role: 2,
+        role: 1,
         isBlocked: false,
         language: 1,
         theme: 1
@@ -182,7 +185,7 @@ function AdminPage() {
             userName: user.userName ?? "",
             email: user.email ?? "",
             password: "",
-            role: user.role ?? 2,
+            role: user.role ?? 1,
             isBlocked: !!user.isBlocked,
             language: user.language ?? 1,
             theme: user.theme ?? 1
@@ -199,7 +202,7 @@ function AdminPage() {
             userName: "",
             email: "",
             password: "",
-            role: 2,
+            role: 1,
             isBlocked: false,
             language: 1,
             theme: 1
@@ -342,39 +345,43 @@ function AdminPage() {
                       AA
                     </button>
                   </li>
+                  <li className="nav-item">
+                      <button
+                        type="button"
+                        className="nav-link"
+                        onClick={toggleTheme}
+                        title="Toggle theme"
+                      >
+                        {theme === "light" ? "🌙" : "☀️"}
+                      </button>
+                    </li>
                 </ul>
             </div>
             <div className="container-fluid d-flex">
                 <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
-                    <ul className="nav nav-underline nav-fill flex-column mt-4">
-                        <li className="nav-item">
-                            <button
-                                type="button"
-                                className="nav-link text-dark fw-bolder"
-                                onClick={() => navigate("/dashboard")}
-                            >
-                                All Inventories
-                            </button>
-                        </li>
-                        <li className="nav-item">
-                            <button
-                                type="button"
-                                className={`nav-link text-dark fw-bolder ${activeAdminTab === "users" ? "active" : ""}`}
-                                onClick={() => setActiveAdminTab("users")}
-                            >
-                                Users Control
-                            </button>
-                        </li>
-                        <li className="nav-item">
-                            <button
-                                type="button"
-                                className={`nav-link text-dark fw-bolder ${activeAdminTab === "inventories" ? "active" : ""}`}
-                                onClick={() => setActiveAdminTab("inventories")}
-                            >
-                                Inventory Control
-                            </button>
-                        </li>
-                    </ul>
+                    <div className="d-flex flex-column gap-2 mt-4">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => navigate("/dashboard")}
+                      >
+                        All Inventories
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn ${activeAdminTab === "users" ? "btn-primary" : "btn-outline-secondary"}`}
+                        onClick={() => setActiveAdminTab("users")}
+                      >
+                        Users Control
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn ${activeAdminTab === "inventories" ? "btn-primary" : "btn-outline-secondary"}`}
+                        onClick={() => setActiveAdminTab("inventories")}
+                      >
+                        Inventory Control
+                      </button>
+                    </div>
                 </div>
                 <div className="col-md-9 p-4 mt-4 shadow-lg rounded-4">
                     {message.text && (
@@ -487,7 +494,7 @@ function AdminPage() {
                                         <td>{user.fullName}</td>
                                         <td>{user.userName}</td>
                                         <td>{user.email}</td>
-                                        <td>{user.role == 1 ? 'Admin' : 'User'}</td>
+                                        <td>{user.role == 0 ? 'Admin' : 'User'}</td>
                                         <td>{user.isBlocked ? 'Blocked' : 'Active'}</td>
                                     </tr>
                                 ))}
@@ -654,8 +661,8 @@ function AdminPage() {
                                                     value={editForm.role}
                                                     onChange={(e) => setEditForm(f => ({ ...f, role: Number(e.target.value) }))}
                                                 >
-                                                    <option value={1}>Admin</option>
-                                                    <option value={2}>User</option>
+                                                    <option value={0}>Admin</option>
+                                                    <option value={1}>User</option>
                                                 </select>
                                             </div>
 

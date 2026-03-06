@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
+import useTheme from "./useTheme";
 function RegisterPage(){
     const [formData, setFormData] = useState({
             userName: "",
@@ -12,17 +13,27 @@ function RegisterPage(){
             language:1,
             theme:1
         });
+    const { setPreferredTheme } = useTheme();
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
     function handleChange(e) {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === "theme") {
+          const v = Number(value);
+          setFormData({ ...formData, theme: v });
+          setPreferredTheme(v);
+          return;
+        }
+        setFormData({ ...formData, [name]: value });
     }
     const handleRegistration = async () => {
     try {
       const response = await axios.post(`${api_url}/api/User/create`, formData);
       const token = response.data.message || response.data.Message;
       localStorage.setItem("userToken", token);
+      setPreferredTheme(formData.theme);
       console.log("Success", response.data);
+      navigate("/login");
     } catch (error) {
       console.error("Failed", error);
     }
@@ -50,6 +61,13 @@ function RegisterPage(){
                 <div className="form-group col-md-12">
                   <label>Password</label>
                   <input type="password" value={formData.passwordHash} name="passwordHash" onChange={handleChange} className="form-control mb-3"/>
+                </div>
+                <div className="form-group col-md-12 mb-3">
+                  <label>Theme</label>
+                  <select className="form-select" name="theme" value={formData.theme} onChange={handleChange}>
+                    <option value={1}>Light</option>
+                    <option value={2}>Dark</option>
+                  </select>
                 </div>
               </div>
               <button type="button" onClick={handleRegistration} className="btn btn-primary w-100 mb-3">Sign up</button>

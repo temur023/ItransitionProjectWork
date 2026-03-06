@@ -48,3 +48,16 @@ C:/Users/irgas/RiderProjects/ProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Do
 /Users/fsdf/ProjectWork/Clean.Domain/obj/Debug/net10.0/refint/Clean.Domain.dll
 /Users/fsdf/ProjectWork/Clean.Domain/obj/Debug/net10.0/Clean.Domain.pdb
 /Users/fsdf/ProjectWork/Clean.Domain/obj/Debug/net10.0/ref/Clean.Domain.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\bin\Debug\net10.0\Clean.Domain.deps.json
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\bin\Debug\net10.0\Clean.Domain.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\bin\Debug\net10.0\Clean.Domain.pdb
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.csproj.AssemblyReference.cache
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.AssemblyInfoInputs.cache
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.AssemblyInfo.cs
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.csproj.CoreCompileInputs.cache
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.sourcelink.json
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\refint\Clean.Domain.dll
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\Clean.Domain.pdb
+C:\Users\irgas\RiderProjects\ProjectWork\Clean.Domain\obj\Debug\net10.0\ref\Clean.Domain.dll

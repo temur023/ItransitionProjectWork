@@ -7,8 +7,12 @@ import Dashboard from './Dashboard';
 import InventoryPage from './InventoryPage';
 import AdminPage from './AdminPage';
 import StatisticsPage from './StatisticsPage';
+import ProtectedRoute from './ProtectedRoute';
+import useTheme from "./useTheme";
 function App() {
-
+  // Ensure theme is applied even on pages that don't call useTheme (Login/Register).
+  useTheme();
+  
   return (
     <>
       <BrowserRouter>
@@ -18,7 +22,14 @@ function App() {
             <Route path="/user-page" element={<UserPage/>}></Route>
             <Route path="/dashboard" element={<Dashboard/>}></Route>
             <Route path="/inventory/:inventoryId" element={<InventoryPage/>}></Route>
-            <Route path='/admin-page' element={<AdminPage/>}></Route>
+            <Route 
+                path="/admin-page" 
+                element={
+                  <ProtectedRoute requiredRole={1}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                } 
+              />
             <Route path='/statistics' element={<StatisticsPage/>}></Route>
             <Route path="/" element={<Navigate to={"/login"} />}></Route>
         </Routes>

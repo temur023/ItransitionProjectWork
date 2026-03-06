@@ -17,4 +17,5 @@ public class InventoryCreateDto
     public Category Category { get; set; }
     public int CreatedById { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public List<string>? Tags { get; set; }
 }

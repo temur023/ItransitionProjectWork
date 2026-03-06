@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
+import useTheme from './useTheme';
 
 function StatisticsPage() {
     const [inventories, setInventories] = useState([]);
     const [message, setMessage] = useState({ text: "", type: "" });
     const api_url = "http://localhost:5137";
+    const { theme, toggleTheme } = useTheme();
     const [activeTab, setActiveTab] = useState("top");
     const navigate = useNavigate();
     const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
@@ -71,6 +73,16 @@ function StatisticsPage() {
                             AA
                         </button>
                     </li>
+                    <li className="nav-item">
+                      <button
+                        type="button"
+                        className="nav-link"
+                        onClick={toggleTheme}
+                        title="Toggle theme"
+                      >
+                        {theme === "light" ? "🌙" : "☀️"}
+                      </button>
+                    </li>
                 </ul>
             </div>
 
@@ -82,7 +94,7 @@ function StatisticsPage() {
                         <li className="nav-item">
                             <button
                                 type="button"
-                                className={`nav-link text-dark fw-bolder ${activeTab === "top" ? "active" : ""}`}
+                                className={`nav-link fw-bolder ${activeTab === "top" ? "active" : ""}`}
                                 onClick={() => setActiveTab("top")}
                             >
                                 Top Inventories
@@ -91,7 +103,7 @@ function StatisticsPage() {
                         <li className="nav-item">
                             <button
                                 type="button"
-                                className={`nav-link text-dark fw-bolder ${activeTab === "latest" ? "active" : ""}`}
+                                className={`nav-link fw-bolder ${activeTab === "latest" ? "active" : ""}`}
                                 onClick={() => setActiveTab("latest")}
                             >
                                 Latest Inventories

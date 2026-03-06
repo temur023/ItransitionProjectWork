@@ -27,7 +27,6 @@ public class TagController(ITagService service) : ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
-    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> Create(TagCreateDto dto)
     {
