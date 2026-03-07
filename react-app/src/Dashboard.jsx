@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
 import useTheme from './useTheme';
+import { useTranslation } from "react-i18next";
 function Dashboard() {
   const [inventories, setInventories] = useState([]);
+  const {t} = useTranslation();
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
   const [message, setMessage] = useState({ text: "", type: "" });
@@ -35,7 +37,13 @@ function Dashboard() {
   };
 
   const navigate = useNavigate();
-  const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
+  const categoryLabels = { 
+  1: t('equipment'), 
+  2: t('furniture'), 
+  3: t('book'), 
+  4: t('technology'), 
+  5: t('other') 
+};
   const totalPages = Math.ceil(total / filter.pageSize);
   const { theme, toggleTheme } = useTheme();
   const fetchInventories = useCallback(async () => {
@@ -147,13 +155,14 @@ function Dashboard() {
     <>
       <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
         <ul className="nav nav-pills w-100 gap-2 align-items-center">
+          {/* <div>{t('welcomeMessage')}</div> */}
           <li className="nav-item">
             <button
               type="button"
               className="nav-link active"
               onClick={() => navigate("/dashboard")}
             >
-              Dashboard
+              {t('dashboard')}
             </button>
           </li>
           <li className="nav-item">
@@ -162,7 +171,7 @@ function Dashboard() {
               className="nav-link active"
               onClick={() => navigate("/statistics")}
             >
-              Statistics
+              {t('statistics')}
             </button>
           </li>
 
@@ -195,7 +204,7 @@ function Dashboard() {
               className={`btn ${activeTab === "dashboard" ? "btn-primary" : "btn-outline-secondary"}`}
               onClick={() => setActiveTab("dashboard")}
             >
-              All Inventories
+              {t('allInventories')}
             </button>
             
             {isAdmin() && (
@@ -204,7 +213,7 @@ function Dashboard() {
                 className="btn btn-outline-secondary"
                 onClick={() => navigate("/admin-page")}
               >
-                Admin Page
+                {t('adminPage')}
               </button>
             )}
           </div>
@@ -216,12 +225,12 @@ function Dashboard() {
           {isSearching ? (
             <>
               <div className="d-flex justify-content-between align-items-center pb-2">
-                <h4 className="mb-0">Search Results</h4>
+                <h4 className="mb-0">{t('dashboard_searchResults')}</h4>
                 <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
                   <input
                     type="search"
                     className="form-control"
-                    placeholder="Search inventories..."
+                    placeholder={t('dashboard_searchInventories')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -230,16 +239,16 @@ function Dashboard() {
               <table className="table table-striped table-hover">
                 <thead>
                   <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Tags</th>
-                    <th>Creator Username</th>
+                    <th>{t('title')}</th>
+                    <th>{t('category')}</th>
+                    <th>{t('tags')}</th>
+                    <th>{t('creator')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {searchResults.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-muted">No inventories found.</td>
+                      <td colSpan={4} className="text-muted">{t('dashboard_noInventories')}.</td>
                     </tr>
                   ) : (
                     searchResults.map((inv) => (
@@ -258,7 +267,7 @@ function Dashboard() {
             <>
               {tags.length > 0 && (
                 <div className="mb-2">
-                  <span className="me-2 text-muted small">Tags (click to toggle):</span>
+                  <span className="me-2 text-muted small">{t('tags')} (click to toggle):</span>
                   <div className="d-flex flex-wrap gap-1">
                     {tags.map((t) => (
                       <button
@@ -275,25 +284,25 @@ function Dashboard() {
               )}
               <div className="d-flex justify-content-between align-items-center pb-2 flex-wrap gap-2">
                 <h4 className="mb-0">
-                  Inventories with tag{selectedTags.length !== 1 ? "s" : ""}: &quot;{selectedTags.join(", ")}&quot;
+                  {t('inventories_withTags')}: &quot;{selectedTags.join(", ")}&quot;
                 </h4>
                 <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedTags([])}>
-                  Clear tags
+                  {t('clear_tags')}
                 </button>
               </div>
               <table className="table table-striped table-hover">
                 <thead>
                   <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Tags</th>
-                    <th>Creator Username</th>
+                    <th>{t('title')}</th>
+                    <th>{t('category')}</th>
+                    <th>{t('tags')}</th>
+                    <th>{t('creator')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {inventoriesByTag.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-muted">No inventories with these tags.</td>
+                      <td colSpan={4} className="text-muted">{t('dashboard_noInventoriesWithTags')}</td>
                     </tr>
                   ) : (
                     inventoriesByTag.map((inv) => (
@@ -311,12 +320,12 @@ function Dashboard() {
           ) : (
             <>
               <div className="d-flex justify-content-between align-items-center pb-2">
-                <h4 className="mb-0">Available Inventories</h4>
+                <h4 className="mb-0">{t('dashboard_availableInventories')}</h4>
                 <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
                   <input
                     type="search"
                     className="form-control"
-                    placeholder="Search inventories..."
+                    placeholder={t('dashboard_searchInventories')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -324,7 +333,7 @@ function Dashboard() {
               </div>
               {tags.length > 0 && (
                 <div className="mb-3">
-                  <span className="me-2 text-muted small">Tags:</span>
+                  <span className="me-2 text-muted small">{t('tags')}:</span>
                   <div className="d-flex flex-wrap gap-1">
                     {tags.map((t) => (
                       <button
@@ -342,10 +351,10 @@ function Dashboard() {
               <table className="table table-striped table-hover">
                 <thead>
                   <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Tags</th>
-                    <th>Creator Username</th>
+                    <th>{t('title')}</th>
+                    <th>{t('category')}</th>
+                    <th>{t('tags')}</th>
+                    <th>{t('creator')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,7 +376,7 @@ function Dashboard() {
                       onClick={() => setFilter(prev => ({ ...prev, pageNumber: prev.pageNumber - 1 }))}
                       disabled={filter.pageNumber <= 1}
                     >
-                      Previous
+                      {t('previous')}
                     </button>
                   </li>
                   {[...Array(totalPages)].map((_, index) => {
@@ -389,7 +398,7 @@ function Dashboard() {
                       onClick={() => setFilter(prev => ({ ...prev, pageNumber: prev.pageNumber + 1 }))}
                       disabled={filter.pageNumber >= totalPages}
                     >
-                      Next
+                      {t('next')}
                     </button>
                   </li>
                 </ul>

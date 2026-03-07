@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from "react-router-dom";
 import useTheme from "./useTheme"
+import { useTranslation } from "react-i18next";
 function AdminPage() {
     const { theme, toggleTheme } = useTheme();
     const [users, setUsers] = useState([]);
+    const { t, i18n } = useTranslation();
+    const langMap = { 1: 'en', 2: 'ru' };
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
@@ -39,7 +42,13 @@ function AdminPage() {
     const invTotalPages = Math.ceil(invTotal / invFilter.pageSize);
     const [checkedInvs, setCheckedInvs] = useState([]);
     const [invSearch, setInvSearch] = useState("");
-    const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
+    const categoryLabels = {
+        1: t('equipment'),
+        2: t('furniture'),
+        3: t('book'),
+        4: t('technology'),
+        5: t('other')
+    };
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -316,71 +325,71 @@ function AdminPage() {
     return (
         <>
             <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-               <ul className="nav nav-pills w-100 gap-2 align-items-center">
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/dashboard")}
-                    >
-                      Dashboard
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button
-                      type="button"
-                      className="nav-link active"
-                      onClick={() => navigate("/statistics")}
-                    >
-                      Statistics
-                    </button>
-                  </li>
-                    
-                  <li className="ms-auto nav-item">
-                    <button
-                      type="button"
-                      className="nav-link"
-                      onClick={() => navigate("/user-page")}
-                    >
-                      AA
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                      <button
-                        type="button"
-                        className="nav-link"
-                        onClick={toggleTheme}
-                        title="Toggle theme"
-                      >
-                        {theme === "light" ? "🌙" : "☀️"}
-                      </button>
+                <ul className="nav nav-pills w-100 gap-2 align-items-center">
+                    <li className="nav-item">
+                        <button
+                            type="button"
+                            className="nav-link active"
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            {t('dashboard')}
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            type="button"
+                            className="nav-link active"
+                            onClick={() => navigate("/statistics")}
+                        >
+                            {t('statistics')}
+                        </button>
+                    </li>
+
+                    <li className="ms-auto nav-item">
+                        <button
+                            type="button"
+                            className="nav-link"
+                            onClick={() => navigate("/user-page")}
+                        >
+                            AA
+                        </button>
+                    </li>
+                    <li className="nav-item">
+                        <button
+                            type="button"
+                            className="nav-link"
+                            onClick={toggleTheme}
+                            title="Toggle theme"
+                        >
+                            {theme === "light" ? "🌙" : "☀️"}
+                        </button>
                     </li>
                 </ul>
             </div>
             <div className="container-fluid d-flex">
                 <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4 ">
                     <div className="d-flex flex-column gap-2 mt-4">
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={() => navigate("/dashboard")}
-                      >
-                        All Inventories
-                      </button>
-                      <button
-                        type="button"
-                        className={`btn ${activeAdminTab === "users" ? "btn-primary" : "btn-outline-secondary"}`}
-                        onClick={() => setActiveAdminTab("users")}
-                      >
-                        Users Control
-                      </button>
-                      <button
-                        type="button"
-                        className={`btn ${activeAdminTab === "inventories" ? "btn-primary" : "btn-outline-secondary"}`}
-                        onClick={() => setActiveAdminTab("inventories")}
-                      >
-                        Inventory Control
-                      </button>
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            {t('allInventories')}
+                        </button>
+                        <button
+                            type="button"
+                            className={`btn ${activeAdminTab === "users" ? "btn-primary" : "btn-outline-secondary"}`}
+                            onClick={() => setActiveAdminTab("users")}
+                        >
+                            {t('user_control')}
+                        </button>
+                        <button
+                            type="button"
+                            className={`btn ${activeAdminTab === "inventories" ? "btn-primary" : "btn-outline-secondary"}`}
+                            onClick={() => setActiveAdminTab("inventories")}
+                        >
+                            {t('inventory_control')}
+                        </button>
                     </div>
                 </div>
                 <div className="col-md-9 p-4 mt-4 shadow-lg rounded-4">
@@ -391,12 +400,12 @@ function AdminPage() {
                     )}
                     {activeAdminTab === "users" && (<>
                         <div className="d-flex justify-content-between align-items-center pb-2">
-                            <h4 className="mb-0">Users</h4>
+                            <h4 className="mb-0">{t("users")}</h4>
                             <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
                                 <input
                                     type="search"
                                     className="form-control"
-                                    placeholder="Search users..."
+                                    placeholder={t('search_users')}
                                     value={userSearch}
                                     onChange={(e) => setUserSearch(e.target.value)}
                                 />
@@ -407,7 +416,7 @@ function AdminPage() {
                                 className="btn btn-danger"
                                 onClick={deleteSelected}
                                 disabled={loading || checkedUsers.length === 0}
-                                title="Delete selected users"
+                                title={t('delete_users')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
@@ -417,7 +426,7 @@ function AdminPage() {
                                 className="btn btn-secondary"
                                 onClick={blockSelected}
                                 disabled={loading || checkedUsers.length === 0}
-                                title="Block selected users"
+                                title={t('block_selected')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-ban" viewBox="0 0 16 16">
                                     <path d="M15 8a6.97 6.97 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8M2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0" />
@@ -427,7 +436,7 @@ function AdminPage() {
                                 className="btn btn-outline-secondary"
                                 onClick={unblockSelected}
                                 disabled={loading || checkedUsers.length === 0}
-                                title="Unblock selected users"
+                                title={t('unblock_selected')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-ban" viewBox="0 0 16 16">
                                     <path d="M15 8a6.97 6.97 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8M2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0" />
@@ -437,7 +446,7 @@ function AdminPage() {
                                 className="btn btn-outline-secondary"
                                 onClick={adminSelected}
                                 disabled={loading || checkedUsers.length === 0}
-                                title="Admin selected users"
+                                title={t('admin_selected')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M2 20h20" />
@@ -450,7 +459,7 @@ function AdminPage() {
                                 className="btn btn-outline-secondary"
                                 onClick={unadminSelected}
                                 disabled={loading || checkedUsers.length === 0}
-                                title="Unadmin selected users"
+                                title={t('unadmin_selected')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M2 20h20" />
@@ -469,11 +478,11 @@ function AdminPage() {
                                         />
                                     </th>
                                     <th>Id</th>
-                                    <th>Full Name</th>
-                                    <th>Username</th>
+                                    <th>{t('register_fullName')}</th>
+                                    <th>{t('register_username')}</th>
                                     <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
+                                    <th>{t('role')}</th>
+                                    <th>{t("status")}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -482,7 +491,7 @@ function AdminPage() {
                                         key={user.id}
                                         style={{ cursor: "pointer" }}
                                         onClick={() => openEditModal(user)}
-                                        title="Click to update user"
+                                        title={t('click_to_update')}
                                     >
                                         <td onClick={(e) => e.stopPropagation()}>
                                             <input type="checkbox" className="form-check-input"
@@ -494,8 +503,8 @@ function AdminPage() {
                                         <td>{user.fullName}</td>
                                         <td>{user.userName}</td>
                                         <td>{user.email}</td>
-                                        <td>{user.role == 0 ? 'Admin' : 'User'}</td>
-                                        <td>{user.isBlocked ? 'Blocked' : 'Active'}</td>
+                                        <td>{user.role == 0 ? t('admin') : t('user')}</td>
+                                        <td>{user.isBlocked ? t('blocked') : t('active')}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -503,7 +512,7 @@ function AdminPage() {
                         <nav>
                             <ul className="pagination d-flex justify-content-center">
                                 <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
-                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>Previous</button>
+                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>{t('previous')}</button>
                                 </li>
                                 {[...Array(totalPages)].map((_, index) => {
                                     const pageNum = index + 1;
@@ -514,7 +523,7 @@ function AdminPage() {
                                     );
                                 })}
                                 <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
-                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>Next</button>
+                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>{t('next')}</button>
                                 </li>
                             </ul>
                         </nav>
@@ -522,12 +531,12 @@ function AdminPage() {
 
                     {activeAdminTab === "inventories" && (<>
                         <div className="d-flex justify-content-between align-items-center pb-2">
-                            <h4 className="mb-0">Inventories</h4>
+                            <h4 className="mb-0">{t('dashboard_availableInventories')}</h4>
                             <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
                                 <input
                                     type="search"
                                     className="form-control"
-                                    placeholder="Search inventories..."
+                                    placeholder={t('dashboard_searchInventories')}
                                     value={invSearch}
                                     onChange={(e) => setInvSearch(e.target.value)}
                                 />
@@ -538,7 +547,7 @@ function AdminPage() {
                                 className="btn btn-danger"
                                 onClick={deleteSelectedInvs}
                                 disabled={loading || checkedInvs.length === 0}
-                                title="Delete selected inventories"
+                                title={t('user_deleteSelectedInventories')}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
@@ -555,10 +564,10 @@ function AdminPage() {
                                         />
                                     </th>
                                     <th>Id</th>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Creator</th>
-                                    <th>Public</th>
+                                    <th>{t('title')}</th>
+                                    <th>{t('category')}</th>
+                                    <th>{t('creator')}</th>
+                                    <th>{t('public')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -584,7 +593,7 @@ function AdminPage() {
                                             <td>{inv.title}</td>
                                             <td>{categoryLabels[inv.category] || inv.category}</td>
                                             <td>{inv.creatorName}</td>
-                                            <td>{inv.isPublic ? 'Yes' : 'No'}</td>
+                                            <td>{inv.isPublic ? t('yes') : t('no')}</td>
                                         </tr>
                                     ))}
                             </tbody>
@@ -592,7 +601,7 @@ function AdminPage() {
                         <nav>
                             <ul className="pagination d-flex justify-content-center">
                                 <li className={`page-item ${invFilter.pageNumber <= 1 ? 'disabled' : ''}`}>
-                                    <button className="page-link" onClick={() => setInvFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={invFilter.pageNumber <= 1}>Previous</button>
+                                    <button className="page-link" onClick={() => setInvFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={invFilter.pageNumber <= 1}>{t('previous')}</button>
                                 </li>
                                 {[...Array(invTotalPages)].map((_, index) => {
                                     const pageNum = index + 1;
@@ -603,7 +612,7 @@ function AdminPage() {
                                     );
                                 })}
                                 <li className={`page-item ${invFilter.pageNumber >= invTotalPages ? 'disabled' : ''}`}>
-                                    <button className="page-link" onClick={() => setInvFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={invFilter.pageNumber >= invTotalPages}>Next</button>
+                                    <button className="page-link" onClick={() => setInvFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={invFilter.pageNumber >= invTotalPages}>{t('next')}</button>
                                 </li>
                             </ul>
                         </nav>
@@ -616,7 +625,7 @@ function AdminPage() {
                             <div className="modal-dialog modal-lg" role="document">
                                 <div className="modal-content">
                                     <div className="modal-header">
-                                        <h5 className="modal-title">Update user</h5>
+                                        <h5 className="modal-title">{t('update_user')}</h5>
                                         <button type="button" className="btn-close" aria-label="Close" onClick={closeEditModal} />
                                     </div>
                                     <div className="modal-body">
@@ -626,7 +635,7 @@ function AdminPage() {
                                                 <input className="form-control" value={editForm.id} disabled />
                                             </div>
                                             <div className="col-md-9">
-                                                <label className="form-label">Full name</label>
+                                                <label className="form-label">{t('register_fullName')}</label>
                                                 <input
                                                     className="form-control"
                                                     value={editForm.fullName}
@@ -635,12 +644,12 @@ function AdminPage() {
                                             </div>
 
                                             <div className="col-md-6">
-                                                <label className="form-label">Username</label>
+                                                <label className="form-label">{t('register_username')}</label>
                                                 <input
                                                     className="form-control"
                                                     value={editForm.userName}
                                                     disabled
-                                                    title="Username cannot be changed"
+                                                    title={t('username_cannot_change')}
                                                 />
                                             </div>
                                             <div className="col-md-6">
@@ -650,12 +659,12 @@ function AdminPage() {
                                                     className="form-control"
                                                     value={editForm.email}
                                                     disabled
-                                                    title="Email cannot be changed"
+                                                    title={t('email_cannot_change')}
                                                 />
                                             </div>
 
                                             <div className="col-md-6">
-                                                <label className="form-label">Role</label>
+                                                <label className="form-label">{t('role')}</label>
                                                 <select
                                                     className="form-select"
                                                     value={editForm.role}
@@ -676,36 +685,40 @@ function AdminPage() {
                                                         onChange={(e) => setEditForm(f => ({ ...f, isBlocked: e.target.checked }))}
                                                     />
                                                     <label className="form-check-label" htmlFor="isBlocked">
-                                                        Blocked
+                                                        {t('blocked')}
                                                     </label>
                                                 </div>
                                             </div>
 
                                             <div className="col-md-6">
-                                                <label className="form-label">Language</label>
+                                                <label className="form-label">{t('language')}</label>
                                                 <select
                                                     className="form-select"
                                                     value={editForm.language}
-                                                    onChange={(e) => setEditForm(f => ({ ...f, language: Number(e.target.value) }))}
+                                                    onChange={(e) => {
+                                                        const v = Number(e.target.value);
+                                                        setEditForm(f => ({ ...f, language: v }));
+                                                        i18n.changeLanguage(langMap[v] || 'en');
+                                                    }}
                                                 >
                                                     <option value={1}>English</option>
-                                                    <option value={2}>Russian</option>
+                                                    <option value={2}>Русский</option>
                                                 </select>
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Theme</label>
+                                                <label className="form-label">{t('theme')}</label>
                                                 <select
                                                     className="form-select"
                                                     value={editForm.theme}
                                                     onChange={(e) => setEditForm(f => ({ ...f, theme: Number(e.target.value) }))}
                                                 >
-                                                    <option value={1}>Light</option>
-                                                    <option value={2}>Dark</option>
+                                                    <option value={1}>{t('light')}</option>
+                                                    <option value={2}>{t('dark')}</option>
                                                 </select>
                                             </div>
 
                                             <div className="col-12">
-                                                <label className="form-label">Password (leave blank to keep current)</label>
+                                                <label className="form-label">{t('register_password')} ({t('leave_blank')})</label>
                                                 <input
                                                     type="password"
                                                     className="form-control"
@@ -717,10 +730,10 @@ function AdminPage() {
                                     </div>
                                     <div className="modal-footer">
                                         <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={saving}>
-                                            Cancel
+                                            {t('cancel')}
                                         </button>
                                         <button type="button" className="btn btn-primary" onClick={updateUser} disabled={saving}>
-                                            {saving ? "Saving..." : "Save changes"}
+                                            {saving ? t("saving") : t("save")}
                                         </button>
                                     </div>
                                 </div>

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from 'axios';
 import { useNavigate, useParams } from "react-router-dom";
 import TagInput from "./TagInput";
-import useTheme from "./useTheme"
+import useTheme from "./useTheme";
+import { useTranslation } from "react-i18next";
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -40,6 +41,7 @@ function Modal({ isOpen, onClose, title, children, footer }) {
 
 function InventoryPage() {
     const { theme, toggleTheme } = useTheme();
+    const { t } = useTranslation();
     const [items, setItems] = useState([]);
     const [checkedItems, setCheckedItems] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -95,7 +97,7 @@ function InventoryPage() {
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const searchTimerRef = useRef(null);
 
-    const categoryLabels = { 1: "Equipment", 2: "Furniture", 3: "Book", 4: "Technology", 5: "Other" };
+    const categoryLabels = { 1: t('equipment'), 2: t('furniture'), 3: t('book'), 4: t('technology'), 5: t('other') };
     const totalPages = Math.ceil(total / filter.pageSize);
 
     // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -594,23 +596,23 @@ function InventoryPage() {
             <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
                 <ul className="nav nav-pills w-100 gap-2 align-items-center">
                     <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/dashboard")}>Dashboard</button>
+                        <button type="button" className="nav-link active" onClick={() => navigate("/dashboard")}>{t('dashboard')}</button>
                     </li>
                     <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>Statistics</button>
+                        <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>{t('statistics')}</button>
                     </li>
                     <li className="ms-auto nav-item">
                         <button type="button" className="nav-link" onClick={() => navigate("/user-page")}>AA</button>
                     </li>
                     <li className="nav-item">
-                      <button
-                        type="button"
-                        className="nav-link"
-                        onClick={toggleTheme}
-                        title="Toggle theme"
-                      >
-                        {theme === "light" ? "🌙" : "☀️"}
-                      </button>
+                        <button
+                            type="button"
+                            className="nav-link"
+                            onClick={toggleTheme}
+                            title="Toggle theme"
+                        >
+                            {theme === "light" ? "🌙" : "☀️"}
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -619,14 +621,14 @@ function InventoryPage() {
                 {/* Sidebar */}
                 <div className="col-sm-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4">
                     <ul className="nav nav-underline nav-fill flex-column mt-4">
-                        {["items", "discussion", "about"].map(tab => (
+                        {[["items", t('inventory_items')], ["discussion", t('inventory_discussion')], ["about", t('inventory_about_tab')]].map(([tab, label]) => (
                             <li className="nav-item" key={tab}>
                                 <button
                                     type="button"
                                     className={`nav-link fw-bolder ${activeTab === tab ? "active" : ""}`}
                                     onClick={() => setActiveTab(tab)}
                                 >
-                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                    {label}
                                 </button>
                             </li>
                         ))}
@@ -643,7 +645,7 @@ function InventoryPage() {
                     )}
 
                     <div className="d-flex justify-content-center align-items-center">
-                        <h1>{`Inventory ${inventoryId}`}</h1>
+                        <h1>{`${t('inventory_title')} ${inventoryId}`}</h1>
                     </div>
 
                     <div className="pt-3">
@@ -655,7 +657,7 @@ function InventoryPage() {
                                         <input
                                             type="search"
                                             className="form-control"
-                                            placeholder="Search items..."
+                                            placeholder={t('inventory_searchItems')}
                                             value={itemSearch}
                                             onChange={(e) => setItemSearch(e.target.value)}
                                         />
@@ -664,14 +666,14 @@ function InventoryPage() {
                                         className="btn btn-danger"
                                         onClick={deleteSelected}
                                         disabled={loading || checkedItems.length === 0}
-                                        title="Delete selected items"
+                                        title={t('inventory_deleteSelected')}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
                                         </svg>
                                     </button>
-                                    <button className="btn btn-primary" onClick={openEditModal}>Edit Inventory</button>
-                                    <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>+ New Item</button>
+                                    <button className="btn btn-primary" onClick={openEditModal}>{t('inventory_editInventory')}</button>
+                                    <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>{t('inventory_newItem')}</button>
                                 </div>
 
                                 <table className="table table-striped table-hover">
@@ -683,10 +685,10 @@ function InventoryPage() {
                                                     checked={items.length > 0 && checkedItems.length === items.length}
                                                 />
                                             </th>
-                                            <th>Custom Id</th>
-                                            <th>Name</th>
+                                            <th>{t('inventory_customId')}</th>
+                                            <th>{t('name')}</th>
                                             {inventoryFields.map(f => <th key={f.id}>{f.title}</th>)}
-                                            <th style={{ width: 120 }}>Likes</th>
+                                            <th style={{ width: 120 }}>{t('inventory_likes')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -711,7 +713,7 @@ function InventoryPage() {
                                                         className={`btn btn-sm ${likedByMe[item.id] ? "btn-danger" : "btn-outline-danger"}`}
                                                         onClick={() => toggleLike(item.id)}
                                                         disabled={!!likeBusy[item.id]}
-                                                        title={likedByMe[item.id] ? "Unlike" : "Like"}
+                                                        title={likedByMe[item.id] ? t('inventory_unlike') : t('inventory_like')}
                                                     >
                                                         <ThumbsUpIcon filled={!!likedByMe[item.id]} /> {likeCounts[item.id] ?? 0}
                                                     </button>
@@ -727,22 +729,22 @@ function InventoryPage() {
                         {activeTab === "discussion" && (
                             <div className="card h-100">
                                 <div className="card-header d-flex justify-content-between align-items-center">
-                                    <div>Discussion</div>
+                                    <div>{t('inventory_discussion')}</div>
                                     <button className="btn btn-sm btn-outline-secondary" onClick={fetchComments} disabled={commentsLoading}>
-                                        Refresh
+                                        {t('inventory_refresh')}
                                     </button>
                                 </div>
                                 <div className="card-body">
                                     <div className="mb-3" style={{ maxHeight: 600, overflowY: "auto" }}>
                                         {commentsLoading ? (
-                                            <div className="text-muted">Loading comments...</div>
+                                            <div className="text-muted">{t('inventory_loadingComments')}</div>
                                         ) : comments.length === 0 ? (
-                                            <div className="text-muted">No comments yet.</div>
+                                            <div className="text-muted">{t('inventory_noComments')}</div>
                                         ) : (
                                             comments.map(c => {
                                                 const isAuthor = c.userId === me;
                                                 const canDelete = isAuthor || admin;
-                                                const author = isAuthor ? "You" : `User #${c.userId}`;
+                                                const author = isAuthor ? t('inventory_you') : `${t('inventory_userNum')} #${c.userId}`;
                                                 return (
                                                     <div key={c.id} className="border rounded p-2 mb-2">
                                                         <div className="d-flex justify-content-between">
@@ -754,7 +756,7 @@ function InventoryPage() {
                                                         {canDelete && (
                                                             <div className="mt-2 d-flex justify-content-end">
                                                                 <button className="btn btn-sm btn-outline-danger" onClick={() => deleteComment(c.id)}>
-                                                                    Delete
+                                                                    {t('inventory_delete')}
                                                                 </button>
                                                             </div>
                                                         )}
@@ -766,14 +768,14 @@ function InventoryPage() {
                                     <div className="input-group">
                                         <input
                                             className="form-control"
-                                            placeholder="Write a comment..."
+                                            placeholder={t('inventory_writeComment')}
                                             value={commentText}
                                             onChange={(e) => setCommentText(e.target.value)}
                                             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); createComment(); } }}
                                             disabled={commentSubmitting}
                                         />
                                         <button className="btn btn-primary" onClick={createComment} disabled={commentSubmitting || !commentText.trim()}>
-                                            Send
+                                            {t('inventory_send')}
                                         </button>
                                     </div>
                                 </div>
@@ -785,28 +787,28 @@ function InventoryPage() {
                             <div className="d-flex flex-column p-3 shadow-lg m-4 rounded-3">
                                 <h5>{inventoryData?.title || `Inventory ${inventoryId}`}</h5>
                                 <div className="mb-3">
-                                    <label className="fw-bold">Description</label>
-                                    <p className="text-muted">{inventoryData?.description || "No description"}</p>
+                                    <label className="fw-bold">{t('description')}</label>
+                                    <p className="text-muted">{inventoryData?.description || t('inventory_noDescription')}</p>
                                 </div>
                                 <div className="mb-3">
-                                    <label className="fw-bold">Category</label>
-                                    <p className="text-muted">{categoryLabels[inventoryData?.category] || "Unknown"}</p>
+                                    <label className="fw-bold">{t('category')}</label>
+                                    <p className="text-muted">{categoryLabels[inventoryData?.category] || inventoryData?.category}</p>
                                 </div>
                                 <div className="mb-3">
-                                    <label className="fw-bold">Visibility</label>
-                                    <p className="text-muted">{inventoryData?.isPublic ? "Public" : "Private"}</p>
+                                    <label className="fw-bold">{t('inventory_visibility')}</label>
+                                    <p className="text-muted">{inventoryData?.isPublic ? t('public') : t('private')}</p>
                                 </div>
                                 <hr />
-                                <h6>Fields</h6>
+                                <h6>{t('inventory_fields')}</h6>
                                 {allFields.length === 0 ? (
-                                    <p className="text-muted">No fields defined for this inventory.</p>
+                                    <p className="text-muted">{t('inventory_noFields')}</p>
                                 ) : (
                                     <div className="d-flex flex-column gap-3 mt-2">
                                         {allFields.map(field => (
                                             <div key={field.id} className="border rounded p-2">
                                                 <span className="badge bg-secondary me-2">{field.title}</span>
-                                                {field.showInTable && <span className="badge bg-info text-dark me-2">Shown in table</span>}
-                                                <p className="text-muted small mb-0 mt-1">{field.description || "No description"}</p>
+                                                {field.showInTable && <span className="badge bg-info text-dark me-2">{t('inventory_shownInTable')}</span>}
+                                                <p className="text-muted small mb-0 mt-1">{field.description || t('inventory_noDescription')}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -822,7 +824,7 @@ function InventoryPage() {
                 <nav>
                     <ul className="pagination d-flex justify-content-center">
                         <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>Previous</button>
+                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>{t('previous')}</button>
                         </li>
                         {[...Array(totalPages)].map((_, index) => {
                             const pageNum = index + 1;
@@ -833,50 +835,50 @@ function InventoryPage() {
                             );
                         })}
                         <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>Next</button>
+                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>{t('next')}</button>
                         </li>
                     </ul>
                 </nav>
             )}
 
             {/* Create Item Modal */}
-            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormData({ name: "", description: "" }); }} title="Create New Item"
-                footer={<button className="btn btn-primary" onClick={createItem}>Create</button>}
+            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormData({ name: "", description: "" }); }} title={t('inventory_createNewItem')}
+                footer={<button className="btn btn-primary" onClick={createItem}>{t('inventory_create')}</button>}
             >
                 <div className="mb-3">
-                    <label className="form-label">Name</label>
+                    <label className="form-label">{t('name')}</label>
                     <input type="text" className="form-control" value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">{t('description')}</label>
                     <textarea className="form-control" value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                 </div>
             </Modal>
 
             {/* Edit Inventory Modal */}
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Inventory"
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title={t('inventory_editInv')}
                 footer={
                     <div className="d-flex gap-2">
-                        <button className="btn btn-outline-secondary" onClick={addField}>+ Add Field</button>
-                        <button className="btn btn-outline-secondary" onClick={addAccessUsers}>+ Add User</button>
-                        <button className="btn btn-primary" onClick={updateInventory}>Save</button>
+                        <button className="btn btn-outline-secondary" onClick={addField}>{t('inventory_addField')}</button>
+                        <button className="btn btn-outline-secondary" onClick={addAccessUsers}>{t('inventory_addUser')}</button>
+                        <button className="btn btn-primary" onClick={updateInventory}>{t('save')}</button>
                     </div>
                 }
             >
                 <div className="mb-3">
-                    <label className="form-label">Title</label>
+                    <label className="form-label">{t('title')}</label>
                     <input type="text" className="form-control" value={editFormData.title}
                         onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })} />
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">{t('description')}</label>
                     <textarea className="form-control" value={editFormData.description}
                         onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })} />
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Category</label>
+                    <label className="form-label">{t('category')}</label>
                     <select className="form-select" value={editFormData.category}
                         onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}>
                         {Object.entries(categoryLabels).map(([val, label]) => (
@@ -887,63 +889,63 @@ function InventoryPage() {
                 <div className="mb-3 form-check">
                     <input type="checkbox" className="form-check-input" checked={editFormData.isPublic}
                         onChange={(e) => setEditFormData({ ...editFormData, isPublic: e.target.checked })} />
-                    <label className="form-check-label">Public</label>
+                    <label className="form-check-label">{t('public')}</label>
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Tags</label>
+                    <label className="form-label">{t('tags')}</label>
                     <TagInput
                         value={editFormData.tags || []}
                         onChange={(tags) => setEditFormData({ ...editFormData, tags })}
                         apiUrl={api_url}
-                        placeholder="Type to search or add tags..."
+                        placeholder={t('inventory_tagsPlaceholder')}
                     />
                 </div>
                 <hr />
-                <h6 className="mb-3">Fields</h6>
-                {fields.length === 0 && <p className="text-muted small">No fields yet.</p>}
+                <h6 className="mb-3">{t('inventory_fields')}</h6>
+                {fields.length === 0 && <p className="text-muted small">{t('inventory_noFieldsYet')}</p>}
                 {fields.map((field, index) => (
                     <div key={index} className="border rounded p-3 mb-2 position-relative">
                         <button type="button" className="btn-close position-absolute top-0 end-0 m-2" onClick={() => removeField(index)} />
-                        {field.isExisting && <span className="badge bg-secondary mb-2">Existing</span>}
+                        {field.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
                         <div className="mb-2">
-                            <label className="form-label small">Title</label>
+                            <label className="form-label small">{t('title')}</label>
                             <input type="text" className="form-control form-control-sm" value={field.title}
                                 onChange={(e) => updateField(index, "title", e.target.value)} />
                         </div>
                         <div className="mb-2">
-                            <label className="form-label small">Description</label>
+                            <label className="form-label small">{t('description')}</label>
                             <input type="text" className="form-control form-control-sm" value={field.description}
                                 onChange={(e) => updateField(index, "description", e.target.value)} />
                         </div>
                         <div className="mb-2">
-                            <label className="form-label small">Type</label>
+                            <label className="form-label small">{t('inventory_fieldType')}</label>
                             <select className="form-select form-select-sm" value={field.type}
                                 onChange={(e) => updateField(index, "type", e.target.value)} disabled={field.isExisting}>
-                                <option value={1}>Single Lined Text</option>
-                                <option value={2}>Multi Lined Text</option>
-                                <option value={3}>Number</option>
-                                <option value={4}>Boolean</option>
-                                <option value={5}>Link</option>
+                                <option value={1}>{t('inventory_singleLinedText')}</option>
+                                <option value={2}>{t('inventory_multiLinedText')}</option>
+                                <option value={3}>{t('inventory_number')}</option>
+                                <option value={4}>{t('inventory_boolean')}</option>
+                                <option value={5}>{t('inventory_link')}</option>
                             </select>
                         </div>
                         <div className="form-check">
                             <input type="checkbox" className="form-check-input" checked={field.showInTable}
                                 onChange={(e) => updateField(index, "showInTable", e.target.checked)} />
-                            <label className="form-check-label small">Show in Table</label>
+                            <label className="form-check-label small">{t('inventory_showInTable')}</label>
                         </div>
                     </div>
                 ))}
                 <hr />
-                <h6 className="mb-3">Users with Access</h6>
-                {accessUsers.length === 0 && <p className="text-muted small">No users yet.</p>}
+                <h6 className="mb-3">{t('inventory_usersWithAccess')}</h6>
+                {accessUsers.length === 0 && <p className="text-muted small">{t('inventory_noUsersYet')}</p>}
                 {accessUsers.map((user, index) => (
                     <div key={index} className="border rounded p-3 mb-2 position-relative">
                         <button type="button" className="btn-close position-absolute top-0 end-0 m-2" onClick={() => removeAccessUser(index)} />
-                        {user.isExisting && <span className="badge bg-secondary mb-2">Existing</span>}
+                        {user.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
                         <div style={{ position: "relative" }}>
                             <div className="input-group">
                                 <input type="text" className="form-control"
-                                    placeholder="Search by username or email..."
+                                    placeholder={t('inventory_searchUserPlaceholder')}
                                     value={user.emailOrUsername}
                                     disabled={user.isExisting}
                                     onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
@@ -973,7 +975,7 @@ function InventoryPage() {
             <Modal
                 isOpen={isItemModalOpen}
                 onClose={() => { setIsItemModalOpen(false); setSelectedItem(null); }}
-                title={selectedItem?.name || "Item Details"}
+                title={selectedItem?.name || t('inventory_itemDetails')}
                 footer={
                     <div className="d-flex gap-2 justify-content-center align-items-center">
                         {selectedItem && (
@@ -982,26 +984,26 @@ function InventoryPage() {
                                 className={`btn ${likedByMe[selectedItem.id] ? "btn-danger" : "btn-outline-danger"}`}
                                 onClick={() => toggleLike(selectedItem.id)}
                                 disabled={!!likeBusy[selectedItem.id]}
-                                title={likedByMe[selectedItem.id] ? "Unlike" : "Like"}
+                                title={likedByMe[selectedItem.id] ? t('inventory_unlike') : t('inventory_like')}
                             >
                                 <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} /> {likeCounts[selectedItem.id] ?? 0}
                             </button>
                         )}
-                        <button className="btn btn-primary" onClick={openEditItemModal}>Edit</button>
-                        <button className="btn btn-secondary" onClick={() => { setIsItemModalOpen(false); setSelectedItem(null); }}>Close</button>
+                        <button className="btn btn-primary" onClick={openEditItemModal}>{t('inventory_edit')}</button>
+                        <button className="btn btn-secondary" onClick={() => { setIsItemModalOpen(false); setSelectedItem(null); }}>{t('inventory_close')}</button>
                     </div>
                 }
             >
                 {selectedItem && (
                     <div>
                         <div className="mb-3">
-                            <label className="fw-bold">Description</label>
+                            <label className="fw-bold">{t('description')}</label>
                             <p className="text-muted">{selectedItem.description || "-"}</p>
                         </div>
                         {allFields.length > 0 && (
                             <>
                                 <hr />
-                                <h6>Fields</h6>
+                                <h6>{t('inventory_fields')}</h6>
                                 {allFields.map(f => (
                                     <div className="mb-3" key={f.id}>
                                         <label className="fw-bold">{f.title}</label>
@@ -1014,11 +1016,11 @@ function InventoryPage() {
                             </>
                         )}
                         <div className="mb-3">
-                            <label className="fw-bold">Created At</label>
+                            <label className="fw-bold">{t('inventory_createdAt')}</label>
                             <p className="text-muted">{new Date(selectedItem.createdAt).toLocaleString()}</p>
                         </div>
                         <div className="mb-3">
-                            <label className="fw-bold">Updated At</label>
+                            <label className="fw-bold">{t('inventory_updatedAt')}</label>
                             <p className="text-muted">{new Date(selectedItem.updatedAt).toLocaleString()}</p>
                         </div>
                     </div>
@@ -1032,27 +1034,27 @@ function InventoryPage() {
                 title={`Edit: ${selectedItem?.name || ""}`}
                 footer={
                     <div className="d-flex gap-2">
-                        <button className="btn btn-primary" onClick={updateItem}>Save</button>
-                        <button className="btn btn-secondary" onClick={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}>Cancel</button>
+                        <button className="btn btn-primary" onClick={updateItem}>{t('save')}</button>
+                        <button className="btn btn-secondary" onClick={() => { setIsEditItemModalOpen(false); setSelectedItem(null); }}>{t('cancel')}</button>
                     </div>
                 }
             >
                 {selectedItem && (
                     <div>
                         <div className="mb-3">
-                            <label className="form-label">Name</label>
+                            <label className="form-label">{t('name')}</label>
                             <input type="text" className="form-control" value={editItemData.name}
                                 onChange={(e) => setEditItemData({ ...editItemData, name: e.target.value })} />
                         </div>
                         <div className="mb-3">
-                            <label className="form-label">Description</label>
+                            <label className="form-label">{t('description')}</label>
                             <textarea className="form-control" value={editItemData.description}
                                 onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })} />
                         </div>
                         {editItemData.fieldValues.length > 0 && (
                             <>
                                 <hr />
-                                <h6>Field Values</h6>
+                                <h6>{t('inventory_fieldValues')}</h6>
                                 {editItemData.fieldValues.map((fv, index) => (
                                     <div key={fv.fieldId} className="mb-3">
                                         <label className="form-label">{fv.fieldTitle}</label>

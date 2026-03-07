@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { useNavigate, Link } from "react-router-dom";
 import TagInput from "./TagInput";
-import useTheme from "./useTheme"
+import useTheme from "./useTheme";
+import { useTranslation } from "react-i18next";
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -49,14 +50,16 @@ function UserPage() {
         isPublic: true,
         creatorName: ""
     });
-    const categoryLabels = {
-        1: "Equipment",
-        2: "Furniture",
-        3: "Book",
-        4: "Technology",
-        5: "Other",
-    };
     const { theme, toggleTheme, setPreferredTheme } = useTheme();
+    const { t, i18n } = useTranslation();
+    const langMap = { 1: 'en', 2: 'ru' };
+    const categoryLabels = {
+        1: t('equipment'),
+        2: t('furniture'),
+        3: t('book'),
+        4: t('technology'),
+        5: t('other'),
+    };
     const [checkedInvs, setCheckedInvs] = useState([]);
     const [customIdElements, setCustomIdElements] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,7 +99,7 @@ function UserPage() {
         setSelectedTags([]);
         fetchInventories();
     };
-    
+
 
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
@@ -487,7 +490,7 @@ function UserPage() {
                             className="nav-link active"
                             onClick={() => navigate("/dashboard")}
                         >
-                            Dashboard
+                            {t('dashboard')}
                         </button>
                     </li>
                     <li className="nav-item">
@@ -496,7 +499,7 @@ function UserPage() {
                             className="nav-link active"
                             onClick={() => navigate("/statistics")}
                         >
-                            Statistics
+                            {t('statistics')}
                         </button>
                     </li>
 
@@ -510,14 +513,14 @@ function UserPage() {
                         </button>
                     </li>
                     <li className="nav-item">
-                      <button
-                        type="button"
-                        className="nav-link"
-                        onClick={toggleTheme}
-                        title="Toggle theme"
-                      >
-                        {theme === "light" ? "🌙" : "☀️"}
-                      </button>
+                        <button
+                            type="button"
+                            className="nav-link"
+                            onClick={toggleTheme}
+                            title="Toggle theme"
+                        >
+                            {theme === "light" ? "🌙" : "☀️"}
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -531,7 +534,7 @@ function UserPage() {
                                 className={`nav-link fw-bolder ${activeTab === "own" ? "active" : ""}`}
                                 onClick={() => setActiveTab("own")}
                             >
-                                My Inventories
+                                {t('user_myInventories')}
                             </button>
                         </li>
                         <li className="nav-item">
@@ -540,7 +543,7 @@ function UserPage() {
                                 className={`nav-link fw-bolder ${activeTab === "access" ? "active" : ""}`}
                                 onClick={() => setActiveTab("access")}
                             >
-                                Shared With Me
+                                {t('user_sharedWithMe')}
                             </button>
                         </li>
                         <li className="nav-item">
@@ -549,7 +552,7 @@ function UserPage() {
                                 className={`nav-link fw-bolder ${activeTab === "profile" ? "active" : ""}`}
                                 onClick={() => setActiveTab("profile")}
                             >
-                                My Profile
+                                {t('user_myProfile')}
                             </button>
                         </li>
                     </ul>
@@ -563,38 +566,42 @@ function UserPage() {
                     {/* ── Profile Tab ── */}
                     {activeTab === "profile" && (
                         <>
-                            <h4 className="mb-4">My Profile</h4>
+                            <h4 className="mb-4">{t('user_myProfile')}</h4>
                             {profileData && (
                                 <div className="row g-3" style={{ maxWidth: 600 }}>
                                     <div className="col-md-6">
-                                        <label className="form-label">Username</label>
+                                        <label className="form-label">{t('username')}</label>
                                         <input className="form-control" value={profileData.userName || ""} disabled
-                                            title="Username cannot be changed" />
+                                            title={t('username_cannot_change')} />
                                     </div>
                                     <div className="col-md-6">
-                                        <label className="form-label">Email</label>
+                                        <label className="form-label">{t('email')}</label>
                                         <input className="form-control" value={profileData.email || ""} disabled
-                                            title="Email cannot be changed" />
+                                            title={t('email_cannot_change')} />
                                     </div>
                                     <div className="col-12">
-                                        <label className="form-label">Full Name</label>
+                                        <label className="form-label">{t('fullName')}</label>
                                         <input className="form-control"
                                             value={profileForm.fullName}
                                             onChange={(e) => setProfileForm(f => ({ ...f, fullName: e.target.value }))}
                                         />
                                     </div>
                                     <div className="col-md-6">
-                                        <label className="form-label">Language</label>
+                                        <label className="form-label">{t('language')}</label>
                                         <select className="form-select"
                                             value={profileForm.language}
-                                            onChange={(e) => setProfileForm(f => ({ ...f, language: Number(e.target.value) }))}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value);
+                                                setProfileForm(f => ({ ...f, language: v }));
+                                                i18n.changeLanguage(langMap[v] || 'en');
+                                            }}
                                         >
                                             <option value={1}>English</option>
-                                            <option value={2}>Russian</option>
+                                            <option value={2}>Русский</option>
                                         </select>
                                     </div>
                                     <div className="col-md-6">
-                                        <label className="form-label">Theme</label>
+                                        <label className="form-label">{t('theme')}</label>
                                         <select className="form-select"
                                             value={profileForm.theme}
                                             onChange={(e) => {
@@ -603,12 +610,12 @@ function UserPage() {
                                                 setPreferredTheme(v);
                                             }}
                                         >
-                                            <option value={1}>Light</option>
-                                            <option value={2}>Dark</option>
+                                            <option value={1}>{t('light')}</option>
+                                            <option value={2}>{t('dark')}</option>
                                         </select>
                                     </div>
                                     <div className="col-12">
-                                        <label className="form-label">New Password (leave blank to keep current)</label>
+                                        <label className="form-label">{t('newPassword')}</label>
                                         <input type="password" className="form-control"
                                             value={profileForm.password}
                                             onChange={(e) => setProfileForm(f => ({ ...f, password: e.target.value }))}
@@ -616,7 +623,7 @@ function UserPage() {
                                     </div>
                                     <div className="col-12 mt-3">
                                         <button className="btn btn-primary" onClick={updateProfile} disabled={profileSaving}>
-                                            {profileSaving ? "Saving..." : "Save Changes"}
+                                            {profileSaving ? t('saving_dots') : t('saveChanges')}
                                         </button>
                                     </div>
                                 </div>
@@ -631,7 +638,7 @@ function UserPage() {
                                 <input
                                     type="search"
                                     className="form-control"
-                                    placeholder={activeTab === "own" ? "Search my inventories..." : "Search shared inventories..."}
+                                    placeholder={activeTab === "own" ? t('user_searchMyInventories') : t('user_searchSharedInventories')}
                                     value={inventorySearch}
                                     onChange={(e) => setInventorySearch(e.target.value)}
                                 />
@@ -648,7 +655,7 @@ function UserPage() {
                                     </svg>
                                 </button>
                                 <button className="btn btn-success" onClick={() => setIsModalOpen(true)}>
-                                    + New Inventory
+                                    {t('user_newInventory')}
                                 </button>
                             </div>
                             <table className=" table table-striped table-hover mb-3">
@@ -662,9 +669,9 @@ function UserPage() {
                                                 checked={inventories.length > 0 && checkedInvs.length === inventories.length}
                                             />
                                         </th>
-                                        <th>Title</th>
-                                        <th>Category</th>
-                                        <th>Creator Username</th>
+                                        <th>{t('title')}</th>
+                                        <th>{t('category')}</th>
+                                        <th>{t('creator')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -710,7 +717,7 @@ function UserPage() {
                             onClick={() => setFilter(prev => ({ ...prev, pageNumber: prev.pageNumber - 1 }))}
                             disabled={filter.pageNumber <= 1}
                         >
-                            Previous
+                            {t('previous')}
                         </button>
                     </li>
                     {[...Array(totalPages)].map((_, index) => {
@@ -732,7 +739,7 @@ function UserPage() {
                             onClick={() => setFilter(prev => ({ ...prev, pageNumber: prev.pageNumber + 1 }))}
                             disabled={filter.pageNumber >= totalPages}
                         >
-                            Next
+                            {t('next')}
                         </button>
                     </li>
                 </ul>
@@ -742,25 +749,25 @@ function UserPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
-                title="Create New Inventory"
+                title={t('user_createNewInventory')}
                 footer={
                     !newInventoryId ? (
                         <button className="btn btn-primary" onClick={createInventory}>
-                            Create
+                            {t('inventory_create')}
                         </button>
                     ) : (
                         <div className="d-flex gap-2">
                             <button className="btn btn-success" onClick={addField}>
-                                + New Field
+                                {t('user_newField')}
                             </button>
                             <button className="btn btn-secondary" onClick={addAccessUsers}>
-                                + Access User
+                                {t('user_accessUser')}
                             </button>
                             <button className="btn btn-primary" onClick={async () => {
                                 await saveAllFields();
                                 await saveAllAccessUsers();
                             }}>
-                                Done
+                                {t('user_done')}
                             </button>
                         </div>
                     )
@@ -769,7 +776,7 @@ function UserPage() {
                 {/* Inventory Form — locked after creation */}
                 <fieldset disabled={!!newInventoryId}>
                     <div className="mb-3">
-                        <label className="form-label">Title</label>
+                        <label className="form-label">{t('title')}</label>
                         <input
                             type="text"
                             className="form-control"
@@ -779,7 +786,7 @@ function UserPage() {
                         />
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">{t('description')}</label>
                         <textarea
                             className="form-control"
                             name="description"
@@ -788,18 +795,18 @@ function UserPage() {
                         />
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Category</label>
+                        <label className="form-label">{t('category')}</label>
                         <select
                             className="form-select"
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
                         >
-                            <option value={1}>Equipment</option>
-                            <option value={2}>Furniture</option>
-                            <option value={3}>Book</option>
-                            <option value={4}>Technology</option>
-                            <option value={5}>Other</option>
+                            <option value={1}>{t('equipment')}</option>
+                            <option value={2}>{t('furniture')}</option>
+                            <option value={3}>{t('book')}</option>
+                            <option value={4}>{t('technology')}</option>
+                            <option value={5}>{t('other')}</option>
                         </select>
                     </div>
                     <div className="mb-3 form-check">
@@ -810,22 +817,22 @@ function UserPage() {
                             checked={formData.isPublic}
                             onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                         />
-                        <label className="form-check-label">Public</label>
+                        <label className="form-check-label">{t('public')}</label>
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Tags</label>
+                        <label className="form-label">{t('tags')}</label>
                         <TagInput
                             value={selectedTags}
                             onChange={setSelectedTags}
                             apiUrl={api_url}
-                            placeholder="Type to search or add tags..."
+                            placeholder={t('inventory_tagsPlaceholder')}
                         />
                     </div>
 
                     {/* Custom ID Format Builder */}
                     <div className="mb-3">
-                        <label className="form-label fw-bold">Custom ID Format</label>
-                        <p className="text-muted small mb-2">Define how item IDs will be auto-generated for this inventory.</p>
+                        <label className="form-label fw-bold">{t('user_customIdFormat')}</label>
+                        <p className="text-muted small mb-2">{t('user_customIdDescription')}</p>
                         {customIdElements.map((el, index) => (
                             <div key={index} className="border rounded p-2 mb-2 position-relative">
                                 <button
@@ -836,25 +843,25 @@ function UserPage() {
                                 />
                                 <div className="row g-2 align-items-end">
                                     <div className="col">
-                                        <label className="form-label small">Type</label>
+                                        <label className="form-label small">{t('user_type')}</label>
                                         <select
                                             className="form-select form-select-sm"
                                             value={el.type}
                                             onChange={(e) => updateIdElement(index, "type", e.target.value)}
                                         >
-                                            <option value={1}>Fixed Text</option>
-                                            <option value={2}>Random 20-Bit</option>
-                                            <option value={3}>Random 32-Bit</option>
-                                            <option value={4}>Random 6-Digit</option>
-                                            <option value={5}>Random 9-Digit</option>
-                                            <option value={6}>GUID</option>
-                                            <option value={7}>DateTime</option>
-                                            <option value={8}>Sequence</option>
+                                            <option value={1}>{t('user_fixedText')}</option>
+                                            <option value={2}>{t('user_random20Bit')}</option>
+                                            <option value={3}>{t('user_random32Bit')}</option>
+                                            <option value={4}>{t('user_random6Digit')}</option>
+                                            <option value={5}>{t('user_random9Digit')}</option>
+                                            <option value={6}>{t('user_guid')}</option>
+                                            <option value={7}>{t('user_dateTime')}</option>
+                                            <option value={8}>{t('user_sequence')}</option>
                                         </select>
                                     </div>
                                     {parseInt(el.type) === 1 && (
                                         <div className="col">
-                                            <label className="form-label small">Value</label>
+                                            <label className="form-label small">{t('user_value')}</label>
                                             <input
                                                 type="text"
                                                 className="form-control form-control-sm"
@@ -866,7 +873,7 @@ function UserPage() {
                                     )}
                                     {(parseInt(el.type) === 7 || parseInt(el.type) === 8) && (
                                         <div className="col">
-                                            <label className="form-label small">Format</label>
+                                            <label className="form-label small">{t('user_format')}</label>
                                             <input
                                                 type="text"
                                                 className="form-control form-control-sm"
@@ -880,11 +887,11 @@ function UserPage() {
                             </div>
                         ))}
                         <button type="button" className="btn btn-outline-secondary btn-sm" onClick={addIdElement}>
-                            + Add Element
+                            {t('user_addElement')}
                         </button>
                         {customIdElements.length > 0 && (
                             <div className="mt-2 p-2 bg-light rounded">
-                                <small className="text-muted">Preview: </small>
+                                <small className="text-muted">{t('user_preview')}: </small>
                                 <code>{generatePreview()}</code>
                             </div>
                         )}
@@ -895,9 +902,9 @@ function UserPage() {
                 {newInventoryId && (
                     <div className="mt-2">
                         <hr />
-                        <h6 className="mb-3">Fields</h6>
+                        <h6 className="mb-3">{t('inventory_fields')}</h6>
                         {fields.length === 0 && (
-                            <p className="text-muted small">No fields yet. Click "+ New Field" to add one.</p>
+                            <p className="text-muted small">{t('user_noFieldsYet')}</p>
                         )}
                         {fields.map((field, index) => (
                             <div key={index} className="border rounded p-3 mb-3 position-relative">
@@ -907,7 +914,7 @@ function UserPage() {
                                     onClick={() => removeField(index)}
                                 />
                                 <div className="mb-2">
-                                    <label className="form-label">Title</label>
+                                    <label className="form-label">{t('title')}</label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -916,7 +923,7 @@ function UserPage() {
                                     />
                                 </div>
                                 <div className="mb-2">
-                                    <label className="form-label">Description</label>
+                                    <label className="form-label">{t('description')}</label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -925,17 +932,17 @@ function UserPage() {
                                     />
                                 </div>
                                 <div className="mb-2">
-                                    <label className="form-label">Type</label>
+                                    <label className="form-label">{t('inventory_fieldType')}</label>
                                     <select
                                         className="form-select"
                                         value={field.type}
                                         onChange={(e) => updateField(index, "type", e.target.value)}
                                     >
-                                        <option value={1}>Single Lined Text</option>
-                                        <option value={2}>Multi Lined Text</option>
-                                        <option value={3}>Number</option>
-                                        <option value={4}>Boolean</option>
-                                        <option value={5}>Link</option>
+                                        <option value={1}>{t('inventory_singleLinedText')}</option>
+                                        <option value={2}>{t('inventory_multiLinedText')}</option>
+                                        <option value={3}>{t('inventory_number')}</option>
+                                        <option value={4}>{t('inventory_boolean')}</option>
+                                        <option value={5}>{t('inventory_link')}</option>
                                     </select>
                                 </div>
                                 <div className="form-check">
@@ -945,7 +952,7 @@ function UserPage() {
                                         checked={field.showInTable}
                                         onChange={(e) => updateField(index, "showInTable", e.target.checked)}
                                     />
-                                    <label className="form-check-label">Show in Table</label>
+                                    <label className="form-check-label">{t('inventory_showInTable')}</label>
                                 </div>
                             </div>
                         ))}
@@ -954,9 +961,9 @@ function UserPage() {
                 {newInventoryId && !formData.isPublic && (
                     <div className="mt-2">
                         <hr />
-                        <h6 className="mb-3">Users with write access</h6>
+                        <h6 className="mb-3">{t('user_usersWithWriteAccess')}</h6>
                         {accessUsers.length === 0 && (
-                            <p className="text-muted small">No users yet. Click "+ Access Users" to add one.</p>
+                            <p className="text-muted small">{t('user_noUsersYet')}</p>
                         )}
                         {accessUsers.map((user, index) => (
                             <div key={index} className="border rounded p-3 mb-3 position-relative">
@@ -966,12 +973,12 @@ function UserPage() {
                                     onClick={() => removeAccessUser(index)}
                                 />
                                 <div className="mb-2" style={{ position: "relative" }}>
-                                    <label className="form-label">User</label>
+                                    <label className="form-label">{t('user_userLabel')}</label>
                                     <div className="input-group">
                                         <input
                                             type="text"
                                             className="form-control"
-                                            placeholder="Search by username or email..."
+                                            placeholder={t('inventory_searchUserPlaceholder')}
                                             value={user.emailOrUsername}
                                             onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
                                             onBlur={() => setTimeout(() => {
