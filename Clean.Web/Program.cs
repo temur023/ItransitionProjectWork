@@ -14,22 +14,17 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddHttpClient();
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
-// var google = builder.Configuration.GetSection("Authentication:Google");
-// builder.Services.AddAuthentication()
-//     .AddGoogle(options =>
-//     {
-//         options.ClientId = google["ClientId"]!;
-//         options.ClientSecret = google["ClientSecret"]!;
-//         options.CallbackPath = "/signin-google";
-//     });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins("http://localhost:5173",
+                "https://localhost:5173",
+                "http://localhost:5174",
+                "https://localhost:5174" )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -49,6 +44,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ValidateIssuerSigningKey = true
         };
+    })
+    .AddGoogle(options => {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    })
+    .AddFacebook(options => {
+        options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
+        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
     });
 
 var app = builder.Build();

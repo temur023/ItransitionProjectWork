@@ -22,6 +22,7 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         {
             InvId = a.InventoryId,
             UserId = a.UserId,
+            EmailOrUsername = a.UserName ?? a.Email
         }).ToList();
         return new PagedResponse<InventoryUserAccessGetDto>(dto, filter.PageNumber, filter.PageSize, result.Total, "Success");
     }
@@ -34,6 +35,7 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         {
             InvId = access.InventoryId,
             UserId = access.UserId,
+            EmailOrUsername = access.UserName ?? access.Email
         };
         return new Response<InventoryUserAccessGetDto>(200, "Success", dto);
     }
@@ -58,10 +60,15 @@ public class InventoryUserAccessService(IInventoryUserAccessRepository repositor
         if (alreadyExists)
             return new Response<string>(409, "User already has access");
 
+        // Fetch the full entity to extract the required fields
+        var targetUserEntity = await userRepository.GetById(targetUser);
+
         var model = new InventoryUserAccess
         {
             InventoryId = dto.InvId,
-            UserId = targetUser
+            UserId = targetUser,
+            Email = targetUserEntity.Email,
+            UserName = targetUserEntity.UserName
         };
 
         await repository.Create(model);

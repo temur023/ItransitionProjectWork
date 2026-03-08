@@ -53,6 +53,9 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
 
     public async Task<Response<string>> Create(UserCreateDto dto)
     {
+        if (await repository.ExistsByUserNameOrEmail(dto.UserName, dto.Email))
+            return new Response<string>(409, "Username or email already exists");
+
         var model = new User()
         {
             UserName = dto.UserName,
@@ -91,6 +94,25 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
         }
         await repository.SaveChanges();
         return new Response<string>(200, "User updated");
+    }
+
+    public async Task<Response<string>> UpdateUserName(string username, int id)
+    {
+        var currentUserId = GetCurrentUserId();
+        if(currentUserId == null)
+            return new Response<string>(409, "You are not authorized");
+        var currentUser = await repository.GetById((int)currentUserId);
+        var user = await repository.GetById(id);
+        if (currentUserId != user.Id && currentUser.Role != UserRole.Admin)
+        {
+            return new Response<string>(409, "You are not authorized");
+        }
+        var exists = await repository.ExistsByUserNameOrEmail(username, "");
+        if (exists == true)
+            return new Response<string>(400,"Username already exists");
+        user.UserName = username;
+        await repository.SaveChanges();
+        return new Response<string>(200,"Username updated");
     }
     
 

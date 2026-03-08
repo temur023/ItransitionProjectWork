@@ -17,6 +17,6 @@ public class InventoryGetDto
     public int CreatedById { get; set; }
     public string CreatorName { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public ICollection<InventoryUserAccess> UserAccesses { get; set; }
+    public ICollection<InventoryUserAccessGetDto> UserAccesses { get; set; }
     public List<string>? Tags { get; set; }
 }

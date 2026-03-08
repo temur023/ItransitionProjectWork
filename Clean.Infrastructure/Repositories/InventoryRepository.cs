@@ -27,6 +27,27 @@
             return (items, total);
         }
 
+        public async Task<(List<Inventory> Inventories, int Total)> GetShared(InventoryFilter filter, int id)
+        {
+            var query = context.Inventories
+                .Include(i=>i.Tags)
+                .Include(i=>i.CreatedBy)
+                .Include(i=>i.UserAccesses)
+                .Where(i=>i.UserAccesses.FirstOrDefault(u=>u.UserId==id)!=null)
+                .OrderByDescending(i=>i.CreatedAt).AsNoTracking();
+            // AND logic: only inventories that have ALL selected tags
+            if (filter.Tags != null && filter.Tags.Any())
+            {
+                query = query.Where(i => filter.Tags.All(ft => i.Tags.Any(t => t.Name == ft)));
+            }
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip((filter.PageNumber - 1) * filter.PageSize) 
+                .Take(filter.PageSize)
+                .ToListAsync();
+            return (items, total);
+        }
+
         public async Task<Inventory> GetById(int id)
         {
             var find = await context.Inventories

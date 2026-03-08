@@ -135,6 +135,7 @@ function UserPage() {
             const themeVal = user.theme ?? user.Theme ?? 1;
             setProfileForm({
                 fullName: user.fullName || "",
+                userName: user.userName || "",
                 language: user.language ?? user.Language ?? 1,
                 theme: themeVal,
                 password: ""
@@ -152,6 +153,22 @@ function UserPage() {
             setProfileSaving(true);
             const userId = getUserIdFromToken();
             if (!userId) throw new Error("Cannot determine current user id from token.");
+
+            // Handle username update if changed
+            if (profileForm.userName !== profileData.userName) {
+                try {
+                    await axios.put(`${api_url}/api/User/update-username/${userId}?username=${encodeURIComponent(profileForm.userName)}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                } catch (usernameError) {
+                    if (usernameError.response?.status === 400) {
+                        setMessage({ text: t("register_userExists") || "Username already exists", type: "danger" });
+                        return; // Stop update if username fails
+                    }
+                    throw usernameError; // re-throw other errors
+                }
+            }
+
             const payload = {
                 fullName: profileForm.fullName,
                 passwordHash: profileForm.password,
@@ -571,8 +588,10 @@ function UserPage() {
                                 <div className="row g-3" style={{ maxWidth: 600 }}>
                                     <div className="col-md-6">
                                         <label className="form-label">{t('username')}</label>
-                                        <input className="form-control" value={profileData.userName || ""} disabled
-                                            title={t('username_cannot_change')} />
+                                        <input className="form-control"
+                                            value={profileForm.userName}
+                                            onChange={(e) => setProfileForm(f => ({ ...f, userName: e.target.value }))}
+                                        />
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">{t('email')}</label>

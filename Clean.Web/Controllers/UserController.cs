@@ -46,6 +46,16 @@ public class UserController(IUserService service) : ControllerBase
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
+    [Authorize]
+    [HttpPut("update-username/{id}")]
+    public async Task<IActionResult> UpdateUsername(string username, int id)
+    {
+        var response = await service.UpdateUserName(username, id);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode);
+        return Ok(response);
+    }
+    
     [Authorize(Roles = "Admin")]
     [HttpDelete("delete-selected")]
     public async Task<IActionResult> DeleteSelected(List<int> ids)

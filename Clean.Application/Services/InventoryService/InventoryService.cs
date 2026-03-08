@@ -17,6 +17,39 @@ public class InventoryService(IInvetoryRepository repository
     private int? GetCurrentUserId() =>
         int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
             ?.Value, out var userId) ? userId : null;
+
+    public async Task<PagedResponse<InventoryGetDto>> GetShared(InventoryFilter filter, int id)
+    {
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId == null)
+        {
+            return new PagedResponse<InventoryGetDto>([]
+                ,filter.PageNumber, filter.PageSize,0,"You are not authorized");
+        }
+        var invs = await repository.GetShared(filter,id);
+        var dto = invs.Inventories.Select(u => new InventoryGetDto()
+        {
+            Id = u.Id,
+            CreatedAt = u.CreatedAt.ToUniversalTime(),
+            Description = u.Description,
+            Category = u.Category,
+            IsPublic = u.IsPublic,
+            CreatedById = u.CreatedById,
+            CustomIdFormatJson = u.CustomIdFormatJson,
+            CreatorName = u.CreatedBy.UserName,
+            Version = u.Version,
+            ImageUrl = u.ImageUrl,
+            Title = u.Title,
+            UserAccesses = u.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
+            Tags = u.Tags?.Select(t => t.Name).ToList()
+        }).ToList();
+        return new PagedResponse<InventoryGetDto>(dto,filter.PageNumber, filter.PageSize,invs.Total,"Success");
+    }
+
     public async Task<PagedResponse<InventoryGetDto>> GetAll(InventoryFilter filter)
     {
         var invs = await repository.GetAll(filter);
@@ -33,7 +66,11 @@ public class InventoryService(IInvetoryRepository repository
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
-            UserAccesses = u.UserAccesses,
+            UserAccesses = u.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
             Tags = u.Tags?.Select(t => t.Name).ToList()
         });
         if (GetCurrentUserId() == null)
@@ -70,6 +107,11 @@ public class InventoryService(IInvetoryRepository repository
             Version = inv.Version,
             ImageUrl = inv.ImageUrl,
             Title = inv.Title,
+            UserAccesses = inv.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
             Tags = inv.Tags?.Select(t => t.Name).ToList()
         };
         if (inv.IsPublic)

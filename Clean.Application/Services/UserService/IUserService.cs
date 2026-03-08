@@ -10,6 +10,7 @@ public interface IUserService
     Task<Response<UserGetDto>> GetById(int id);
     Task<Response<string>> Create(UserCreateDto dto);
     Task<Response<string>> Update(UserEditDto dto, int id);
+    Task<Response<string>> UpdateUserName(string username, int id);
     Task<Response<string>> BlockSelected(List<int> ids);
     Task<Response<string>> UnBlockSelected(List<int> ids);
     Task<Response<string>> MakeAdminSelected(List<int> ids);

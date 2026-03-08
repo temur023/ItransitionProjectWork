@@ -35,8 +35,10 @@ function RegisterPage() {
     }
     setFormData({ ...formData, [name]: value });
   }
+  const [errorMsg, setErrorMsg] = useState("");
   const handleRegistration = async () => {
     try {
+      setErrorMsg("");
       const response = await axios.post(`${api_url}/api/User/create`, formData);
       const token = response.data.message || response.data.Message;
       localStorage.setItem("userToken", token);
@@ -44,6 +46,11 @@ function RegisterPage() {
       console.log("Success", response.data);
       navigate("/login");
     } catch (error) {
+      if (error.response?.status === 409) {
+        setErrorMsg(t("register_userExists") || "Username or email already exists.");
+      } else {
+        setErrorMsg(error.response?.data?.message || "Registration failed.");
+      }
       console.error("Failed", error);
     }
   };
@@ -52,6 +59,11 @@ function RegisterPage() {
     <div className="container-fluid d-flex flex-column justify-content-center align-items-center vh-100">
       <div className="d-flex flex-column justify-content-center align-items-center border bordeer-success rounded-4 p-5 shadow-lg ">
         <form>
+          {errorMsg && (
+            <div className="alert alert-danger" role="alert">
+              {errorMsg}
+            </div>
+          )}
           <div className="d-flex gap-3">
             <div className="form-group">
               <label>{t("register_fullName")}</label>

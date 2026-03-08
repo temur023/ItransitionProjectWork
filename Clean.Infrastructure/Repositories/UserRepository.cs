@@ -38,6 +38,13 @@ public class UserRepository(DataContext context):IUserRepository
             .FirstOrDefaultAsync(a => a.Email.Contains(input)|| a.UserName.Contains(input));
         return user?.Id ?? -1;
     }
+
+    public async Task<bool> ExistsByUserNameOrEmail(string userName, string email)
+    {
+        return await context.Users
+            .AnyAsync(u => u.UserName == userName || u.Email == email);
+    }
+
     public async Task<int> Create(User user)
     {
         context.Users.Add(user);

@@ -29,7 +29,11 @@ public class UserPageService(IUserPageRepository repository
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
-            UserAccesses = u.UserAccesses
+            UserAccesses = u.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>()
         }).ToList();
         return new PagedResponse<InventoryGetDto>(dto,filter.PageNumber, filter.PageSize,invs.Total, "Success");
     }
@@ -50,7 +54,11 @@ public class UserPageService(IUserPageRepository repository
             Version = u.Version,
             ImageUrl = u.ImageUrl,
             Title = u.Title,
-            UserAccesses = u.UserAccesses
+            UserAccesses = u.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>()
         }).ToList();
         return new PagedResponse<InventoryGetDto>(dto,filter.PageNumber, filter.PageSize,invs.Total, "Success");
     }

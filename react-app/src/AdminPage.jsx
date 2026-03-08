@@ -225,6 +225,22 @@ function AdminPage() {
 
         try {
             setSaving(true);
+
+            // Handle username update if changed
+            if (editForm.userName !== selectedUser.userName) {
+                try {
+                    await axios.put(`${api_url}/api/User/update-username/${selectedUser.id}?username=${encodeURIComponent(editForm.userName)}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                } catch (usernameError) {
+                    if (usernameError.response?.status === 400 || usernameError.response?.status === 409) {
+                        setMessage({ text: t("register_userExists") || "Username already exists", type: "danger" });
+                        return; // Stop update if username fails
+                    }
+                    throw usernameError; // re-throw other errors
+                }
+            }
+
             const payload = {
                 Id: selectedUser.id,
                 FullName: editForm.fullName,
@@ -648,8 +664,7 @@ function AdminPage() {
                                                 <input
                                                     className="form-control"
                                                     value={editForm.userName}
-                                                    disabled
-                                                    title={t('username_cannot_change')}
+                                                    onChange={(e) => setEditForm(f => ({ ...f, userName: e.target.value }))}
                                                 />
                                             </div>
                                             <div className="col-md-6">

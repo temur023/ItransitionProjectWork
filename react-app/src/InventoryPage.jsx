@@ -464,7 +464,7 @@ function InventoryPage() {
                 type: f.type, showInTable: f.showInTable, order: f.order, isExisting: true
             })));
             setAccessUsers((accessRes.data.data || []).map(a => ({
-                userId: a.userId, emailOrUsername: a.userName || a.email, isExisting: true
+                userId: a.userId, emailOrUsername: a.emailOrUsername, isExisting: true
             })));
             setIsEditModalOpen(true);
         } catch {
@@ -487,24 +487,27 @@ function InventoryPage() {
 
             const newFields = fields.filter(f => !f.isExisting);
             if (newFields.length > 0) {
-                await axios.post(`${api_url}/api/InventoryField/create-bulk`, {
-                    InvId: parseInt(inventoryId),
-                    Fields: newFields.map(f => ({
+                await Promise.all(newFields.map(f =>
+                    axios.post(`${api_url}/api/InventoryField/create`, {
+                        InvId: parseInt(inventoryId),
                         Title: f.title,
                         Description: f.description,
                         Type: parseInt(f.type),
                         ShowInTable: f.showInTable,
                         Order: f.order
-                    }))
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                    }, { headers: { Authorization: `Bearer ${token}` } })
+                ));
             }
 
             const newUsers = accessUsers.filter(u => !u.isExisting);
             if (newUsers.length > 0) {
-                await axios.post(`${api_url}/api/InventoryUserAccess/create-bulk`, {
-                    InvId: parseInt(inventoryId),
-                    UserIds: newUsers.map(u => u.userId)
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                await Promise.all(newUsers.map(u =>
+                    axios.post(`${api_url}/api/InventoryUserAccess/create`, {
+                        InvId: parseInt(inventoryId),
+                        UserId: u.userId,
+                        EmailOrUsername: u.emailOrUsername
+                    }, { headers: { Authorization: `Bearer ${token}` } })
+                ));
             }
 
             setMessage({ text: "Inventory updated!", type: "success" });
@@ -567,9 +570,8 @@ function InventoryPage() {
         if (user.isExisting) {
             try {
                 const token = localStorage.getItem("userToken");
-                await axios.delete(`${api_url}/api/InventoryUserAccess/delete`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    params: { InvId: parseInt(inventoryId), UserId: user.userId }
+                await axios.delete(`${api_url}/api/InventoryUserAccess/delete/${inventoryId}/${user.userId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } catch {
                 setMessage({ text: "Failed to remove user access", type: "danger" });

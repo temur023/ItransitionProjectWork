@@ -12,6 +12,7 @@ public class UserPageRepository(DataContext context):IUserPageRepository
     {
         var query = context.Inventories
             .Include(i => i.UserAccesses)
+            .Include(i => i.CreatedBy)
             .Where(i => i.UserAccesses.Any(a => a.UserId == userId))
             .AsNoTracking();
         var total = await query.CountAsync();

@@ -36,7 +36,7 @@ public class AuthService(IAuthRepository repository, IConfiguration configuratio
     }
     
     
-    private string CreateToken(User user)
+    public string CreateToken(User user)
     {
         var claims = new List<Claim>
         {
