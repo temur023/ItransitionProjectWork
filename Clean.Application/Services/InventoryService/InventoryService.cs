@@ -199,6 +199,7 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
     inventory.Description = dto.Description;
     inventory.Category = dto.Category;
     inventory.IsPublic = dto.IsPublic;
+    inventory.ImageUrl = dto.ImageUrl;
 
     inventory.Tags.Clear();
     if (dto.Tags != null && dto.Tags.Count > 0)

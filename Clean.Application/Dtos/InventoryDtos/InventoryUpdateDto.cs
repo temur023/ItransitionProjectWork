@@ -9,5 +9,6 @@ public class InventoryUpdateDto
     public string Description { get; set; }
     public Category Category { get; set; }
     public bool IsPublic { get; set; }
+    public string? ImageUrl { get; set; }
     public List<string>? Tags { get; set; }
 }

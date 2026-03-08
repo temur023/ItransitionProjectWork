@@ -27,7 +27,8 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
             Role = u.Role,
             IsBlocked = u.IsBlocked,
             PasswordHash = u.PasswordHash,
-            Theme = u.Theme
+            Theme = u.Theme,
+            ProfileImage = u.ProfileImage
         }).ToList();
         return new PagedResponse<UserGetDto>(dto,filter.PageNumber, filter.PageSize,users.Total,"Success");
     }
@@ -45,7 +46,8 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
             Role = user.Role,
             IsBlocked = user.IsBlocked,
             PasswordHash = user.PasswordHash,
-            Theme = user.Theme
+            Theme = user.Theme,
+            ProfileImage = user.ProfileImage
         };
         return new Response<UserGetDto>(200, "User fond", dto);
     }

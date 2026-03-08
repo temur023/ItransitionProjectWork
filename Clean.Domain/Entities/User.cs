@@ -15,6 +15,8 @@ namespace Clean.Domain.Entities
         public string UserName { get; set; }
         [MaxLength(60)]
         public string FullName { get; set; }
+
+        public string ProfileImage { get; set; }
         [Required]
         public string Email { get; set; }
         public string PasswordHash { get; set; }

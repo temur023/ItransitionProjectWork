@@ -59,6 +59,10 @@ function InventoryPage() {
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
     const api_url = "http://localhost:5137";
     const navigate = useNavigate();
+    const logout = async () => {
+        localStorage.removeItem("userToken");
+        navigate("/login")
+    }
 
     // Comments
     const [comments, setComments] = useState([]);
@@ -99,6 +103,21 @@ function InventoryPage() {
 
     const categoryLabels = { 1: t('equipment'), 2: t('furniture'), 3: t('book'), 4: t('technology'), 5: t('other') };
     const totalPages = Math.ceil(total / filter.pageSize);
+    const [profileData, setProfileData] = useState(null);
+
+    const fetchProfile = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("userToken");
+            const userId = getUserIdFromToken();
+            if (!token || !userId) return;
+            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProfileData(response.data.data);
+        } catch { }
+    }, [getUserIdFromToken]);
+
+    useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
     // ─── Helpers ──────────────────────────────────────────────────────────────────
     const getUserIdFromToken = useCallback(() => {
@@ -604,7 +623,27 @@ function InventoryPage() {
                         <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>{t('statistics')}</button>
                     </li>
                     <li className="ms-auto nav-item">
-                        <button type="button" className="nav-link" onClick={() => navigate("/user-page")}>AA</button>
+                        <button
+                            type="button"
+                            className="nav-link p-0"
+                            onClick={() => navigate("/user-page")}
+                        >
+                            {profileData?.profileImage
+                                ? <img
+                                    src={profileData.profileImage}
+                                    alt="avatar"
+                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }}
+                                />
+                                : <div style={{
+                                    width: 35, height: 35, borderRadius: "50%",
+                                    background: "#0d6efd", color: "white",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 14, fontWeight: "bold"
+                                }}>
+                                    {profileData?.fullName?.[0]?.toUpperCase() || "U"}
+                                </div>
+                            }
+                        </button>
                     </li>
                     <li className="nav-item">
                         <button
@@ -616,8 +655,19 @@ function InventoryPage() {
                             {theme === "light" ? "🌙" : "☀️"}
                         </button>
                     </li>
+                    <li>
+                        <button
+                            onClick={logout}
+                            className="btn btn-outline-danger btn-sm fw-bold px-3"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
+                                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
+                                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
+                            </svg>
+                        </button>
+                    </li>
                 </ul>
-            </div>
+            </div >
 
             <div className="container-fluid d-flex justify-content-start gap-3 w-100 p-0">
                 {/* Sidebar */}
@@ -822,26 +872,28 @@ function InventoryPage() {
             </div>
 
             {/* Pagination */}
-            {activeTab === "items" && totalPages > 1 && (
-                <nav>
-                    <ul className="pagination d-flex justify-content-center">
-                        <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>{t('previous')}</button>
-                        </li>
-                        {[...Array(totalPages)].map((_, index) => {
-                            const pageNum = index + 1;
-                            return (
-                                <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? "active" : ""}`}>
-                                    <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>{pageNum}</button>
-                                </li>
-                            );
-                        })}
-                        <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>{t('next')}</button>
-                        </li>
-                    </ul>
-                </nav>
-            )}
+            {
+                activeTab === "items" && totalPages > 1 && (
+                    <nav>
+                        <ul className="pagination d-flex justify-content-center">
+                            <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
+                                <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>{t('previous')}</button>
+                            </li>
+                            {[...Array(totalPages)].map((_, index) => {
+                                const pageNum = index + 1;
+                                return (
+                                    <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? "active" : ""}`}>
+                                        <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>{pageNum}</button>
+                                    </li>
+                                );
+                            })}
+                            <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
+                                <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>{t('next')}</button>
+                            </li>
+                        </ul>
+                    </nav>
+                )
+            }
 
             {/* Create Item Modal */}
             <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormData({ name: "", description: "" }); }} title={t('inventory_createNewItem')}

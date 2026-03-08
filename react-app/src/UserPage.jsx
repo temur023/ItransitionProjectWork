@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import TagInput from "./TagInput";
 import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
+import AvatarUpload from "./AvatarUpload";
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -40,6 +41,7 @@ function Modal({ isOpen, onClose, title, children, footer }) {
 }
 
 function UserPage() {
+
     const [inventories, setInventories] = useState([]);
     const [formData, setFormData] = useState({
         title: "",
@@ -50,6 +52,7 @@ function UserPage() {
         isPublic: true,
         creatorName: ""
     });
+
     const { theme, toggleTheme, setPreferredTheme } = useTheme();
     const { t, i18n } = useTranslation();
     const langMap = { 1: 'en', 2: 'ru' };
@@ -87,6 +90,10 @@ function UserPage() {
     const api_url = "http://localhost:5137";
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
+    const logout = async () => {
+        localStorage.removeItem("userToken");
+        navigate("/login")
+    }
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setNewInventoryId(null);
@@ -100,21 +107,26 @@ function UserPage() {
         fetchInventories();
     };
 
-
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
         if (!token) return null;
         try {
             const payloadB64 = token.split(".")[1];
-            if (!payloadB64) return null;
             const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
             const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
             const payload = JSON.parse(atob(padded));
+
+            console.log("Full JWT payload:", payload);
+
             const id =
                 payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
                 payload.nameid ??
                 payload.sub;
-            const parsed = parseInt(id, 10);
+
+            console.log("Raw id from token:", id);
+
+            const cleanId = String(id).split(":")[0];
+            const parsed = parseInt(cleanId, 10);
             return Number.isFinite(parsed) ? parsed : null;
         } catch {
             return null;
@@ -310,7 +322,6 @@ function UserPage() {
                 Tags: selectedTags,
                 Version: 1,
                 CreatedById: 0,
-                ImageUrl: null,
                 CustomIdFormatJson: JSON.stringify(
                     customIdElements.map(el => ({
                         Type: parseInt(el.type),
@@ -494,8 +505,8 @@ function UserPage() {
     }, [message]);
 
     useEffect(() => {
-        if (activeTab === "profile") fetchProfile();
-    }, [activeTab, fetchProfile]);
+        fetchProfile();
+    }, [fetchProfile]);
 
     return (
         <>
@@ -523,10 +534,24 @@ function UserPage() {
                     <li className="ms-auto nav-item">
                         <button
                             type="button"
-                            className="nav-link"
+                            className="nav-link p-0"
                             onClick={() => navigate("/user-page")}
                         >
-                            AA
+                            {profileData?.profileImage
+                                ? <img
+                                    src={profileData.profileImage}
+                                    alt="avatar"
+                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }}
+                                />
+                                : <div style={{
+                                    width: 35, height: 35, borderRadius: "50%",
+                                    background: "#0d6efd", color: "white",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 14, fontWeight: "bold"
+                                }}>
+                                    {profileData?.fullName?.[0]?.toUpperCase() || "U"}
+                                </div>
+                            }
                         </button>
                     </li>
                     <li className="nav-item">
@@ -537,6 +562,17 @@ function UserPage() {
                             title="Toggle theme"
                         >
                             {theme === "light" ? "🌙" : "☀️"}
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            onClick={logout}
+                            className="btn btn-outline-danger btn-sm fw-bold px-3"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
+                                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
+                                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
+                            </svg>
                         </button>
                     </li>
                 </ul>
@@ -586,6 +622,11 @@ function UserPage() {
                             <h4 className="mb-4">{t('user_myProfile')}</h4>
                             {profileData && (
                                 <div className="row g-3" style={{ maxWidth: 600 }}>
+                                    <AvatarUpload
+                                        uploadUrl={`${api_url}/api/Upload/profile-image/${getUserIdFromToken()}`}
+                                        currentImage={profileData?.profileImage}
+                                        onUpload={(url) => setProfileData(p => ({ ...p, profileImage: url }))}
+                                    />
                                     <div className="col-md-6">
                                         <label className="form-label">{t('username')}</label>
                                         <input className="form-control"

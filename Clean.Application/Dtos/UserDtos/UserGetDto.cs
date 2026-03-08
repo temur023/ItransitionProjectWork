@@ -13,4 +13,5 @@ public class UserGetDto
     public UserRole Role { get; set; }
     public PreferedLanguage Language { get; set; }
     public PreferedTheme Theme{ get; set; }
+    public string? ProfileImage { get; set; }
 }
