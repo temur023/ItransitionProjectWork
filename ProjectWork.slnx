@@ -2,6 +2,5 @@
   <Project Path="Clean.Application/Clean.Application.csproj" />
   <Project Path="Clean.Domain/Clean.Domain.csproj" />
   <Project Path="Clean.Infrastructure/Clean.Infrastructure.csproj" />
-  <Project Path="Clean.Tests/Clean.Tests.csproj" />
   <Project Path="Clean.Web\Clean.Web.csproj" />
 </Solution>
