@@ -12,7 +12,8 @@ function RegisterPage() {
     isBlocked: false,
     role: 1,
     language: 1,
-    theme: 1
+    theme: 1,
+    profileImage: ""
   });
   const { setPreferredTheme } = useTheme();
   const { t, i18n } = useTranslation();
