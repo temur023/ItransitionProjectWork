@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
 function RegisterPage() {
-  const savedLang = localStorage.getItem('userLanguage') || 'en';
-  const initialLangId = savedLang === 'ru' ? 2 : 1;
+  const savedLang = localStorage.getItem('userLanguage') || 'ru';
+  const initialLangId = savedLang === 'en' ? 1 : 2;
   const savedTheme = localStorage.getItem('theme') || 'light';
   const initialThemeId = savedTheme === 'dark' ? 2 : 1;
 

@@ -42,6 +42,35 @@ function AdminPage() {
     }, [getUserIdFromToken]);
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    // Auto-update theme in DB if user toggles it using the navbar
+    useEffect(() => {
+        const autoSaveTheme = async () => {
+            const token = localStorage.getItem("userToken");
+            const userId = getUserIdFromToken();
+            if (!token || !userId || !profileData) return;
+
+            // Only save if it actually differs from what's in the DB to avoid infinite loops
+            const currentDbTheme = profileData.theme ?? profileData.Theme ?? 1;
+            const newThemeVal = theme === "dark" ? 2 : 1;
+
+            if (currentDbTheme !== newThemeVal) {
+                try {
+                    const payload = {
+                        fullName: profileData.fullName,
+                        passwordHash: "",
+                        language: profileData.language ?? profileData.Language ?? 1,
+                        theme: newThemeVal,
+                    };
+                    await axios.put(`${api_url}/api/User/update/${userId}`, payload, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setProfileData(prev => ({ ...prev, theme: newThemeVal }));
+                } catch (e) { console.error("Auto-saving theme failed", e); }
+            }
+        };
+        autoSaveTheme();
+    }, [theme, profileData, getUserIdFromToken, api_url]);
     const logout = async () => {
         localStorage.removeItem("userToken");
         navigate("/login")

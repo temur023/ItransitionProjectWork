@@ -85,8 +85,8 @@ function UserPage() {
     const [total, setTotal] = useState(0);
     const [message, setMessage] = useState({ text: "", type: "" });
     const [profileData, setProfileData] = useState(null);
-    const savedLang = localStorage.getItem('userLanguage') || 'en';
-    const initLangId = savedLang === 'ru' ? 2 : 1;
+    const savedLang = localStorage.getItem('userLanguage') || 'ru';
+    const initLangId = savedLang === 'en' ? 1 : 2;
     const savedTheme = localStorage.getItem('theme') || 'light';
     const initThemeId = savedTheme === 'dark' ? 2 : 1;
     const [profileForm, setProfileForm] = useState({ fullName: "", language: initLangId, theme: initThemeId, password: "" });
@@ -157,14 +157,19 @@ function UserPage() {
             const user = response.data.data;
             setProfileData(user);
             const themeVal = user.theme ?? user.Theme ?? 1;
+            const langVal = user.language ?? user.Language ?? 1;
+            const langStr = langVal === 1 ? 'en' : 'ru';
+
             setProfileForm({
                 fullName: user.fullName || "",
                 userName: user.userName || "",
-                language: user.language ?? user.Language ?? 1,
+                language: langVal,
                 theme: themeVal,
                 password: ""
             });
             setPreferredTheme(themeVal);
+            i18n.changeLanguage(langStr);
+            localStorage.setItem('userLanguage', langStr);
         } catch (error) {
             if (error.response?.status === 401) navigate("/login");
         }
@@ -452,6 +457,42 @@ function UserPage() {
     }, [message]);
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    // Auto-update theme in DB if user toggles it using the navbar
+    useEffect(() => {
+        const autoSaveTheme = async () => {
+            const token = localStorage.getItem("userToken");
+            const userId = getUserIdFromToken();
+            if (!token || !userId || !profileData) return;
+
+            // Only save if it actually differs from what's in the DB to avoid infinite loops
+            const currentDbTheme = profileData.theme ?? profileData.Theme ?? 1;
+            const newThemeVal = theme === "dark" ? 2 : 1;
+
+            if (currentDbTheme !== newThemeVal) {
+                try {
+                    const payload = {
+                        fullName: profileData.fullName,
+                        passwordHash: "",
+                        language: profileData.language ?? profileData.Language ?? 1,
+                        theme: newThemeVal,
+                    };
+                    await axios.put(`${api_url}/api/User/update/${userId}`, payload, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setProfileData(prev => ({ ...prev, theme: newThemeVal }));
+                } catch (e) { console.error("Auto-saving theme failed", e); }
+            }
+        };
+        autoSaveTheme();
+    }, [theme, profileData, getUserIdFromToken, api_url]);
+
+    useEffect(() => {
+        setProfileForm(prev => ({
+            ...prev,
+            theme: theme === "dark" ? 2 : 1
+        }));
+    }, [theme]);
 
     // ── Render ─────────────────────────────────────────────────────────────────
     return (
