@@ -9,5 +9,6 @@ public interface IInventoryFieldService
     Task<PagedResponse<InventoryFieldGetDto>> GetAll(InventoryFieldFilter filter, int invId);
     Task<Response<InventoryFieldGetDto>> GetById(int id);
     Task<Response<string>> Create(InventoryFieldCreateDto dto);
+    Task<Response<string>> Update(InventoryFieldUpdateDto dto);
     Task<Response<string>> Delete(int id);
 }

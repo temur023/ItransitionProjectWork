@@ -11,4 +11,5 @@ public class InventoryUpdateDto
     public bool IsPublic { get; set; }
     public string? ImageUrl { get; set; }
     public List<string>? Tags { get; set; }
+    public int Version { get; set; }
 }

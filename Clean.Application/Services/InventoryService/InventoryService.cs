@@ -17,38 +17,7 @@ public class InventoryService(IInvetoryRepository repository
     private int? GetCurrentUserId() =>
         int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
             ?.Value, out var userId) ? userId : null;
-
-    public async Task<PagedResponse<InventoryGetDto>> GetShared(InventoryFilter filter, int id)
-    {
-        var currentUserId = GetCurrentUserId();
-        if (currentUserId == null)
-        {
-            return new PagedResponse<InventoryGetDto>([]
-                ,filter.PageNumber, filter.PageSize,0,"You are not authorized");
-        }
-        var invs = await repository.GetShared(filter,id);
-        var dto = invs.Inventories.Select(u => new InventoryGetDto()
-        {
-            Id = u.Id,
-            CreatedAt = u.CreatedAt.ToUniversalTime(),
-            Description = u.Description,
-            Category = u.Category,
-            IsPublic = u.IsPublic,
-            CreatedById = u.CreatedById,
-            CustomIdFormatJson = u.CustomIdFormatJson,
-            CreatorName = u.CreatedBy.UserName,
-            Version = u.Version,
-            ImageUrl = u.ImageUrl,
-            Title = u.Title,
-            UserAccesses = u.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
-                InvId = a.InventoryId, 
-                UserId = a.UserId, 
-                EmailOrUsername = a.UserName ?? a.Email 
-            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
-            Tags = u.Tags?.Select(t => t.Name).ToList()
-        }).ToList();
-        return new PagedResponse<InventoryGetDto>(dto,filter.PageNumber, filter.PageSize,invs.Total,"Success");
-    }
+    
 
     public async Task<PagedResponse<InventoryGetDto>> GetAll(InventoryFilter filter)
     {
@@ -192,8 +161,11 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
         return new Response<string>(404, "Inventory not found");
 
     var user = await userRepository.GetById((int)currentUser);
-    if (inventory.CreatedById != currentUser && user.Role != UserRole.Admin)
+    if (inventory.CreatedById != currentUser && user.Role != UserRole.Admin && inventory.UserAccesses.All(u => u.UserId != currentUser))
         return new Response<string>(403, "Forbidden");
+
+    if (inventory.Version != dto.Version)
+        return new Response<string>(409, "Conflict: The inventory was modified by another user.");
 
     inventory.Title = dto.Title;
     inventory.Description = dto.Description;
@@ -215,9 +187,9 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
             inventory.Tags.Add(tag);
         }
     }
-
+    inventory.Version++;
     await repository.SaveChanges();
-    return new Response<string>(200, "Inventory updated");
+    return new Response<string>(200, "Inventory updated", inventory.Version.ToString());
 }
 public async Task<Response<string>> Delete(int id)
 {

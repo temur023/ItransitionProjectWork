@@ -63,6 +63,24 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         return new Response<string>(200, "Inventory field created");
     }
 
+    public async Task<Response<string>> Update(InventoryFieldUpdateDto dto)
+    {
+        var field = await repository.GetById(dto.Id);
+        if (field == null)
+        {
+            return new Response<string>(404, "Inventory field not found");
+        }
+
+        field.Title = dto.Title;
+        field.Description = dto.Description;
+        field.Type = dto.Type;
+        field.ShowInTable = dto.ShowInTable;
+        field.Order = dto.Order;
+
+        await repository.SaveChanges();
+        return new Response<string>(200, "Inventory field updated");
+    }
+
     public async Task<Response<string>> Delete(int id)
     {
         var result = await repository.Delete(id);

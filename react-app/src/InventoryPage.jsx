@@ -4,6 +4,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import TagInput from "./TagInput";
 import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+import SortableItem from "./SortableItem";
 
 function Modal({ isOpen, onClose, title, children, footer }) {
     useEffect(() => {
@@ -86,7 +101,9 @@ function InventoryPage() {
 
     // Edit Inventory Modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editFormData, setEditFormData] = useState({ title: "", description: "", category: 1, isPublic: true, tags: [] });
+    const [editFormData, setEditFormData] = useState({ title: "", description: "", category: 1, isPublic: true, tags: [], version: 0 });
+    const prevEditFormDataRef = useRef(null);
+    const autoSaveTimerRef = useRef(null);
 
     // Edit Item Modal
     const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
@@ -105,21 +122,6 @@ function InventoryPage() {
     const totalPages = Math.ceil(total / filter.pageSize);
     const [profileData, setProfileData] = useState(null);
 
-    const fetchProfile = useCallback(async () => {
-        try {
-            const token = localStorage.getItem("userToken");
-            const userId = getUserIdFromToken();
-            if (!token || !userId) return;
-            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProfileData(response.data.data);
-        } catch { }
-    }, [getUserIdFromToken]);
-
-    useEffect(() => { fetchProfile(); }, [fetchProfile]);
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────────
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
         if (!token) return null;
@@ -139,6 +141,39 @@ function InventoryPage() {
             return null;
         }
     }, []);
+
+    // ─── DnD sensors ────────────────────────────────────────────────────────────
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    function handleFieldDragEnd(event) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        setFields((items) => {
+            const oldIndex = items.findIndex(f => f.id === active.id);
+            const newIndex = items.findIndex(f => f.id === over.id);
+            return arrayMove(items, oldIndex, newIndex);
+        });
+    }
+
+    const fetchProfile = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("userToken");
+            const userId = getUserIdFromToken();
+            if (!token || !userId) return;
+            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProfileData(response.data.data);
+        } catch { }
+    }, [getUserIdFromToken]);
+
+    useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
     const isAdmin = useCallback(() => {
         const token = localStorage.getItem("userToken");
@@ -477,9 +512,9 @@ function InventoryPage() {
                 axios.get(`${api_url}/api/InventoryUserAccess/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } })
             ]);
             const inv = invRes.data.data;
-            setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic, tags: inv.tags || [] });
+            setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic, tags: inv.tags || [], version: inv.version || 0 });
             setFields((fieldsRes.data.data || []).map(f => ({
-                id: f.id, title: f.title, description: f.description,
+                id: String(f.id), title: f.title, description: f.description,
                 type: f.type, showInTable: f.showInTable, order: f.order, isExisting: true
             })));
             setAccessUsers((accessRes.data.data || []).map(a => ({
@@ -501,14 +536,33 @@ function InventoryPage() {
                 Description: editFormData.description,
                 Category: parseInt(editFormData.category),
                 IsPublic: editFormData.isPublic,
-                Tags: editFormData.tags || []
+                Tags: editFormData.tags || [],
+                Version: editFormData.version
             }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
 
-            const newFields = fields.filter(f => !f.isExisting);
+            const updatedFields = fields.map((f, index) => ({ ...f, order: index + 1 }));
+
+            // Save new fields
+            const newFields = updatedFields.filter(f => !f.isExisting);
             if (newFields.length > 0) {
                 await Promise.all(newFields.map(f =>
                     axios.post(`${api_url}/api/InventoryField/create`, {
                         InvId: parseInt(inventoryId),
+                        Title: f.title,
+                        Description: f.description,
+                        Type: parseInt(f.type),
+                        ShowInTable: f.showInTable,
+                        Order: f.order
+                    }, { headers: { Authorization: `Bearer ${token}` } })
+                ));
+            }
+
+            // Update existing fields 
+            const existingFields = updatedFields.filter(f => f.isExisting);
+            if (existingFields.length > 0) {
+                await Promise.all(existingFields.map(f =>
+                    axios.put(`${api_url}/api/InventoryField/update`, {
+                        Id: parseInt(f.id),
                         Title: f.title,
                         Description: f.description,
                         Type: parseInt(f.type),
@@ -530,25 +584,29 @@ function InventoryPage() {
             }
 
             setMessage({ text: "Inventory updated!", type: "success" });
+            prevEditFormDataRef.current = null;
             setIsEditModalOpen(false);
             await fetchFields();
             await fetchItems();
         } catch (error) {
-            setMessage({ text: error.response?.data?.message || "Failed to update", type: "danger" });
+            if (error.response?.status === 409) {
+                setMessage({ text: t('inventory_conflict') || "Conflict: Modified by another user. Reload the page.", type: "danger" });
+            } else {
+                setMessage({ text: error.response?.data?.message || "Failed to update", type: "danger" });
+            }
         }
     };
 
     // ─── Fields CRUD ──────────────────────────────────────────────────────────────
     const addField = () => {
-        setFields([...fields, { title: "", description: "", type: 1, showInTable: false, order: fields.length + 1 }]);
+        setFields([...fields, { id: String(Date.now()) + Math.random().toString(36).slice(2), title: "", description: "", type: 1, showInTable: false, order: fields.length + 1 }]);
     };
-    const updateField = (index, key, value) => {
-        const updated = [...fields];
-        updated[index][key] = value;
-        setFields(updated);
+    const updateField = (id, key, value) => {
+        setFields(fields.map(f => f.id === id ? { ...f, [key]: value } : f));
     };
-    const removeField = async (index) => {
-        const field = fields[index];
+    const removeField = async (id) => {
+        const field = fields.find(f => f.id === id);
+        if (!field) return;
         if (field.isExisting) {
             try {
                 const token = localStorage.getItem("userToken");
@@ -560,7 +618,7 @@ function InventoryPage() {
                 return;
             }
         }
-        setFields(fields.filter((_, i) => i !== index));
+        setFields(fields.filter(f => f.id !== id));
     };
 
     // ─── Access Users CRUD ────────────────────────────────────────────────────────
@@ -602,12 +660,60 @@ function InventoryPage() {
         setActiveSuggestionIndex(-1);
     };
 
-    // ─── Auto-dismiss messages ────────────────────────────────────────────────────
     useEffect(() => {
         if (!message.text) return;
         const timer = setTimeout(() => setMessage({ text: "", type: "" }), 5000);
         return () => clearTimeout(timer);
     }, [message.text]);
+
+    // ─── Auto-Save ────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!isEditModalOpen) {
+            prevEditFormDataRef.current = null;
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+            return;
+        }
+
+        const currentDataStr = JSON.stringify(editFormData);
+        if (!prevEditFormDataRef.current) {
+            prevEditFormDataRef.current = currentDataStr;
+            return;
+        }
+        if (currentDataStr === prevEditFormDataRef.current) return;
+
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+        autoSaveTimerRef.current = setTimeout(async () => {
+            try {
+                const token = localStorage.getItem("userToken");
+                const response = await axios.put(`${api_url}/api/Inventory/update/${inventoryId}`, {
+                    Title: editFormData.title,
+                    Description: editFormData.description,
+                    Category: parseInt(editFormData.category),
+                    IsPublic: editFormData.isPublic,
+                    Tags: editFormData.tags || [],
+                    Version: editFormData.version
+                }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+
+                let newVersion = editFormData.version;
+                if (response.data && response.data.data) {
+                    newVersion = parseInt(response.data.data);
+                    setEditFormData(f => ({ ...f, version: newVersion }));
+                }
+
+                prevEditFormDataRef.current = JSON.stringify({ ...editFormData, version: newVersion });
+            } catch (error) {
+                if (error.response?.status === 409) {
+                    setMessage({ text: t('inventory_conflict') || "Conflict: Modified by another user. Please close and reopen.", type: "danger" });
+                    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                } else {
+                    setMessage({ text: "Auto-save failed.", type: "danger" });
+                }
+            }
+        }, 8000);
+
+        return () => clearTimeout(autoSaveTimerRef.current);
+    }, [editFormData, isEditModalOpen, api_url, inventoryId, t]);
 
     const me = getUserIdFromToken();
     const admin = isAdmin();
@@ -912,7 +1018,7 @@ function InventoryPage() {
             </Modal>
 
             {/* Edit Inventory Modal */}
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title={t('inventory_editInv')}
+            <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); prevEditFormDataRef.current = null; }} title={t('inventory_editInv')}
                 footer={
                     <div className="d-flex gap-2">
                         <button className="btn btn-outline-secondary" onClick={addField}>{t('inventory_addField')}</button>
@@ -957,38 +1063,41 @@ function InventoryPage() {
                 <hr />
                 <h6 className="mb-3">{t('inventory_fields')}</h6>
                 {fields.length === 0 && <p className="text-muted small">{t('inventory_noFieldsYet')}</p>}
-                {fields.map((field, index) => (
-                    <div key={index} className="border rounded p-3 mb-2 position-relative">
-                        <button type="button" className="btn-close position-absolute top-0 end-0 m-2" onClick={() => removeField(index)} />
-                        {field.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
-                        <div className="mb-2">
-                            <label className="form-label small">{t('title')}</label>
-                            <input type="text" className="form-control form-control-sm" value={field.title}
-                                onChange={(e) => updateField(index, "title", e.target.value)} />
-                        </div>
-                        <div className="mb-2">
-                            <label className="form-label small">{t('description')}</label>
-                            <input type="text" className="form-control form-control-sm" value={field.description}
-                                onChange={(e) => updateField(index, "description", e.target.value)} />
-                        </div>
-                        <div className="mb-2">
-                            <label className="form-label small">{t('inventory_fieldType')}</label>
-                            <select className="form-select form-select-sm" value={field.type}
-                                onChange={(e) => updateField(index, "type", e.target.value)} disabled={field.isExisting}>
-                                <option value={1}>{t('inventory_singleLinedText')}</option>
-                                <option value={2}>{t('inventory_multiLinedText')}</option>
-                                <option value={3}>{t('inventory_number')}</option>
-                                <option value={4}>{t('inventory_boolean')}</option>
-                                <option value={5}>{t('inventory_link')}</option>
-                            </select>
-                        </div>
-                        <div className="form-check">
-                            <input type="checkbox" className="form-check-input" checked={field.showInTable}
-                                onChange={(e) => updateField(index, "showInTable", e.target.checked)} />
-                            <label className="form-check-label small">{t('inventory_showInTable')}</label>
-                        </div>
-                    </div>
-                ))}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
+                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                        {fields.map((field) => (
+                            <SortableItem key={field.id} id={field.id} onRemove={() => removeField(field.id)}>
+                                {field.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
+                                <div className="mb-2">
+                                    <label className="form-label small">{t('title')}</label>
+                                    <input type="text" className="form-control form-control-sm" value={field.title}
+                                        onChange={(e) => updateField(field.id, "title", e.target.value)} />
+                                </div>
+                                <div className="mb-2">
+                                    <label className="form-label small">{t('description')}</label>
+                                    <input type="text" className="form-control form-control-sm" value={field.description}
+                                        onChange={(e) => updateField(field.id, "description", e.target.value)} />
+                                </div>
+                                <div className="mb-2">
+                                    <label className="form-label small">{t('inventory_fieldType')}</label>
+                                    <select className="form-select form-select-sm" value={field.type}
+                                        onChange={(e) => updateField(field.id, "type", e.target.value)} disabled={field.isExisting}>
+                                        <option value={1}>{t('inventory_singleLinedText')}</option>
+                                        <option value={2}>{t('inventory_multiLinedText')}</option>
+                                        <option value={3}>{t('inventory_number')}</option>
+                                        <option value={4}>{t('inventory_boolean')}</option>
+                                        <option value={5}>{t('inventory_link')}</option>
+                                    </select>
+                                </div>
+                                <div className="form-check">
+                                    <input type="checkbox" className="form-check-input" checked={field.showInTable}
+                                        onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
+                                    <label className="form-check-label small">{t('inventory_showInTable')}</label>
+                                </div>
+                            </SortableItem>
+                        ))}
+                    </SortableContext>
+                </DndContext>
                 <hr />
                 <h6 className="mb-3">{t('inventory_usersWithAccess')}</h6>
                 {accessUsers.length === 0 && <p className="text-muted small">{t('inventory_noUsersYet')}</p>}

@@ -9,6 +9,7 @@ import AdminPage from './AdminPage';
 import StatisticsPage from './StatisticsPage';
 import ProtectedRoute from './ProtectedRoute';
 import useTheme from "./useTheme";
+import SortableItem from './SortableItem';
 function App() {
   // Ensure theme is applied even on pages that don't call useTheme (Login/Register).
   useTheme();
@@ -34,6 +35,7 @@ function App() {
             <Route path="/" element={<Navigate to={"/login"} />}></Route>
         </Routes>
       </BrowserRouter>
+      <SortableItem/>
     </>
   )
 }

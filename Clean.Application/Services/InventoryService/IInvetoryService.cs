@@ -6,7 +6,6 @@ namespace Clean.Application.Services;
 
 public interface IInvetoryService
 {
-    Task<PagedResponse<InventoryGetDto>> GetShared(InventoryFilter filter, int id);
     Task<PagedResponse<InventoryGetDto>> GetAll(InventoryFilter filter);
     Task<Response<InventoryGetDto>> GetById(int id);
     Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto);

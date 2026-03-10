@@ -37,6 +37,17 @@ public class InventoryFieldController(IInventoryFieldService service) : Controll
             return StatusCode(response.StatusCode);
         return Ok(response);
     }
+    
+    [Authorize]
+    [HttpPut("update")]
+    public async Task<IActionResult> Update(InventoryFieldUpdateDto dto)
+    {
+        var response = await service.Update(dto);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode);
+        return Ok(response);
+    }
+
     [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
