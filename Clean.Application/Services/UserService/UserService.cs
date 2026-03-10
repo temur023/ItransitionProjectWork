@@ -68,6 +68,7 @@ public class UserService(IUserRepository repository, IHttpContextAccessor httpCo
             IsBlocked = false,
             PasswordHash = dto.PasswordHash,
             Theme = dto.Theme,
+            ProfileImage = ""
         };
         var user = await repository.Create(model);
         return new Response<string>(200, "User created");
