@@ -72,7 +72,7 @@ function InventoryPage() {
 
     const [selectedItem, setSelectedItem] = useState(null);
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-    const api_url = "http://localhost:5137";
+    const api_url = "https://itransitionprojectwork-production.up.railway.app";
     const navigate = useNavigate();
     const logout = async () => {
         localStorage.removeItem("userToken");

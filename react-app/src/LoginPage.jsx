@@ -7,7 +7,7 @@ import FacebookLogin from "@greatsumini/react-facebook-login";
 
 const GOOGLE_CLIENT_ID = "883533109052-5i1slf978hamq2ircs74s6fvpj6tdktu.apps.googleusercontent.com";
 const FACEBOOK_APP_ID = "932426212812578";
-const api_url = "http://localhost:5137";
+const api_url = "https://itransitionprojectwork-production.up.railway.app";
 
 function LoginPage() {
     const [loginInput, setLoginInput] = useState("");

@@ -17,7 +17,7 @@ function RegisterPage() {
   const { setPreferredTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const langMap = { 1: 'en', 2: 'ru' };
-  const api_url = "http://localhost:5137";
+  const api_url = "https://itransitionprojectwork-production.up.railway.app";
   const navigate = useNavigate();
   function handleChange(e) {
     const { name, value } = e.target;

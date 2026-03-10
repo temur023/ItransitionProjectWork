@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-const api_url = "http://localhost:5137";
+const api_url = "https://itransitionprojectwork-production.up.railway.app";
 
 function AvatarUpload({ currentImage, onUpload, uploadUrl }) {
   const [preview, setPreview] = useState(currentImage || null);

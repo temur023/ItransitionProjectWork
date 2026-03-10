@@ -17,7 +17,7 @@ function Dashboard() {
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [inventoriesByTag, setInventoriesByTag] = useState([]);
-  const api_url = "http://localhost:5137";
+  const api_url = "https://itransitionprojectwork-production.up.railway.app";
   const [activeTab, setActiveTab] = useState("dashboard");
   const searchTimerRef = useRef(null);
   const [profileData, setProfileData] = useState(null);

@@ -9,7 +9,7 @@ function AdminPage() {
 
     const { t, i18n } = useTranslation();
     const langMap = { 1: 'en', 2: 'ru' };
-    const api_url = "http://localhost:5137";
+    const api_url = "https://itransitionprojectwork-production.up.railway.app";
     const navigate = useNavigate();
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
     const [checkedUsers, setCheckedUsers] = useState([]);

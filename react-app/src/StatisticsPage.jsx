@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 function StatisticsPage() {
     const [inventories, setInventories] = useState([]);
     const [message, setMessage] = useState({ text: "", type: "" });
-    const api_url = "http://localhost:5137";
+    const api_url = "https://itransitionprojectwork-production.up.railway.app";
     const { theme, toggleTheme } = useTheme();
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState("top");

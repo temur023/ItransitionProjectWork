@@ -91,7 +91,7 @@ function UserPage() {
     const [userSuggestions, setUserSuggestions] = useState([]);
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const searchTimerRef = React.useRef(null);
-    const api_url = "http://localhost:5137";
+    const api_url = "https://itransitionprojectwork-production.up.railway.app";
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
 
