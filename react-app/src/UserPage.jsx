@@ -85,7 +85,11 @@ function UserPage() {
     const [total, setTotal] = useState(0);
     const [message, setMessage] = useState({ text: "", type: "" });
     const [profileData, setProfileData] = useState(null);
-    const [profileForm, setProfileForm] = useState({ fullName: "", language: 1, theme: 1, password: "" });
+    const savedLang = localStorage.getItem('userLanguage') || 'en';
+    const initLangId = savedLang === 'ru' ? 2 : 1;
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const initThemeId = savedTheme === 'dark' ? 2 : 1;
+    const [profileForm, setProfileForm] = useState({ fullName: "", language: initLangId, theme: initThemeId, password: "" });
     const [profileSaving, setProfileSaving] = useState(false);
     const [accessUsers, setAccessUsers] = useState([]);
     const [userSuggestions, setUserSuggestions] = useState([]);
@@ -310,7 +314,7 @@ function UserPage() {
     // ── Fields (stable IDs) ────────────────────────────────────────────────────
     const addField = () => {
         setFields([...fields, {
-            id: String(Date.now()) + Math.random().toString(36).slice(2),   // ✅ stable unique string id
+            id: String(Date.now()) + Math.random().toString(36).slice(2),
             title: "", description: "", type: 1,
             showInTable: false, order: fields.length + 1
         }]);
@@ -557,7 +561,9 @@ function UserPage() {
                                             onChange={(e) => {
                                                 const v = Number(e.target.value);
                                                 setProfileForm(f => ({ ...f, language: v }));
-                                                i18n.changeLanguage(langMap[v] || 'en');
+                                                const lang = langMap[v] || 'en';
+                                                i18n.changeLanguage(lang);
+                                                localStorage.setItem('userLanguage', lang);
                                             }}>
                                             <option value={1}>English</option>
                                             <option value={2}>Русский</option>

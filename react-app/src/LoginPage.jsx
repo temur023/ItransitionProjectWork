@@ -36,7 +36,7 @@ function LoginPage() {
             const token = response.data.token;
             localStorage.setItem("userToken", token);
             const lang = response.data.language === 2 ? "ru" : "en";
-            localStorage.setItem("language", lang);
+            localStorage.setItem("userLanguage", lang);
             i18n.changeLanguage(lang);
             navigate("/dashboard");
         } catch (error) {

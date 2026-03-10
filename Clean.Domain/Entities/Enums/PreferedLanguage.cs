@@ -6,6 +6,6 @@ namespace Clean.Domain.Entities.Enums;
 public enum PreferedLanguage
 {
     English = 1,
-    Russian
+    Russian = 2
 }
 

@@ -6,5 +6,5 @@ namespace Clean.Domain.Entities.Enums;
 public enum PreferedTheme
 {
     Light = 1,
-    Dark
+    Dark = 2
 }

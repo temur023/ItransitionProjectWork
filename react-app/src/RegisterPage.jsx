@@ -4,6 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
 function RegisterPage() {
+  const savedLang = localStorage.getItem('userLanguage') || 'en';
+  const initialLangId = savedLang === 'ru' ? 2 : 1;
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  const initialThemeId = savedTheme === 'dark' ? 2 : 1;
+
   const [formData, setFormData] = useState({
     userName: "",
     fullName: "",
@@ -11,8 +16,8 @@ function RegisterPage() {
     passwordHash: "",
     isBlocked: false,
     role: 1,
-    language: 1,
-    theme: 1,
+    language: initialLangId,
+    theme: initialThemeId,
     profileImage: ""
   });
   const { setPreferredTheme } = useTheme();
@@ -30,8 +35,9 @@ function RegisterPage() {
     }
     if (name === "language") {
       const v = Number(value);
-      setFormData({ ...formData, language: v });
-      i18n.changeLanguage(langMap[v] || 'en');
+      const lang = langMap[v] || 'en';
+      i18n.changeLanguage(lang);
+      localStorage.setItem('userLanguage', lang);
       return;
     }
     setFormData({ ...formData, [name]: value });
