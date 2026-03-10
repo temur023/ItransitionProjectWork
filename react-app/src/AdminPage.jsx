@@ -715,126 +715,126 @@ function AdminPage() {
                             </ul>
                         </nav>
                     </>)}
-                </div>
 
-                {/* Edit User Tab */}
-                {activeAdminTab === "edit_user" && (
-                    <div className="card shadow mt-4">
-                        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0">{t('update_user')}</h5>
-                            <button type="button" className="btn-close btn-close-white" aria-label="Close" onClick={closeEditModal} />
-                        </div>
-                        <div className="card-body">
-                            <div className="row g-3">
-                                <div className="col-md-3">
-                                    <label className="form-label">Id</label>
-                                    <input className="form-control" value={editForm.id} disabled />
-                                </div>
-                                <div className="col-md-9">
-                                    <label className="form-label">{t('register_fullName')}</label>
-                                    <input
-                                        className="form-control"
-                                        value={editForm.fullName}
-                                        onChange={(e) => setEditForm(f => ({ ...f, fullName: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="col-md-6">
-                                    <label className="form-label">{t('register_username')}</label>
-                                    <input
-                                        className="form-control"
-                                        value={editForm.userName}
-                                        onChange={(e) => setEditForm(f => ({ ...f, userName: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label">Email</label>
-                                    <input
-                                        type="email"
-                                        className="form-control"
-                                        value={editForm.email}
-                                        disabled
-                                        title={t('email_cannot_change')}
-                                    />
-                                </div>
-
-                                <div className="col-md-6">
-                                    <label className="form-label">{t('role')}</label>
-                                    <select
-                                        className="form-select"
-                                        value={editForm.role}
-                                        onChange={(e) => setEditForm(f => ({ ...f, role: Number(e.target.value) }))}
-                                    >
-                                        <option value={0}>Admin</option>
-                                        <option value={1}>User</option>
-                                    </select>
-                                </div>
-
-                                <div className="col-md-6 d-flex align-items-end">
-                                    <div className="form-check">
+                    {/* Edit User Tab */}
+                    {activeAdminTab === "edit_user" && (
+                        <div className="card shadow mt-4 mb-4">
+                            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0">{t('update_user')}</h5>
+                                <button type="button" className="btn-close btn-close-white" aria-label="Close" onClick={closeEditModal} />
+                            </div>
+                            <div className="card-body">
+                                <div className="row g-3">
+                                    <div className="col-md-3">
+                                        <label className="form-label">Id</label>
+                                        <input className="form-control" value={editForm.id} disabled />
+                                    </div>
+                                    <div className="col-md-9">
+                                        <label className="form-label">{t('register_fullName')}</label>
                                         <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            id="isBlocked"
-                                            checked={!!editForm.isBlocked}
-                                            onChange={(e) => setEditForm(f => ({ ...f, isBlocked: e.target.checked }))}
+                                            className="form-control"
+                                            value={editForm.fullName}
+                                            onChange={(e) => setEditForm(f => ({ ...f, fullName: e.target.value }))}
                                         />
-                                        <label className="form-check-label" htmlFor="isBlocked">
-                                            {t('blocked')}
-                                        </label>
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <label className="form-label">{t('register_username')}</label>
+                                        <input
+                                            className="form-control"
+                                            value={editForm.userName}
+                                            onChange={(e) => setEditForm(f => ({ ...f, userName: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Email</label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            value={editForm.email}
+                                            disabled
+                                            title={t('email_cannot_change')}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <label className="form-label">{t('role')}</label>
+                                        <select
+                                            className="form-select"
+                                            value={editForm.role}
+                                            onChange={(e) => setEditForm(f => ({ ...f, role: Number(e.target.value) }))}
+                                        >
+                                            <option value={0}>Admin</option>
+                                            <option value={1}>User</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="col-md-6 d-flex align-items-end">
+                                        <div className="form-check">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                id="isBlocked"
+                                                checked={!!editForm.isBlocked}
+                                                onChange={(e) => setEditForm(f => ({ ...f, isBlocked: e.target.checked }))}
+                                            />
+                                            <label className="form-check-label" htmlFor="isBlocked">
+                                                {t('blocked')}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <label className="form-label">{t('language')}</label>
+                                        <select
+                                            className="form-select"
+                                            value={editForm.language}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value);
+                                                setEditForm(f => ({ ...f, language: v }));
+                                                const lang = langMap[v] || 'en';
+                                                i18n.changeLanguage(lang);
+                                                localStorage.setItem('userLanguage', lang);
+                                            }}
+                                        >
+                                            <option value={1}>English</option>
+                                            <option value={2}>Русский</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">{t('theme')}</label>
+                                        <select
+                                            className="form-select"
+                                            value={editForm.theme}
+                                            onChange={(e) => setEditForm(f => ({ ...f, theme: Number(e.target.value) }))}
+                                        >
+                                            <option value={1}>{t('light')}</option>
+                                            <option value={2}>{t('dark')}</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="col-12">
+                                        <label className="form-label">{t('register_password')} ({t('leave_blank')})</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            value={editForm.password}
+                                            onChange={(e) => setEditForm(f => ({ ...f, password: e.target.value }))}
+                                        />
                                     </div>
                                 </div>
-
-                                <div className="col-md-6">
-                                    <label className="form-label">{t('language')}</label>
-                                    <select
-                                        className="form-select"
-                                        value={editForm.language}
-                                        onChange={(e) => {
-                                            const v = Number(e.target.value);
-                                            setEditForm(f => ({ ...f, language: v }));
-                                            const lang = langMap[v] || 'en';
-                                            i18n.changeLanguage(lang);
-                                            localStorage.setItem('userLanguage', lang);
-                                        }}
-                                    >
-                                        <option value={1}>English</option>
-                                        <option value={2}>Русский</option>
-                                    </select>
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label">{t('theme')}</label>
-                                    <select
-                                        className="form-select"
-                                        value={editForm.theme}
-                                        onChange={(e) => setEditForm(f => ({ ...f, theme: Number(e.target.value) }))}
-                                    >
-                                        <option value={1}>{t('light')}</option>
-                                        <option value={2}>{t('dark')}</option>
-                                    </select>
-                                </div>
-
-                                <div className="col-12">
-                                    <label className="form-label">{t('register_password')} ({t('leave_blank')})</label>
-                                    <input
-                                        type="password"
-                                        className="form-control"
-                                        value={editForm.password}
-                                        onChange={(e) => setEditForm(f => ({ ...f, password: e.target.value }))}
-                                    />
-                                </div>
+                            </div>
+                            <div className="card-footer d-flex justify-content-end gap-2">
+                                <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={saving}>
+                                    {t('cancel')}
+                                </button>
+                                <button type="button" className="btn btn-primary" onClick={updateUser} disabled={saving}>
+                                    {saving ? t("saving") : t("save")}
+                                </button>
                             </div>
                         </div>
-                        <div className="card-footer d-flex justify-content-end gap-2">
-                            <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={saving}>
-                                {t('cancel')}
-                            </button>
-                            <button type="button" className="btn btn-primary" onClick={updateUser} disabled={saving}>
-                                {saving ? t("saving") : t("save")}
-                            </button>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
             </div>
         </>);

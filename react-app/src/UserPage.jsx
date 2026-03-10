@@ -21,8 +21,6 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
 
-
-
 // ─── UserPage ─────────────────────────────────────────────────────────────────
 function UserPage() {
     // ── State ──────────────────────────────────────────────────────────────────
@@ -515,7 +513,6 @@ function UserPage() {
                             { key: "own", label: t('user_myInventories') },
                             { key: "access", label: t('user_sharedWithMe') },
                             { key: "profile", label: t('user_myProfile') },
-                            { key: "create", label: t('user_createNewInventory') },
                         ].map(({ key, label }) => (
                             <li key={key} className="nav-item">
                                 <button
@@ -623,7 +620,11 @@ function UserPage() {
                                         <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
                                     </svg>
                                 </button>
-                                <button className="btn btn-success" onClick={() => setActiveTab("create")}>
+                                <button className="btn btn-success" onClick={() => {
+                                    setActiveTab("create");
+                                    setFormData({ title: "", description: "", category: 1, isPublic: true });
+                                    setNewInventoryId(null);
+                                }}>
                                     {t('user_newInventory')}
                                 </button>
                             </div>
@@ -668,6 +669,236 @@ function UserPage() {
                             </table>
                         </>
                     )}
+
+                    {/* ── Create Inventory Tab ── */}
+                    {activeTab === "create" && (
+                        <div>
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <h4 className="mb-0">{t('user_createNewInventory')}</h4>
+                                <button type="button" className="btn-close" aria-label="Close" onClick={handleCloseModal} />
+                            </div>
+
+                            {/* ── Inventory form (locked after creation) ── */}
+                            <fieldset disabled={!!newInventoryId}>
+                                <div className="mb-3">
+                                    <label className="form-label">{t('title')}</label>
+                                    <input type="text" className="form-control" name="title"
+                                        value={formData.title} onChange={handleChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">{t('description')}</label>
+                                    <textarea className="form-control" name="description"
+                                        value={formData.description} onChange={handleChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">{t('category')}</label>
+                                    <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
+                                        <option value={1}>{t('equipment')}</option>
+                                        <option value={2}>{t('furniture')}</option>
+                                        <option value={3}>{t('book')}</option>
+                                        <option value={4}>{t('technology')}</option>
+                                        <option value={5}>{t('other')}</option>
+                                    </select>
+                                </div>
+                                <div className="mb-3 form-check">
+                                    <input type="checkbox" className="form-check-input" name="isPublic"
+                                        checked={formData.isPublic}
+                                        onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })} />
+                                    <label className="form-check-label">{t('public')}</label>
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">{t('tags')}</label>
+                                    <TagInput value={selectedTags} onChange={setSelectedTags}
+                                        apiUrl={api_url} placeholder={t('inventory_tagsPlaceholder')} />
+                                </div>
+
+                                {/* ── Custom ID Format Builder ── */}
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">{t('user_customIdFormat')}</label>
+                                    <p className="text-muted small mb-2">{t('user_customIdDescription')}</p>
+
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleIdElementDragEnd}>
+                                        <SortableContext
+                                            items={customIdElements.map(el => el.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            {customIdElements.map((el) => (
+                                                <SortableItem key={el.id} id={el.id} onRemove={() => removeIdElement(el.id)}>
+                                                    <div className="row g-2 align-items-end ps-2">
+                                                        <div className="col">
+                                                            <label className="form-label small">{t('user_type')}</label>
+                                                            <select className="form-select form-select-sm" value={el.type}
+                                                                onChange={(e) => updateIdElement(el.id, "type", e.target.value)}>
+                                                                <option value={1}>{t('user_fixedText')}</option>
+                                                                <option value={2}>{t('user_random20Bit')}</option>
+                                                                <option value={3}>{t('user_random32Bit')}</option>
+                                                                <option value={4}>{t('user_random6Digit')}</option>
+                                                                <option value={5}>{t('user_random9Digit')}</option>
+                                                                <option value={6}>{t('user_guid')}</option>
+                                                                <option value={7}>{t('user_dateTime')}</option>
+                                                                <option value={8}>{t('user_sequence')}</option>
+                                                            </select>
+                                                        </div>
+                                                        {parseInt(el.type) === 1 && (
+                                                            <div className="col">
+                                                                <label className="form-label small">{t('user_value')}</label>
+                                                                <input type="text" className="form-control form-control-sm"
+                                                                    placeholder="e.g. INV-" value={el.value}
+                                                                    onChange={(e) => updateIdElement(el.id, "value", e.target.value)} />
+                                                            </div>
+                                                        )}
+                                                        {(parseInt(el.type) === 7 || parseInt(el.type) === 8) && (
+                                                            <div className="col">
+                                                                <label className="form-label small">{t('user_format')}</label>
+                                                                <input type="text" className="form-control form-control-sm"
+                                                                    placeholder={parseInt(el.type) === 7 ? "e.g. yyyyMMdd" : "e.g. D5"}
+                                                                    value={el.format}
+                                                                    onChange={(e) => updateIdElement(el.id, "format", e.target.value)} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </SortableItem>
+                                            ))}
+                                        </SortableContext>
+                                    </DndContext>
+
+                                    <button type="button" className="btn btn-outline-secondary btn-sm mt-1" onClick={addIdElement}>
+                                        {t('user_addElement')}
+                                    </button>
+
+                                    {customIdElements.length > 0 && (
+                                        <div className="mt-2 p-2 bg-light rounded">
+                                            <small className="text-muted">{t('user_preview')}: </small>
+                                            <code>{generatePreview()}</code>
+                                        </div>
+                                    )}
+                                </div>
+                            </fieldset>
+
+                            {/* ── Fields section ── */}
+                            {newInventoryId && (
+                                <div className="mt-2">
+                                    <hr />
+                                    <h6 className="mb-3">{t('inventory_fields')}</h6>
+                                    {fields.length === 0 && (
+                                        <p className="text-muted small">{t('user_noFieldsYet')}</p>
+                                    )}
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
+                                        <SortableContext
+                                            items={fields.map(f => f.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            {fields.map((field) => (
+                                                <SortableItem key={field.id} id={field.id} onRemove={() => removeField(field.id)}>
+                                                    <div className="ps-2">
+                                                        <div className="mb-2">
+                                                            <label className="form-label">{t('title')}</label>
+                                                            <input type="text" className="form-control" value={field.title}
+                                                                onChange={(e) => updateField(field.id, "title", e.target.value)} />
+                                                        </div>
+                                                        <div className="mb-2">
+                                                            <label className="form-label">{t('description')}</label>
+                                                            <input type="text" className="form-control" value={field.description}
+                                                                onChange={(e) => updateField(field.id, "description", e.target.value)} />
+                                                        </div>
+                                                        <div className="mb-2">
+                                                            <label className="form-label">{t('inventory_fieldType')}</label>
+                                                            <select className="form-select" value={field.type}
+                                                                onChange={(e) => updateField(field.id, "type", e.target.value)}>
+                                                                <option value={1}>{t('inventory_singleLinedText')}</option>
+                                                                <option value={2}>{t('inventory_multiLinedText')}</option>
+                                                                <option value={3}>{t('inventory_number')}</option>
+                                                                <option value={4}>{t('inventory_boolean')}</option>
+                                                                <option value={5}>{t('inventory_link')}</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="form-check">
+                                                            <input type="checkbox" className="form-check-input"
+                                                                checked={field.showInTable}
+                                                                onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
+                                                            <label className="form-check-label">{t('inventory_showInTable')}</label>
+                                                        </div>
+                                                    </div>
+                                                </SortableItem>
+                                            ))}
+                                        </SortableContext>
+                                    </DndContext>
+                                </div>
+                            )}
+
+                            {/* ── Access users section ── */}
+                            {newInventoryId && !formData.isPublic && (
+                                <div className="mt-2">
+                                    <hr />
+                                    <h6 className="mb-3">{t('user_usersWithWriteAccess')}</h6>
+                                    {accessUsers.length === 0 && (
+                                        <p className="text-muted small">{t('user_noUsersYet')}</p>
+                                    )}
+                                    {accessUsers.map((user, index) => (
+                                        <div key={index} className="border rounded p-3 mb-3 position-relative">
+                                            <button type="button" className="btn-close position-absolute top-0 end-0 m-2"
+                                                onClick={() => removeAccessUser(index)} />
+                                            <div className="mb-2" style={{ position: "relative" }}>
+                                                <label className="form-label">{t('user_userLabel')}</label>
+                                                <div className="input-group">
+                                                    <input type="text" className="form-control"
+                                                        placeholder={t('inventory_searchUserPlaceholder')}
+                                                        value={user.emailOrUsername}
+                                                        onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
+                                                        onBlur={() => setTimeout(() => {
+                                                            if (activeSuggestionIndex === index) {
+                                                                setUserSuggestions([]);
+                                                                setActiveSuggestionIndex(-1);
+                                                            }
+                                                        }, 200)} />
+                                                    {user.userId && <span className="input-group-text text-success">✓</span>}
+                                                </div>
+                                                {activeSuggestionIndex === index && userSuggestions.length > 0 && (
+                                                    <ul className="list-group" style={{
+                                                        position: "absolute", zIndex: 1050, width: "100%",
+                                                        maxHeight: "200px", overflowY: "auto",
+                                                        boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
+                                                    }}>
+                                                        {userSuggestions.map((s) => (
+                                                            <li key={s.id} className="list-group-item list-group-item-action"
+                                                                style={{ cursor: "pointer" }}
+                                                                onMouseDown={() => selectSuggestion(index, s)}>
+                                                                <strong>{s.userName}</strong>
+                                                                <small className="text-muted ms-2">{s.email}</small>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* ── Bottom actions ── */}
+                            <div className="d-flex justify-content-end mt-4">
+                                {!newInventoryId ? (
+                                    <button className="btn btn-primary" onClick={createInventory}>
+                                        {t('inventory_create')}
+                                    </button>
+                                ) : (
+                                    <div className="d-flex gap-2">
+                                        <button className="btn btn-success" onClick={addField}>{t('user_newField')}</button>
+                                        <button className="btn btn-secondary" onClick={addAccessUsers}>{t('user_accessUser')}</button>
+                                        <button className="btn btn-primary" onClick={async () => {
+                                            try {
+                                                await saveAllFields();
+                                                await saveAllAccessUsers();
+                                                handleCloseModal();
+                                            } catch { }
+                                        }}>
+                                            {t('user_done')}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -701,234 +932,6 @@ function UserPage() {
                     </li>
                 </ul>
             </nav>
-
-            {/* ── Create Inventory Tab ── */}
-            {activeTab === "create" && (
-                <div className="col-md-9 mt-4 shadow-lg rounded-4 p-4">
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h4>{t('user_createNewInventory')}</h4>
-                        <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close" />
-                    </div>
-
-                    <div className="mb-3">
-                        {!newInventoryId ? (
-                            <button className="btn btn-primary" onClick={createInventory}>
-                                {t('inventory_create')}
-                            </button>
-                        ) : (
-                            <div className="d-flex gap-2">
-                                <button className="btn btn-success" onClick={addField}>{t('user_newField')}</button>
-                                <button className="btn btn-secondary" onClick={addAccessUsers}>{t('user_accessUser')}</button>
-                                <button className="btn btn-primary" onClick={async () => {
-                                    try {
-                                        await saveAllFields();
-                                        await saveAllAccessUsers();
-                                        handleCloseModal();
-                                    } catch { }
-                                }}>
-                                    {t('user_done')}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    {/* ── Inventory form (locked after creation) ── */}
-                    <fieldset disabled={!!newInventoryId}>
-                        <div className="mb-3">
-                            <label className="form-label">{t('title')}</label>
-                            <input type="text" className="form-control" name="title"
-                                value={formData.title} onChange={handleChange} />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">{t('description')}</label>
-                            <textarea className="form-control" name="description"
-                                value={formData.description} onChange={handleChange} />
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">{t('category')}</label>
-                            <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
-                                <option value={1}>{t('equipment')}</option>
-                                <option value={2}>{t('furniture')}</option>
-                                <option value={3}>{t('book')}</option>
-                                <option value={4}>{t('technology')}</option>
-                                <option value={5}>{t('other')}</option>
-                            </select>
-                        </div>
-                        <div className="mb-3 form-check">
-                            <input type="checkbox" className="form-check-input" name="isPublic"
-                                checked={formData.isPublic}
-                                onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })} />
-                            <label className="form-check-label">{t('public')}</label>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label">{t('tags')}</label>
-                            <TagInput value={selectedTags} onChange={setSelectedTags}
-                                apiUrl={api_url} placeholder={t('inventory_tagsPlaceholder')} />
-                        </div>
-
-                        {/* ── Custom ID Format Builder ── */}
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">{t('user_customIdFormat')}</label>
-                            <p className="text-muted small mb-2">{t('user_customIdDescription')}</p>
-
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleIdElementDragEnd}>
-                                <SortableContext
-                                    items={customIdElements.map(el => el.id)}
-                                    strategy={verticalListSortingStrategy}
-                                >
-                                    {customIdElements.map((el) => (
-                                        <SortableItem key={el.id} id={el.id} onRemove={() => removeIdElement(el.id)}>
-                                            <div className="row g-2 align-items-end ps-2">
-                                                <div className="col">
-                                                    <label className="form-label small">{t('user_type')}</label>
-                                                    <select className="form-select form-select-sm" value={el.type}
-                                                        onChange={(e) => updateIdElement(el.id, "type", e.target.value)}>
-                                                        <option value={1}>{t('user_fixedText')}</option>
-                                                        <option value={2}>{t('user_random20Bit')}</option>
-                                                        <option value={3}>{t('user_random32Bit')}</option>
-                                                        <option value={4}>{t('user_random6Digit')}</option>
-                                                        <option value={5}>{t('user_random9Digit')}</option>
-                                                        <option value={6}>{t('user_guid')}</option>
-                                                        <option value={7}>{t('user_dateTime')}</option>
-                                                        <option value={8}>{t('user_sequence')}</option>
-                                                    </select>
-                                                </div>
-                                                {parseInt(el.type) === 1 && (
-                                                    <div className="col">
-                                                        <label className="form-label small">{t('user_value')}</label>
-                                                        <input type="text" className="form-control form-control-sm"
-                                                            placeholder="e.g. INV-" value={el.value}
-                                                            onChange={(e) => updateIdElement(el.id, "value", e.target.value)} />
-                                                    </div>
-                                                )}
-                                                {(parseInt(el.type) === 7 || parseInt(el.type) === 8) && (
-                                                    <div className="col">
-                                                        <label className="form-label small">{t('user_format')}</label>
-                                                        <input type="text" className="form-control form-control-sm"
-                                                            placeholder={parseInt(el.type) === 7 ? "e.g. yyyyMMdd" : "e.g. D5"}
-                                                            value={el.format}
-                                                            onChange={(e) => updateIdElement(el.id, "format", e.target.value)} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </SortableItem>
-                                    ))}
-                                </SortableContext>
-                            </DndContext>
-
-                            <button type="button" className="btn btn-outline-secondary btn-sm mt-1" onClick={addIdElement}>
-                                {t('user_addElement')}
-                            </button>
-
-                            {customIdElements.length > 0 && (
-                                <div className="mt-2 p-2 bg-light rounded">
-                                    <small className="text-muted">{t('user_preview')}: </small>
-                                    <code>{generatePreview()}</code>
-                                </div>
-                            )}
-                        </div>
-                    </fieldset>
-
-                    {/* ── Fields section ── */}
-                    {newInventoryId && (
-                        <div className="mt-2">
-                            <hr />
-                            <h6 className="mb-3">{t('inventory_fields')}</h6>
-                            {fields.length === 0 && (
-                                <p className="text-muted small">{t('user_noFieldsYet')}</p>
-                            )}
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
-                                <SortableContext
-                                    items={fields.map(f => f.id)}
-                                    strategy={verticalListSortingStrategy}
-                                >
-                                    {fields.map((field) => (
-                                        <SortableItem key={field.id} id={field.id} onRemove={() => removeField(field.id)}>
-                                            <div className="ps-2">
-                                                <div className="mb-2">
-                                                    <label className="form-label">{t('title')}</label>
-                                                    <input type="text" className="form-control" value={field.title}
-                                                        onChange={(e) => updateField(field.id, "title", e.target.value)} />
-                                                </div>
-                                                <div className="mb-2">
-                                                    <label className="form-label">{t('description')}</label>
-                                                    <input type="text" className="form-control" value={field.description}
-                                                        onChange={(e) => updateField(field.id, "description", e.target.value)} />
-                                                </div>
-                                                <div className="mb-2">
-                                                    <label className="form-label">{t('inventory_fieldType')}</label>
-                                                    <select className="form-select" value={field.type}
-                                                        onChange={(e) => updateField(field.id, "type", e.target.value)}>
-                                                        <option value={1}>{t('inventory_singleLinedText')}</option>
-                                                        <option value={2}>{t('inventory_multiLinedText')}</option>
-                                                        <option value={3}>{t('inventory_number')}</option>
-                                                        <option value={4}>{t('inventory_boolean')}</option>
-                                                        <option value={5}>{t('inventory_link')}</option>
-                                                    </select>
-                                                </div>
-                                                <div className="form-check">
-                                                    <input type="checkbox" className="form-check-input"
-                                                        checked={field.showInTable}
-                                                        onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
-                                                    <label className="form-check-label">{t('inventory_showInTable')}</label>
-                                                </div>
-                                            </div>
-                                        </SortableItem>
-                                    ))}
-                                </SortableContext>
-                            </DndContext>
-                        </div>
-                    )}
-
-                    {/* ── Access users section ── */}
-                    {newInventoryId && !formData.isPublic && (
-                        <div className="mt-2">
-                            <hr />
-                            <h6 className="mb-3">{t('user_usersWithWriteAccess')}</h6>
-                            {accessUsers.length === 0 && (
-                                <p className="text-muted small">{t('user_noUsersYet')}</p>
-                            )}
-                            {accessUsers.map((user, index) => (
-                                <div key={index} className="border rounded p-3 mb-3 position-relative">
-                                    <button type="button" className="btn-close position-absolute top-0 end-0 m-2"
-                                        onClick={() => removeAccessUser(index)} />
-                                    <div className="mb-2" style={{ position: "relative" }}>
-                                        <label className="form-label">{t('user_userLabel')}</label>
-                                        <div className="input-group">
-                                            <input type="text" className="form-control"
-                                                placeholder={t('inventory_searchUserPlaceholder')}
-                                                value={user.emailOrUsername}
-                                                onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
-                                                onBlur={() => setTimeout(() => {
-                                                    if (activeSuggestionIndex === index) {
-                                                        setUserSuggestions([]);
-                                                        setActiveSuggestionIndex(-1);
-                                                    }
-                                                }, 200)} />
-                                            {user.userId && <span className="input-group-text text-success">✓</span>}
-                                        </div>
-                                        {activeSuggestionIndex === index && userSuggestions.length > 0 && (
-                                            <ul className="list-group" style={{
-                                                position: "absolute", zIndex: 1050, width: "100%",
-                                                maxHeight: "200px", overflowY: "auto",
-                                                boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
-                                            }}>
-                                                {userSuggestions.map((s) => (
-                                                    <li key={s.id} className="list-group-item list-group-item-action"
-                                                        style={{ cursor: "pointer" }}
-                                                        onMouseDown={() => selectSuggestion(index, s)}>
-                                                        <strong>{s.userName}</strong>
-                                                        <small className="text-muted ms-2">{s.email}</small>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
         </>
     );
 }
