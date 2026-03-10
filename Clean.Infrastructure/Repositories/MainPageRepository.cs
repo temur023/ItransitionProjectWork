@@ -24,7 +24,7 @@ public class MainPageRepository(DataContext context):IMainPageRepository
             .Include(i => i.Items)
             .Include(i => i.CreatedBy)
             .OrderByDescending(i => i.Items.Count)
-            .Take(10)
+            .Take(5)
             .ToListAsync();
         return invs;
     }
