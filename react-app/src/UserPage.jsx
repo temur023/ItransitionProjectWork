@@ -350,7 +350,7 @@ function UserPage() {
             const token = localStorage.getItem("userToken");
             await Promise.all(fields.map(field =>
                 axios.post(`${api_url}/api/InventoryField/create`, {
-                    InventoryId: inventoryId,  // ✅ use parameter, not state
+                    InvId: inventoryId,
                     Title: field.title,
                     Description: field.description,
                     MaxSingleLineLength: field.maxSingleLineLength,
