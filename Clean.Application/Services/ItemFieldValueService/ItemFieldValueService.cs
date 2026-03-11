@@ -81,29 +81,41 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
 
     public async Task<Response<string>> Set(ItemFieldValueSetDto dto)
     {
-        if (string.IsNullOrEmpty(dto.Value))
-            return new Response<string>(400, "Value is required", null);
-
-        var field = await fieldRepository.GetById(dto.FieldId);
-        if (field == null)
-            return new Response<string>(404, "Field not found", null);
-
-        var existing = await repository.GetByItemAndField(dto.ItemId, dto.FieldId);
-        if (existing != null)
-        {
-            SetValueByType(existing, field.Type, dto.Value);
-            await repository.SaveChanges();
-            return new Response<string>(200, "Item field value updated");
-        }
-
-        var model = new ItemFieldValue
+        return await SetBulk(new ItemFieldValueSetBulkDto
         {
             ItemId = dto.ItemId,
-            FieldId = dto.FieldId
-        };
-        SetValueByType(model, field.Type, dto.Value);
-        await repository.Create(model);
-        return new Response<string>(200, "Item field value set");
+            FieldValues = new List<FieldValueDto> { new FieldValueDto { FieldId = dto.FieldId, Value = dto.Value } }
+        });
+    }
+
+    public async Task<Response<string>> SetBulk(ItemFieldValueSetBulkDto dto)
+    {
+        if (dto.FieldValues == null || dto.FieldValues.Count == 0)
+            return new Response<string>(400, "No field values provided", null);
+
+        foreach (var fv in dto.FieldValues)
+        {
+            var field = await fieldRepository.GetById(fv.FieldId);
+            if (field == null) continue;
+
+            var existing = await repository.GetByItemAndField(dto.ItemId, fv.FieldId);
+            if (existing != null)
+            {
+                SetValueByType(existing, field.Type, fv.Value);
+            }
+            else
+            {
+                var model = new ItemFieldValue
+                {
+                    ItemId = dto.ItemId,
+                    FieldId = fv.FieldId
+                };
+                SetValueByType(model, field.Type, fv.Value);
+                await repository.Create(model);
+            }
+        }
+        await repository.SaveChanges();
+        return new Response<string>(200, "Item field values updated");
     }
 
     private static void SetValueByType(ItemFieldValue entity, FieldType fieldType, string value)

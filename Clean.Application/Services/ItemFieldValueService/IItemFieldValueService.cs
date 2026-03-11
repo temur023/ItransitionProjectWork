@@ -10,5 +10,6 @@ public interface IItemFieldValueService
     Task<Response<ItemFieldValueGetDto>> GetById(int id);
     Task<Response<string>> Create(ItemFieldValueCreateDto dto);
     Task<Response<string>> Set(ItemFieldValueSetDto dto);
+    Task<Response<string>> SetBulk(ItemFieldValueSetBulkDto dto);
     Task<Response<string>> Delete(int id);
 }

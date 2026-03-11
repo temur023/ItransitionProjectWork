@@ -48,6 +48,16 @@ public class ItemFieldValueController(IItemFieldValueService service) : Controll
     }
 
     [Authorize]
+    [HttpPost("set-bulk")]
+    public async Task<IActionResult> SetBulk([FromBody] ItemFieldValueSetBulkDto dto)
+    {
+        var response = await service.SetBulk(dto);
+        if (response.StatusCode != 200)
+            return StatusCode(response.StatusCode, new { message = response.Message });
+        return Ok(response);
+    }
+
+    [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
