@@ -45,8 +45,12 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
 
     public async Task<Response<string>> Create(ItemFieldValueCreateDto dto)
     {
-        var inv = await fieldRepository.GetById(dto.FieldId);
-        
+        var field = await fieldRepository.GetById(dto.FieldId);
+        if (field == null) return new Response<string>(404, "Field not found");
+
+        var validationResponse = ValidateValue(field, dto.ValueNumber, dto.ValueText);
+        if (validationResponse != null) return validationResponse;
+
         var model = new ItemFieldValue
         {
             ItemId = dto.ItemId,
@@ -56,25 +60,7 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
             ValueBool = dto.ValueBool,
             ValueLink = dto.ValueLink
         };
-        if (!string.IsNullOrEmpty(model.ValueText))
-        {
-            if (model.ValueText.Contains('\n'))
-            {
-                if (inv.MaxMultiLineLength.HasValue && model.ValueText.Length > inv.MaxMultiLineLength)
-                    return new Response<string>(400, $"Multiline text cannot exceed {inv.MaxMultiLineLength} characters!");
-            }
-            else if (inv.MaxSingleLineLength.HasValue && model.ValueText.Length > inv.MaxSingleLineLength)
-                    return new Response<string>(400, $"Single line text cannot exceed {inv.MaxSingleLineLength} characters!");
-        }
 
-        if (model.ValueNumber.HasValue && inv.MaxNumberLength.HasValue && model.ValueNumber>inv.MaxNumberLength)
-        {
-            return new Response<string>(400, $"The length of number could not be larger than {inv.MaxNumberLength}!");
-        }
-        if (model.ValueNumber.HasValue && inv.MinNumberLength.HasValue && model.ValueNumber<inv.MinNumberLength)
-        {
-            return new Response<string>(400, $"The length of number could not be less than {inv.MinNumberLength}!");
-        }
         await repository.Create(model);
         return new Response<string>(200, "Item field value created");
     }
@@ -98,6 +84,14 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
             var field = await fieldRepository.GetById(fv.FieldId);
             if (field == null) continue;
 
+            // Validation
+            decimal? valNum = null;
+            if (field.Type == FieldType.Number && decimal.TryParse(fv.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var n))
+                valNum = n;
+            
+            var validationResponse = ValidateValue(field, valNum, fv.Value);
+            if (validationResponse != null) return validationResponse;
+
             var existing = await repository.GetByItemAndField(dto.ItemId, fv.FieldId);
             if (existing != null)
             {
@@ -116,6 +110,35 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
         }
         await repository.SaveChanges();
         return new Response<string>(200, "Item field values updated");
+    }
+
+    private static Response<string>? ValidateValue(InventoryField field, decimal? valueNumber, string? valueText)
+    {
+        if (!string.IsNullOrEmpty(valueText))
+        {
+            if (valueText.Contains('\n'))
+            {
+                if (field.MaxMultiLineLength.HasValue && valueText.Length > field.MaxMultiLineLength)
+                    return new Response<string>(400, $"Multiline text in field '{field.Title}' cannot exceed {field.MaxMultiLineLength} characters!");
+            }
+            else if (field.MaxSingleLineLength.HasValue && valueText.Length > field.MaxSingleLineLength)
+            {
+                // Only validate single line length if it's NOT a number (numbers have different constraints)
+                if (field.Type != FieldType.Number && valueText.Length > field.MaxSingleLineLength)
+                    return new Response<string>(400, $"Single line text in field '{field.Title}' cannot exceed {field.MaxSingleLineLength} characters!");
+            }
+        }
+
+        if (valueNumber.HasValue)
+        {
+            if (field.MaxNumberLength.HasValue && valueNumber > field.MaxNumberLength)
+                return new Response<string>(400, $"The value of number field '{field.Title}' could not be larger than {field.MaxNumberLength}!");
+            
+            if (field.MinNumberLength.HasValue && valueNumber < field.MinNumberLength)
+                return new Response<string>(400, $"The value of number field '{field.Title}' could not be less than {field.MinNumberLength}!");
+        }
+
+        return null;
     }
 
     private static void SetValueByType(ItemFieldValue entity, FieldType fieldType, string value)
