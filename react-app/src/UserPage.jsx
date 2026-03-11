@@ -59,7 +59,8 @@ function UserPage() {
     const [userSuggestions, setUserSuggestions] = useState([]);
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const searchTimerRef = React.useRef(null);
-    const api_url = "https://itransitionprojectwork-production.up.railway.app";
+    // const api_url = "https://itransitionprojectwork-production.up.railway.app";
+    const api_url = "http://localhost:5137";
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
 
@@ -344,13 +345,12 @@ function UserPage() {
     };
 
     // ── Save fields ────────────────────────────────────────────────────────────
-    // ✅ FIX 3: maxNumberLength is correctly camelCase, and uses Promise.all
-    const saveAllFields = async () => {
+    const saveAllFields = async (inventoryId) => {
         try {
             const token = localStorage.getItem("userToken");
             await Promise.all(fields.map(field =>
                 axios.post(`${api_url}/api/InventoryField/create`, {
-                    InventoryId: newInventoryId,
+                    InventoryId: inventoryId,  // ✅ use parameter, not state
                     Title: field.title,
                     Description: field.description,
                     MaxSingleLineLength: field.maxSingleLineLength,
@@ -368,7 +368,6 @@ function UserPage() {
             throw error;
         }
     };
-
     // ── Access users ───────────────────────────────────────────────────────────
     const searchUsers = async (searchTerm) => {
         if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
@@ -951,7 +950,7 @@ function UserPage() {
                                         <button className="btn btn-secondary" onClick={addAccessUsers}>{t('user_accessUser')}</button>
                                         <button className="btn btn-primary" onClick={async () => {
                                             try {
-                                                await saveAllFields();
+                                                await saveAllFields(newInventoryId);
                                                 await saveAllAccessUsers();
                                                 handleCloseModal();
                                             } catch { }
