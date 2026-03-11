@@ -87,7 +87,7 @@ function UserPage() {
         } catch { return null; }
     }, []);
 
-    // ── DnD handlers (stable IDs) ──────────────────────────────────────────────
+    // ── DnD handlers ──────────────────────────────────────────────────────────
     function handleIdElementDragEnd(event) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -250,10 +250,10 @@ function UserPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     }
 
-    // ── Custom ID elements (stable IDs) ────────────────────────────────────────
+    // ── Custom ID elements ─────────────────────────────────────────────────────
     const addIdElement = () => {
         setCustomIdElements([...customIdElements, {
-            id: String(Date.now()) + Math.random().toString(36).slice(2),   // ✅ stable unique string id
+            id: String(Date.now()) + Math.random().toString(36).slice(2),
             type: 1, value: "", format: ""
         }]);
     };
@@ -280,17 +280,35 @@ function UserPage() {
         }).join("");
     };
 
-    // ── Fields (stable IDs) ────────────────────────────────────────────────────
+    // ── Fields ─────────────────────────────────────────────────────────────────
+    // ✅ FIX 1: addField now initializes all 4 length constraint properties as null
     const addField = () => {
         setFields([...fields, {
             id: String(Date.now()) + Math.random().toString(36).slice(2),
             title: "", description: "", type: 1,
-            showInTable: false, order: fields.length + 1
+            showInTable: false, order: fields.length + 1,
+            maxSingleLineLength: null,
+            maxMultiLineLength: null,
+            minNumberLength: null,
+            maxNumberLength: null,
         }]);
     };
+
+    // ✅ FIX 2: updateField resets length constraints when type changes
     const updateField = (id, key, value) => {
-        setFields(prev => prev.map(f => f.id === id ? { ...f, [key]: value } : f));
+        setFields(prev => prev.map(f => {
+            if (f.id !== id) return f;
+            const updated = { ...f, [key]: value };
+            if (key === "type") {
+                updated.maxSingleLineLength = null;
+                updated.maxMultiLineLength = null;
+                updated.minNumberLength = null;
+                updated.maxNumberLength = null;
+            }
+            return updated;
+        }));
     };
+
     const removeField = (id) => {
         setFields(prev => prev.filter(f => f.id !== id));
     };
@@ -326,19 +344,24 @@ function UserPage() {
     };
 
     // ── Save fields ────────────────────────────────────────────────────────────
+    // ✅ FIX 3: maxNumberLength is correctly camelCase, and uses Promise.all
     const saveAllFields = async () => {
         try {
             const token = localStorage.getItem("userToken");
-            for (const field of fields) {
-                await axios.post(`${api_url}/api/InventoryField/create`, {
+            await Promise.all(fields.map(field =>
+                axios.post(`${api_url}/api/InventoryField/create`, {
                     InventoryId: newInventoryId,
                     Title: field.title,
                     Description: field.description,
+                    MaxSingleLineLength: field.maxSingleLineLength,
+                    MaxMultiLineLength: field.maxMultiLineLength,
+                    MinNumberLength: field.minNumberLength,
+                    MaxNumberLength: field.maxNumberLength,
                     Type: parseInt(field.type),
                     ShowInTable: field.showInTable,
                     Order: field.order
-                }, { headers: { Authorization: `Bearer ${token}` } });
-            }
+                }, { headers: { Authorization: `Bearer ${token}` } })
+            ));
         } catch (error) {
             const msg = error.response?.data?.message || "Failed to save fields";
             setMessage({ text: msg, type: "danger" });
@@ -422,14 +445,12 @@ function UserPage() {
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-    // Auto-update theme in DB if user toggles it using the navbar
     useEffect(() => {
         const autoSaveTheme = async () => {
             const token = localStorage.getItem("userToken");
             const userId = getUserIdFromToken();
             if (!token || !userId || !profileData) return;
 
-            // Only save if it actually differs from what's in the DB to avoid infinite loops
             const currentDbTheme = profileData.theme ?? profileData.Theme ?? 1;
             const newThemeVal = theme === "dark" ? 2 : 1;
 
@@ -812,6 +833,49 @@ function UserPage() {
                                                                 <option value={5}>{t('inventory_link')}</option>
                                                             </select>
                                                         </div>
+
+                                                        {/* Single line max length */}
+                                                        {parseInt(field.type) === 1 && (
+                                                            <div className="mb-2">
+                                                                <label className="form-label">{t('inventory_maxSingleLineLength')}</label>
+                                                                <input type="number" className="form-control"
+                                                                    value={field.maxSingleLineLength || ""}
+                                                                    onChange={(e) => updateField(field.id, "maxSingleLineLength",
+                                                                        e.target.value ? parseInt(e.target.value) : null)} />
+                                                            </div>
+                                                        )}
+
+                                                        {/* Multi line max length */}
+                                                        {parseInt(field.type) === 2 && (
+                                                            <div className="mb-2">
+                                                                <label className="form-label">{t('inventory_maxMultiLineLength')}</label>
+                                                                <input type="number" className="form-control"
+                                                                    value={field.maxMultiLineLength || ""}
+                                                                    onChange={(e) => updateField(field.id, "maxMultiLineLength",
+                                                                        e.target.value ? parseInt(e.target.value) : null)} />
+                                                            </div>
+                                                        )}
+
+                                                        {/* Number min/max */}
+                                                        {parseInt(field.type) === 3 && (
+                                                            <div className="row mb-2">
+                                                                <div className="col">
+                                                                    <label className="form-label">{t('inventory_minNumber')}</label>
+                                                                    <input type="number" className="form-control"
+                                                                        value={field.minNumberLength || ""}
+                                                                        onChange={(e) => updateField(field.id, "minNumberLength",
+                                                                            e.target.value ? parseInt(e.target.value) : null)} />
+                                                                </div>
+                                                                <div className="col">
+                                                                    <label className="form-label">{t('inventory_maxNumber')}</label>
+                                                                    <input type="number" className="form-control"
+                                                                        value={field.maxNumberLength || ""}
+                                                                        onChange={(e) => updateField(field.id, "maxNumberLength",
+                                                                            e.target.value ? parseInt(e.target.value) : null)} />
+                                                                </div>
+                                                            </div>
+                                                        )}
+
                                                         <div className="form-check">
                                                             <input type="checkbox" className="form-check-input"
                                                                 checked={field.showInTable}
