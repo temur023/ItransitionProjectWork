@@ -20,5 +20,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/theprojectdb</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="railway@shinkansen.proxy.rlwy.net" uuid="525aed79-c0cb-4f62-a6fe-044d291cc1a8">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://shinkansen.proxy.rlwy.net:24913/railway</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

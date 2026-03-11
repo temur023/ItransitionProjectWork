@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Clean.Application.Abstractions;
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
@@ -44,6 +45,8 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
 
     public async Task<Response<string>> Create(ItemFieldValueCreateDto dto)
     {
+        var inv = await fieldRepository.GetById(dto.FieldId);
+        
         var model = new ItemFieldValue
         {
             ItemId = dto.ItemId,
@@ -53,6 +56,25 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
             ValueBool = dto.ValueBool,
             ValueLink = dto.ValueLink
         };
+        if (!string.IsNullOrEmpty(model.ValueText))
+        {
+            if (model.ValueText.Contains('\n'))
+            {
+                if (inv.MaxMultiLineLength.HasValue && model.ValueText.Length > inv.MaxMultiLineLength)
+                    return new Response<string>(400, $"Multiline text cannot exceed {inv.MaxMultiLineLength} characters!");
+            }
+            else if (inv.MaxSingleLineLength.HasValue && model.ValueText.Length > inv.MaxSingleLineLength)
+                    return new Response<string>(400, $"Single line text cannot exceed {inv.MaxSingleLineLength} characters!");
+        }
+
+        if (model.ValueNumber.HasValue && inv.MaxNumberLength.HasValue && model.ValueNumber>inv.MaxNumberLength)
+        {
+            return new Response<string>(400, $"The length of number could not be larger than {inv.MaxNumberLength}!");
+        }
+        if (model.ValueNumber.HasValue && inv.MinNumberLength.HasValue && model.ValueNumber<inv.MinNumberLength)
+        {
+            return new Response<string>(400, $"The length of number could not be less than {inv.MinNumberLength}!");
+        }
         await repository.Create(model);
         return new Response<string>(200, "Item field value created");
     }

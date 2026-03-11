@@ -49,6 +49,10 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         {
             InventoryId = dto.InvId,
             Title = dto.Title,
+            MaxMultiLineLength =  dto.MaxMultiLineLength,
+            MaxSingleLineLength = dto.MaxSingleLineLength,
+            MinNumberLength = dto.MinNumberLength,
+            MaxNumberLength = dto.MaxNumberLength,
             Description = dto.Description,
             Type = dto.Type,
             ShowInTable = dto.ShowInTable,
@@ -71,6 +75,10 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
         field.Type = dto.Type;
         field.ShowInTable = dto.ShowInTable;
         field.Order = dto.Order;
+        field.MaxMultiLineLength = dto.MaxMultiLineLength;
+        field.MaxSingleLineLength = dto.MaxSingleLineLength;
+        field.MinNumberLength = dto.MinNumberLength;
+        field.MaxNumberLength = dto.MaxNumberLength;
 
         await repository.SaveChanges();
         return new Response<string>(200, "Inventory field updated");
