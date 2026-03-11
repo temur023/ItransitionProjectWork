@@ -14,7 +14,11 @@ public class InventoryField
     public string? Description { get; set; }
 
     public FieldType Type { get; set; }
-
+    public int? MaxSingleLineLength { get; set; }
+    public int? MaxMultiLineLength { get; set; }
+    public int? MinNumberLength { get; set; }
+    public int? MaxNumberLength { get; set; }
+    
     public bool ShowInTable { get; set; }
 
     public int Order { get; set; }

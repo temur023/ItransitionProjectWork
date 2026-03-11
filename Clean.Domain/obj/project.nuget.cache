@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "6WgOKdojEYc=",
+  "dgSpecHash": "wCsR6dbqbOE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
+  "projectFilePath": "/Users/fsdf/ProjectWork/Clean.Domain/Clean.Domain.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.0\\microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512",
-    "C:\\Users\\irgas\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.0\\microsoft.extensions.logging.abstractions.10.0.0.nupkg.sha512",
-    "C:\\Users\\irgas\\.nuget\\packages\\npgsql\\10.0.0\\npgsql.10.0.0.nupkg.sha512"
+    "/Users/fsdf/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.0/microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512",
+    "/Users/fsdf/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.0/microsoft.extensions.logging.abstractions.10.0.0.nupkg.sha512",
+    "/Users/fsdf/.nuget/packages/npgsql/10.0.0/npgsql.10.0.0.nupkg.sha512"
   ],
   "logs": []
 }

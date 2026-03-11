@@ -45,11 +45,6 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
     public async Task<Response<string>> Create(InventoryFieldCreateDto dto)
     {
         var inv = await invetoryRepository.GetById(dto.InvId);
-        var numOfField = inv.Fields.Count(f => f.Type==dto.Type);
-        if (numOfField >= 3)
-        {
-            return new Response<string>(409, "No more than 3 fields can be created to the same type");
-        }
         var model = new InventoryField
         {
             InventoryId = dto.InvId,
