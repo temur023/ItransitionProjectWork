@@ -21,9 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
 
-// ─── UserPage ─────────────────────────────────────────────────────────────────
 function UserPage() {
-    // ── State ──────────────────────────────────────────────────────────────────
     const [inventories, setInventories] = useState([]);
     const [formData, setFormData] = useState({
         title: "", description: "", category: 1,
@@ -64,13 +62,13 @@ function UserPage() {
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
 
-    // ── DnD sensors ────────────────────────────────────────────────────────────
+    //DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-    // ── Token helper ───────────────────────────────────────────────────────────
+    //Token helper
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
         if (!token) return null;
@@ -88,7 +86,7 @@ function UserPage() {
         } catch { return null; }
     }, []);
 
-    // ── DnD handlers ──────────────────────────────────────────────────────────
+    // DnD handlers
     function handleIdElementDragEnd(event) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -109,7 +107,7 @@ function UserPage() {
         });
     }
 
-    // ── Profile ────────────────────────────────────────────────────────────────
+    //Profile
     const fetchProfile = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -184,7 +182,7 @@ function UserPage() {
         } finally { setProfileSaving(false); }
     };
 
-    // ── Inventories ────────────────────────────────────────────────────────────
+    //Inventories
     const fetchInventories = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -224,7 +222,7 @@ function UserPage() {
         } finally { setLoading(false); }
     };
 
-    // ── Checkbox helpers ───────────────────────────────────────────────────────
+    //Checkbox helpers
     function handleCheckingInvs(id) {
         setCheckedInvs(c => c.includes(id) ? c.filter(i => i !== id) : [...c, id]);
     }
@@ -233,25 +231,11 @@ function UserPage() {
         else setCheckedInvs(inventories.map(u => u.id));
     }
 
-    // ── Modal helpers ──────────────────────────────────────────────────────────
-    const handleCloseModal = () => {
-        setActiveTab("own");
-        setNewInventoryId(null);
-        setFields([]);
-        setCustomIdElements([]);
-        setAccessUsers([]);
-        setUserSuggestions([]);
-        setActiveSuggestionIndex(-1);
-        setFormData({ title: "", description: "", category: 1, isPublic: true });
-        setSelectedTags([]);
-        fetchInventories();
-    };
-
     function handleChange(e) {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     }
 
-    // ── Custom ID elements ─────────────────────────────────────────────────────
+    // Custom ID elements
     const addIdElement = () => {
         setCustomIdElements([...customIdElements, {
             id: String(Date.now()) + Math.random().toString(36).slice(2),
@@ -281,8 +265,8 @@ function UserPage() {
         }).join("");
     };
 
-    // ── Fields ─────────────────────────────────────────────────────────────────
-    // ✅ FIX 1: addField now initializes all 4 length constraint properties as null
+    // Fields
+    // addField now initializes all 4 length constraint properties as null
     const addField = () => {
         setFields([...fields, {
             id: String(Date.now()) + Math.random().toString(36).slice(2),
@@ -295,7 +279,7 @@ function UserPage() {
         }]);
     };
 
-    // ✅ FIX 2: updateField resets length constraints when type changes
+    // updateField resets length constraints when type changes
     const updateField = (id, key, value) => {
         setFields(prev => prev.map(f => {
             if (f.id !== id) return f;
@@ -314,7 +298,7 @@ function UserPage() {
         setFields(prev => prev.filter(f => f.id !== id));
     };
 
-    // ── Create inventory ───────────────────────────────────────────────────────
+    //Create inventory 
     const createInventory = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -344,7 +328,7 @@ function UserPage() {
         }
     };
 
-    // ── Save fields ────────────────────────────────────────────────────────────
+    //Save fields
     const saveAllFields = async (inventoryId) => {
         try {
             const token = localStorage.getItem("userToken");
@@ -368,7 +352,7 @@ function UserPage() {
             throw error;
         }
     };
-    // ── Access users ───────────────────────────────────────────────────────────
+    //Access users
     const searchUsers = async (searchTerm) => {
         if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
         try {
@@ -428,7 +412,7 @@ function UserPage() {
         navigate("/login");
     };
 
-    // ── Effects ────────────────────────────────────────────────────────────────
+    // Effects
     useEffect(() => {
         const delay = setTimeout(() => fetchInventories(), 500);
         return () => clearTimeout(delay);
@@ -478,7 +462,7 @@ function UserPage() {
         }));
     }, [theme]);
 
-    // ── Render ─────────────────────────────────────────────────────────────────
+    //Render
     return (
         <>
             {/* ── Navbar ── */}

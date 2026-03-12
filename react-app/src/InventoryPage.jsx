@@ -104,7 +104,7 @@ function InventoryPage() {
         }
     }, []);
 
-    // ─── DnD sensors ────────────────────────────────────────────────────────────
+    // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -134,7 +134,7 @@ function InventoryPage() {
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────────
+    //Helpers
 
 
     const isAdmin = useCallback(() => {
@@ -154,7 +154,7 @@ function InventoryPage() {
         }
     }, []);
 
-    // ─── Likes ────────────────────────────────────────────────────────────────────
+    // Likes
     const fetchLikeMetaForItem = useCallback(async (itemId) => {
         try {
             const countRes = await axios.get(`${api_url}/api/ItemLike/get-all`, {
@@ -187,7 +187,7 @@ function InventoryPage() {
         await Promise.all(items.map(i => fetchLikeMetaForItem(i.id)));
     }, [items, fetchLikeMetaForItem]);
 
-    // ─── Search Users ─────────────────────────────────────────────────────────────
+    //Search Users 
     const searchUsers = async (searchTerm) => {
         if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
         try {
@@ -200,7 +200,7 @@ function InventoryPage() {
         } catch { setUserSuggestions([]); }
     };
 
-    // ─── Fetch Fields ─────────────────────────────────────────────────────────────
+    // Fetch Fields
     const fetchFields = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -232,7 +232,7 @@ function InventoryPage() {
     useEffect(() => { fetchFields(); }, [fetchFields]);
     useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-    // ─── Debounce search input ────────────────────────────────────────────────────
+    // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(itemSearch), 400);
         return () => clearTimeout(timer);
@@ -243,7 +243,7 @@ function InventoryPage() {
         setFilter(prev => ({ ...prev, pageNumber: 1 }));
     }, [debouncedSearch]);
 
-    // ─── Fetch Items ──────────────────────────────────────────────────────────────
+    // Fetch Items
     const fetchItems = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -274,7 +274,7 @@ function InventoryPage() {
     useEffect(() => { setCheckedItems([]); }, [items]);
     useEffect(() => { refreshLikesForVisibleItems(); }, [refreshLikesForVisibleItems]);
 
-    // ─── Comments ─────────────────────────────────────────────────────────────────
+    // Comments
     const fetchComments = useCallback(async () => {
         try {
             setCommentsLoading(true);
@@ -329,7 +329,7 @@ function InventoryPage() {
         }
     };
 
-    // ─── Likes Toggle ─────────────────────────────────────────────────────────────
+    // Likes Toggle
     const toggleLike = async (itemId) => {
         const token = localStorage.getItem("userToken");
         if (!token) return navigate("/login");
@@ -369,7 +369,7 @@ function InventoryPage() {
         </svg>
     );
 
-    // ─── Create Item ──────────────────────────────────────────────────────────────
+    // Create Item
     const createItem = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -389,7 +389,7 @@ function InventoryPage() {
         }
     };
 
-    // ─── Delete Selected ──────────────────────────────────────────────────────────
+    // Delete Selected
     const deleteSelected = async () => {
         const token = localStorage.getItem("userToken");
         if (!token) return navigate("/login");
@@ -413,7 +413,7 @@ function InventoryPage() {
         } finally { setLoading(false); }
     };
 
-    // ─── Check Items ──────────────────────────────────────────────────────────────
+    // Check Items
     function handleCheckingItems(id) {
         setCheckedItems(c => c.includes(id) ? c.filter(i => i !== id) : [...c, id]);
     }
@@ -422,7 +422,7 @@ function InventoryPage() {
         else setCheckedItems(items.map(i => i.id));
     }
 
-    // ─── Edit Item ────────────────────────────────────────────────────────────────
+    // Edit Item
     const openEditItemModal = () => {
         setEditItemData({
             name: selectedItem.name,
@@ -437,7 +437,6 @@ function InventoryPage() {
         setActiveTab("edit_item");
     };
 
-    // FIX: batch field values instead of loop
     const updateItem = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -463,7 +462,7 @@ function InventoryPage() {
         }
     };
 
-    // ─── Edit Inventory ───────────────────────────────────────────────────────────
+    // Edit Inventory
     const openEditModal = async () => {
         const token = localStorage.getItem("userToken");
         try {
@@ -487,7 +486,6 @@ function InventoryPage() {
         }
     };
 
-    // FIX: batch new fields and access users instead of loops
     const updateInventory = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -558,7 +556,7 @@ function InventoryPage() {
         }
     };
 
-    // ─── Fields CRUD ──────────────────────────────────────────────────────────────
+    // Fields CRUD
     const addField = () => {
         setFields([...fields, { id: String(Date.now()) + Math.random().toString(36).slice(2), title: "", description: "", type: 1, showInTable: false, order: fields.length + 1 }]);
     };
@@ -582,7 +580,7 @@ function InventoryPage() {
         setFields(fields.filter(f => f.id !== id));
     };
 
-    // ─── Access Users CRUD ────────────────────────────────────────────────────────
+    // Access Users CRUD
     const addAccessUsers = () => {
         setAccessUsers([...accessUsers, { emailOrUsername: "", userId: null, isExisting: false }]);
     };
@@ -627,7 +625,7 @@ function InventoryPage() {
         return () => clearTimeout(timer);
     }, [message.text]);
 
-    // ─── Auto-Save ────────────────────────────────────────────────────────────────
+    // Auto-Save
     useEffect(() => {
         if (activeTab !== "edit_inventory") {
             prevEditFormDataRef.current = null;
