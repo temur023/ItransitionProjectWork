@@ -12,6 +12,10 @@ public class CustomIdGeneratorService
     {
         var elements = JsonSerializer.Deserialize<List<CustomIdElement>>(formatJson) 
                        ?? new List<CustomIdElement>();
+        
+        if (elements.Count == 0)
+            return $"ITEM-{nextSequence}";
+        
         var sb = new StringBuilder();
         foreach (var element in elements)
         {
@@ -33,7 +37,7 @@ public class CustomIdGeneratorService
                     sb.Append(RandomNumberGenerator.GetInt32(100000, 999999).ToString());
                     break;
                 case IdElementType.Random9Digit:
-                    sb.Append(RandomNumberGenerator.GetInt32(1000000000, 999999999).ToString());
+                    sb.Append(RandomNumberGenerator.GetInt32(100000000, 999999999).ToString());
                     break;
                 case IdElementType.Random20Bit:
                     int val20 = RandomNumberGenerator.GetInt32(0, 1048576); 
