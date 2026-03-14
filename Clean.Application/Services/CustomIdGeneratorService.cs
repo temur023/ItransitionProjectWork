@@ -31,7 +31,11 @@ public class CustomIdGeneratorService
                     sb.Append(element.Value);
                     break;
                 case IdElementType.Sequence:
-                    sb.Append(nextSequence.ToString(element.Format ?? "D")); 
+                    var seqFormat = element.Format ?? "D";
+                    // If user entered just a number like "2" or "5", convert to "D2" or "D5"
+                    if (int.TryParse(seqFormat, out _))
+                        seqFormat = $"D{seqFormat}";
+                    sb.Append(nextSequence.ToString(seqFormat)); 
                     break;
                 case IdElementType.Random6Digit:
                     sb.Append(RandomNumberGenerator.GetInt32(100000, 999999).ToString());
