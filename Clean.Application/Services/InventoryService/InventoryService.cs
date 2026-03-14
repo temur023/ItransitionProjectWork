@@ -42,23 +42,8 @@ public class InventoryService(IInvetoryRepository repository
             }).ToList() ?? new List<InventoryUserAccessGetDto>(), // User with write access
             Tags = u.Tags?.Select(t => t.Name).ToList()
         });
-        if (GetCurrentUserId() == null)
-        {
-            return new PagedResponse<InventoryGetDto>(dto.Where(i => i.IsPublic).ToList()
-                ,filter.PageNumber, filter.PageSize,invs.Total,"Success");
-        } // if not authorized 
-        var usr = await userRepository.GetById((int)GetCurrentUserId());
-
-        if (usr.Role == UserRole.Admin)
-        {
-            return new PagedResponse<InventoryGetDto>(dto.ToList()
-                , filter.PageNumber, filter.PageSize, invs.Total, "Success");
-        } //gets everything 
-        
-        return new PagedResponse<InventoryGetDto>(dto.Where(i=>i.IsPublic == true 
-                                                               ||i.UserAccesses.Any(i=>i.UserId==usr.Id)).ToList()
-            ,filter.PageNumber, filter.PageSize,invs.Total,"Success");
-    } //gets public or if he has useraccess.  CHECK IF USER GETS HIS PRIVATE INVENTORIES 
+        return new PagedResponse<InventoryGetDto>(dto.ToList(), filter.PageNumber, filter.PageSize, invs.Total, "Success");
+    } 
 
     public async Task<Response<InventoryGetDto>> GetById(int id)
     {
@@ -83,20 +68,7 @@ public class InventoryService(IInvetoryRepository repository
             }).ToList() ?? new List<InventoryUserAccessGetDto>(),
             Tags = inv.Tags?.Select(t => t.Name).ToList()
         };
-        if (inv.IsPublic)
-        {
-            return new Response<InventoryGetDto>(200, "Inventory found", dto);
-        }
-        var currentUserId = GetCurrentUserId();
-        if(currentUserId == null)
-            return new Response<InventoryGetDto>(400,"You do not have the required permission");
-        var usr = await userRepository.GetById((int)currentUserId);
-        if ( inv.CreatedById == currentUserId 
-             ||inv.UserAccesses.Any(u => u.UserId == currentUserId)||usr.Role==UserRole.Admin)
-            return new Response<InventoryGetDto>(200, "Inventory found", dto);
-        
-        return new Response<InventoryGetDto>(403, "You do not have the required permission");
-        
+        return new Response<InventoryGetDto>(200, "Inventory found", dto);
     }
 
 public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
@@ -173,7 +145,7 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
     inventory.IsPublic = dto.IsPublic;
     inventory.ImageUrl = dto.ImageUrl;
 
-    inventory.Tags.Clear(); // Clearing existing tags and readding them below
+    inventory.Tags.Clear(); // Clearing existing tags and re-adding them below
     if (dto.Tags != null && dto.Tags.Count > 0)
     {
         foreach (var name in dto.Tags.Where(n => !string.IsNullOrWhiteSpace(n)))
@@ -198,10 +170,10 @@ public async Task<Response<string>> Delete(int id)
         return new Response<string>(401, "Not Authorized");
 
     var inv = await repository.GetById(id);
-
+    
     var user = await userRepository.GetById((int)currentUser);
-    if (user.Role != UserRole.Admin && inv.UserAccesses.All(i => i.UserId != currentUser))
-        return new Response<string>(403, "Not Authorized");
+    if (user.Role != UserRole.Admin && user.UserName != inv.CreatedBy.UserName)
+        return new Response<string>(403, "You do not have permission to delete");
 
     var result = await repository.Delete(id);
     if (result == -1)

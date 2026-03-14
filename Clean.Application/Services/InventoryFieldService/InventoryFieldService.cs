@@ -53,7 +53,7 @@ public class InventoryFieldService(IInventoryFieldRepository repository,IInvetor
             MaxSingleLineLength = dto.MaxSingleLineLength,
             MinNumberLength = dto.MinNumberLength,
             MaxNumberLength = dto.MaxNumberLength,
-            Description = dto.Description,
+            Description =   dto.Description,
             Type = dto.Type,
             ShowInTable = dto.ShowInTable,
             Order = dto.Order

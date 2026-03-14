@@ -85,11 +85,15 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             return new Response<string>(404,"You are not allowed to write");
         }
         var user = await userRepository.GetById((int)currentUser);
-       if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
-          && inventory.CreatedById != currentUser && user.Role != UserRole.Admin)
+        if (!inventory.IsPublic)
         {
-            return new Response<string>(404,"You are not allowed to write");
+            if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
+               && inventory.CreatedById != currentUser && user.Role != UserRole.Admin)
+            {
+                return new Response<string>(404,"You are not allowed to write");
+            }
         }
+        
         var model = new Item()
         {
             CustomId =  dto.CustomId,
@@ -127,11 +131,18 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             return new Response<string>(404,"You are not allowed to write");
         }
         var user = await userRepository.GetById((int)currentUser);
-        if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
-           && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+        if (!inventory.IsPublic)
         {
-            return new Response<string>(404,"You are not allowed to write");
+            if(!inventory.UserAccesses.Any(u => u.UserId == currentUser)
+               && inventory.CreatedById != currentUser && user.Role!=UserRole.Admin)
+            {
+                return new Response<string>(404,"You are not allowed to write");
+            }
         }
+        if (itm.Version != dto.Version)
+            return new Response<string>(409, "Conflict: The item was modified by another user.");
+
+        itm.Version++;
         itm.Description = dto.Description;
         itm.Name = dto.Name;
         itm.UpdatedAt = DateTime.UtcNow;

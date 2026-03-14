@@ -8,6 +8,7 @@ import FacebookLogin from "@greatsumini/react-facebook-login";
 const GOOGLE_CLIENT_ID = "883533109052-5i1slf978hamq2ircs74s6fvpj6tdktu.apps.googleusercontent.com";
 const FACEBOOK_APP_ID = "932426212812578";
 const api_url = "https://itransitionprojectwork-production.up.railway.app";
+    // const api_url = "http://localhost:5137";
 
 function LoginPage() {
     const [loginInput, setLoginInput] = useState("");
@@ -77,73 +78,73 @@ function LoginPage() {
     const isEmail = loginInput.includes("@");
 
     return (
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <div className="container-fluid d-flex flex-column justify-content-center align-items-center vh-100">
-                <div className="d-flex flex-column justify-content-center align-items-center border rounded-4 p-5 w-25 shadow-lg">
-                    <h3 className="mb-4 mt-4">{t("login_title")}</h3>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <div className="container-fluid d-flex flex-column justify-content-center align-items-center vh-100">
+            <div className="d-flex flex-column justify-content-center align-items-center border rounded-4 p-4 p-md-5 w-100 w-sm-75 shadow-lg"
+                style={{ maxWidth: "480px" }}>
+                <h3 className="mb-4">{t("login_title")}</h3>
 
-                    {/* Normal login form */}
-                    <div className="w-100">
-                        <div className="form-group mb-2">
-                            <label>{t("login_emailOrUsername")}</label>
-                            <input
-                                name="loginInput"
-                                type={isEmail ? "email" : "text"}
-                                value={loginInput}
-                                onChange={handleLoginInputChange}
-                                placeholder={t("login_emailOrUsername")}
-                                className="form-control"
-                            />
-                        </div>
-                        <div className="form-group mb-3">
-                            <label>{t("login_password")}</label>
-                            <input
-                                type="password"
-                                name="passwordHash"
-                                onChange={handleChange}
-                                value={formData.passwordHash}
-                                placeholder={t("login_password")}
-                                className="form-control"
-                            />
-                        </div>
-                        <button type="button" onClick={handleLogin} className="btn btn-primary w-100 mb-2">
-                            {t("login_signIn")}
-                        </button>
-                        <p>{t("login_noAccount")} <Link to="/register">{t("login_signUpLink")}</Link></p>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="d-flex align-items-center gap-2 w-100 my-2">
-                        <hr className="flex-grow-1 m-0" />
-                        <span className="text-muted small">or</span>
-                        <hr className="flex-grow-1 m-0" />
-                    </div>
-
-                    {/* Google */}
-                    <div className="w-50 mb-2">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={() => alert("Google login failed")}
-                            width="100"
+                {/* Normal login form */}
+                <div className="w-100">
+                    <div className="form-group mb-2">
+                        <label>{t("login_emailOrUsername")}</label>
+                        <input
+                            name="loginInput"
+                            type={isEmail ? "email" : "text"}
+                            value={loginInput}
+                            onChange={handleLoginInputChange}
+                            placeholder={t("login_emailOrUsername")}
+                            className="form-control"
                         />
                     </div>
+                    <div className="form-group mb-3">
+                        <label>{t("login_password")}</label>
+                        <input
+                            type="password"
+                            name="passwordHash"
+                            onChange={handleChange}
+                            value={formData.passwordHash}
+                            placeholder={t("login_password")}
+                            className="form-control"
+                        />
+                    </div>
+                    <button type="button" onClick={handleLogin} className="btn btn-primary w-100 mb-2">
+                        {t("login_signIn")}
+                    </button>
+                    <p>{t("login_noAccount")} <Link to="/register">{t("login_signUpLink")}</Link></p>
+                </div>
 
-                    {/* Facebook */}
-                    <FacebookLogin
-                        appId={FACEBOOK_APP_ID}
-                        onSuccess={(response) => handleFacebookResponse(response)}
-                        onFail={(error) => console.log("Facebook fail:", error)} // ✅ log instead of alert to see actual error
-                        scope="public_profile"
-                        render={({ onClick }) => (
-                            <button className="btn btn-primary w-100" onClick={onClick}>
-                                Continue with Facebook
-                            </button>
-                        )}
+                {/* Divider */}
+                <div className="d-flex align-items-center gap-2 w-100 my-2">
+                    <hr className="flex-grow-1 m-0" />
+                    <span className="text-muted small">or</span>
+                    <hr className="flex-grow-1 m-0" />
+                </div>
+
+                {/* Google */}
+                <div className="w-100 mb-2">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => alert("Google login failed")}
+                        width="432"
                     />
                 </div>
+
+                {/* Facebook */}
+                <FacebookLogin
+                    appId={FACEBOOK_APP_ID}
+                    onSuccess={(response) => handleFacebookResponse(response)}
+                    onFail={(error) => console.log("Facebook fail:", error)}
+                    render={({ onClick }) => (
+                        <button className="btn btn-primary w-100" onClick={onClick}>
+                            Continue with Facebook
+                        </button>
+                    )}
+                />
             </div>
-        </GoogleOAuthProvider>
-    );
+        </div>
+    </GoogleOAuthProvider>
+);
 }
 
 export default LoginPage;

@@ -11,19 +11,8 @@ namespace ProjectWork.Controllers;
 // ExternalAuthController.cs
 [ApiController]
 [Route("api/[controller]")]
-public class ExternalAuthController : ControllerBase
+public class ExternalAuthController(DataContext _db, IAuthService _jwtService, IHttpClientFactory _httpClientFactory) : ControllerBase
 {
-    private readonly DataContext _db;
-    private readonly IAuthService _jwtService;
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public ExternalAuthController(DataContext db, IAuthService jwtService, IHttpClientFactory httpClientFactory)
-    {
-        _db = db;
-        _jwtService = jwtService;
-        _httpClientFactory = httpClientFactory;
-    }
-
     [HttpPost("login")]
     public async Task<IActionResult> ExternalLogin([FromBody] ExternalLoginDto dto)
     {
@@ -50,7 +39,7 @@ public class ExternalAuthController : ControllerBase
                     IsBlocked = false,
                     Language = PreferedLanguage.English,
                     Theme = PreferedTheme.Light,
-                    PasswordHash = "" // Dummy value to satisfy database constraint for external auth users
+                    PasswordHash = ""
                 };
                 _db.Users.Add(user);
                 await _db.SaveChangesAsync();

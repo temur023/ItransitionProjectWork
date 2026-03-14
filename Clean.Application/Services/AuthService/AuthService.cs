@@ -26,6 +26,8 @@ public class AuthService(IAuthRepository repository, IConfiguration configuratio
         var usr = await repository.Login(loginInput);
         if (usr == null) 
             return new Response<string>(404, "User not found!", null);
+        if (string.IsNullOrEmpty(usr.PasswordHash))
+            return new Response<string>("Please sign in with Google or Facebook");
         if (usr.PasswordHash != user.PasswordHash)
             return new Response<string>(400, "The password is incorrect!", null);
         if (usr.IsBlocked == true)

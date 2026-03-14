@@ -13,8 +13,8 @@
             var query = context.Inventories
                 .Include(i=>i.Tags)
                 .Include(i=>i.CreatedBy)
+                .Include(i=>i.UserAccesses)
                 .OrderByDescending(i=>i.CreatedAt).AsNoTracking();
-            // AND logic: only inventories that have ALL selected tags
             if (filter.Tags != null && filter.Tags.Any())
             {
                 query = query.Where(i => filter.Tags.All(ft => i.Tags.Any(t => t.Name == ft)));
@@ -35,7 +35,6 @@
                 .Include(i=>i.UserAccesses)
                 .Where(i=>i.UserAccesses.FirstOrDefault(u=>u.UserId==id)!=null)
                 .OrderByDescending(i=>i.CreatedAt).AsNoTracking();
-            // AND logic: only inventories that have ALL selected tags
             if (filter.Tags != null && filter.Tags.Any())
             {
                 query = query.Where(i => filter.Tags.All(ft => i.Tags.Any(t => t.Name == ft)));

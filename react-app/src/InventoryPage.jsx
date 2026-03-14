@@ -31,18 +31,20 @@ function InventoryPage() {
     const [message, setMessage] = useState({ text: "", type: "" });
     const { inventoryId } = useParams();
 
-    // Two separate field states: all fields (for About tab) and only showInTable fields (for table columns)
-    const [inventoryFields, setInventoryFields] = useState([]); // showInTable only
-    const [allFields, setAllFields] = useState([]);             // all fields
-    const [inventoryData, setInventoryData] = useState(null);   // inventory details
+    const [inventoryFields, setInventoryFields] = useState([]);
+    const [allFields, setAllFields] = useState([]);
+    const [inventoryData, setInventoryData] = useState(null);
 
     const [selectedItem, setSelectedItem] = useState(null);
+
     const api_url = "https://itransitionprojectwork-production.up.railway.app";
+    // const api_url = "http://localhost:5137";
+
     const navigate = useNavigate();
-    const logout = async () => {
+    const logout = () => {
         localStorage.removeItem("userToken");
-        navigate("/login")
-    }
+        navigate("/login");
+    };
 
     // Comments
     const [comments, setComments] = useState([]);
@@ -56,7 +58,7 @@ function InventoryPage() {
     const [likedByMe, setLikedByMe] = useState({});
     const [likeBusy, setLikeBusy] = useState({});
 
-    // Search — sent to backend, not filtered client-side
+    // Search
     const [itemSearch, setItemSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -64,14 +66,18 @@ function InventoryPage() {
     const [formData, setFormData] = useState({ name: "", description: "" });
 
     // Edit Inventory Form
-    const [editFormData, setEditFormData] = useState({ title: "", description: "", category: 1, isPublic: true, tags: [], version: 0 });
+    const [editFormData, setEditFormData] = useState({
+        title: "", description: "", category: 1, isPublic: true, tags: [], version: 0
+    });
     const prevEditFormDataRef = useRef(null);
     const autoSaveTimerRef = useRef(null);
 
     // Edit Item Form
-    const [editItemData, setEditItemData] = useState({ name: "", description: "", fieldValues: [] });
+    const [editItemData, setEditItemData] = useState({
+        name: "", description: "", version: 0, fieldValues: []
+    });
 
-    // Fields (for edit form)
+    // Fields
     const [fields, setFields] = useState([]);
 
     // Access Users
@@ -80,7 +86,9 @@ function InventoryPage() {
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const searchTimerRef = useRef(null);
 
-    const categoryLabels = { 1: t('equipment'), 2: t('furniture'), 3: t('book'), 4: t('technology'), 5: t('other') };
+    const categoryLabels = {
+        1: t('equipment'), 2: t('furniture'), 3: t('book'), 4: t('technology'), 5: t('other')
+    };
     const totalPages = Math.ceil(total / filter.pageSize);
     const [profileData, setProfileData] = useState(null);
 
@@ -104,7 +112,7 @@ function InventoryPage() {
         }
     }, []);
 
-    // DnD sensors
+    // ─── DnD sensors ─────────────────────────────────────────────────────────────
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -113,10 +121,10 @@ function InventoryPage() {
     function handleFieldDragEnd(event) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
-        setFields((items) => {
-            const oldIndex = items.findIndex(f => f.id === active.id);
-            const newIndex = items.findIndex(f => f.id === over.id);
-            return arrayMove(items, oldIndex, newIndex);
+        setFields((prev) => {
+            const oldIndex = prev.findIndex(f => f.id === active.id);
+            const newIndex = prev.findIndex(f => f.id === over.id);
+            return arrayMove(prev, oldIndex, newIndex);
         });
     }
 
@@ -134,9 +142,6 @@ function InventoryPage() {
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-    //Helpers
-
-
     const isAdmin = useCallback(() => {
         const token = localStorage.getItem("userToken");
         if (!token) return false;
@@ -145,7 +150,8 @@ function InventoryPage() {
             const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
             const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
             const payload = JSON.parse(atob(padded));
-            let role = payload.role ?? payload.Role ?? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+            let role = payload.role ?? payload.Role ??
+                payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
             if (role == null && Array.isArray(payload.roles)) role = payload.roles[0];
             if (role == null && Array.isArray(payload.role)) role = payload.role[0];
             return role === "Admin" || role === "admin" || Number(role) === 0 || Number(role) === 1;
@@ -154,23 +160,19 @@ function InventoryPage() {
         }
     }, []);
 
-    // Likes
+    // ─── Likes ────────────────────────────────────────────────────────────────────
     const fetchLikeMetaForItem = useCallback(async (itemId) => {
         try {
             const countRes = await axios.get(`${api_url}/api/ItemLike/get-all`, {
                 params: { ItemId: itemId, PageNumber: 1, PageSize: 1 }
             });
-            const count = countRes.data.totalRecords ?? 0;
-            setLikeCounts(prev => ({ ...prev, [itemId]: count }));
+            setLikeCounts(prev => ({ ...prev, [itemId]: countRes.data.totalRecords ?? 0 }));
         } catch {
             setLikeCounts(prev => ({ ...prev, [itemId]: 0 }));
         }
 
         const me = getUserIdFromToken();
-        if (!me) {
-            setLikedByMe(prev => ({ ...prev, [itemId]: false }));
-            return;
-        }
+        if (!me) { setLikedByMe(prev => ({ ...prev, [itemId]: false })); return; }
 
         try {
             await axios.get(`${api_url}/api/ItemLike/get/${itemId}/${me}`);
@@ -187,7 +189,7 @@ function InventoryPage() {
         await Promise.all(items.map(i => fetchLikeMetaForItem(i.id)));
     }, [items, fetchLikeMetaForItem]);
 
-    //Search Users 
+    // ─── Search Users ─────────────────────────────────────────────────────────────
     const searchUsers = async (searchTerm) => {
         if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
         try {
@@ -200,7 +202,7 @@ function InventoryPage() {
         } catch { setUserSuggestions([]); }
     };
 
-    // Fetch Fields
+    // ─── Fetch Fields ─────────────────────────────────────────────────────────────
     const fetchFields = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -232,18 +234,17 @@ function InventoryPage() {
     useEffect(() => { fetchFields(); }, [fetchFields]);
     useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-    // Debounce search input
+    // ─── Debounce search ─────────────────────────────────────────────────────────
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(itemSearch), 400);
         return () => clearTimeout(timer);
     }, [itemSearch]);
 
-    // Reset to page 1 when search changes
     useEffect(() => {
         setFilter(prev => ({ ...prev, pageNumber: 1 }));
     }, [debouncedSearch]);
 
-    // Fetch Items
+    // ─── Fetch Items ──────────────────────────────────────────────────────────────
     const fetchItems = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -274,7 +275,7 @@ function InventoryPage() {
     useEffect(() => { setCheckedItems([]); }, [items]);
     useEffect(() => { refreshLikesForVisibleItems(); }, [refreshLikesForVisibleItems]);
 
-    // Comments
+    // ─── Comments ─────────────────────────────────────────────────────────────────
     const fetchComments = useCallback(async () => {
         try {
             setCommentsLoading(true);
@@ -329,7 +330,7 @@ function InventoryPage() {
         }
     };
 
-    // Likes Toggle
+    // ─── Likes Toggle ─────────────────────────────────────────────────────────────
     const toggleLike = async (itemId) => {
         const token = localStorage.getItem("userToken");
         if (!token) return navigate("/login");
@@ -369,7 +370,7 @@ function InventoryPage() {
         </svg>
     );
 
-    // Create Item
+    // ─── Create Item ──────────────────────────────────────────────────────────────
     const createItem = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -389,7 +390,7 @@ function InventoryPage() {
         }
     };
 
-    // Delete Selected
+    // ─── Delete Selected ──────────────────────────────────────────────────────────
     const deleteSelected = async () => {
         const token = localStorage.getItem("userToken");
         if (!token) return navigate("/login");
@@ -413,7 +414,7 @@ function InventoryPage() {
         } finally { setLoading(false); }
     };
 
-    // Check Items
+    // ─── Check Items ──────────────────────────────────────────────────────────────
     function handleCheckingItems(id) {
         setCheckedItems(c => c.includes(id) ? c.filter(i => i !== id) : [...c, id]);
     }
@@ -422,11 +423,13 @@ function InventoryPage() {
         else setCheckedItems(items.map(i => i.id));
     }
 
-    // Edit Item
+    // ─── Edit Item ────────────────────────────────────────────────────────────────
     const openEditItemModal = () => {
+        // FIX: include version so optimistic locking works
         setEditItemData({
             name: selectedItem.name,
             description: selectedItem.description,
+            version: selectedItem.version,
             fieldValues: allFields.map(f => ({
                 fieldId: f.id,
                 fieldTitle: f.title,
@@ -440,9 +443,11 @@ function InventoryPage() {
     const updateItem = async () => {
         try {
             const token = localStorage.getItem("userToken");
+            // FIX: send Version in request body
             await axios.put(`${api_url}/api/Item/update/${selectedItem.id}`, {
                 Name: editItemData.name,
                 Description: editItemData.description,
+                Version: editItemData.version,
             }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
 
             const nonEmptyValues = editItemData.fieldValues.filter(fv => fv.value !== "");
@@ -453,26 +458,48 @@ function InventoryPage() {
                 }, { headers: { Authorization: `Bearer ${token}` } });
             }
 
+            // FIX: update local selectedItem version after success
+            setSelectedItem(prev => ({ ...prev, version: prev.version + 1 }));
+
             setMessage({ text: "Item updated!", type: "success" });
             setActiveTab("items");
             setSelectedItem(null);
             await fetchItems();
         } catch (error) {
-            setMessage({ text: error.response?.data?.message || "Failed to update item", type: "danger" });
+            if (error.response?.status === 409) {
+                setMessage({ text: "Conflict: Item was modified by another user. Please reload.", type: "danger" });
+            } else {
+                setMessage({ text: error.response?.data?.message || "Failed to update item", type: "danger" });
+            }
         }
     };
 
-    // Edit Inventory
+    // ─── Edit Inventory ───────────────────────────────────────────────────────────
     const openEditModal = async () => {
         const token = localStorage.getItem("userToken");
         try {
             const [invRes, fieldsRes, accessRes] = await Promise.all([
-                axios.get(`${api_url}/api/Inventory/get/${inventoryId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${api_url}/api/InventoryField/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } }),
-                axios.get(`${api_url}/api/InventoryUserAccess/get-all`, { headers: { Authorization: `Bearer ${token}` }, params: { InvId: inventoryId } })
+                axios.get(`${api_url}/api/Inventory/get/${inventoryId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get(`${api_url}/api/InventoryField/get-all`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { InvId: inventoryId }
+                }),
+                axios.get(`${api_url}/api/InventoryUserAccess/get-all`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { InvId: inventoryId }
+                })
             ]);
             const inv = invRes.data.data;
-            setEditFormData({ title: inv.title, description: inv.description, category: inv.category, isPublic: inv.isPublic, tags: inv.tags || [], version: inv.version || 0 });
+            setEditFormData({
+                title: inv.title,
+                description: inv.description,
+                category: inv.category,
+                isPublic: inv.isPublic,
+                tags: inv.tags || [],
+                version: inv.version || 0
+            });
             setFields((fieldsRes.data.data || []).map(f => ({
                 id: String(f.id), title: f.title, description: f.description,
                 type: f.type, showInTable: f.showInTable, order: f.order, isExisting: true
@@ -501,7 +528,6 @@ function InventoryPage() {
 
             const updatedFields = fields.map((f, index) => ({ ...f, order: index + 1 }));
 
-            // Save new fields
             const newFields = updatedFields.filter(f => !f.isExisting);
             if (newFields.length > 0) {
                 await Promise.all(newFields.map(f =>
@@ -516,7 +542,6 @@ function InventoryPage() {
                 ));
             }
 
-            // Update existing fields 
             const existingFields = updatedFields.filter(f => f.isExisting);
             if (existingFields.length > 0) {
                 await Promise.all(existingFields.map(f =>
@@ -549,16 +574,23 @@ function InventoryPage() {
             await fetchItems();
         } catch (error) {
             if (error.response?.status === 409) {
-                setMessage({ text: t('inventory_conflict') || "Conflict: Modified by another user. Reload the page.", type: "danger" });
+                setMessage({
+                    text: t('inventory_conflict') || "Conflict: Modified by another user. Reload the page.",
+                    type: "danger"
+                });
             } else {
                 setMessage({ text: error.response?.data?.message || "Failed to update", type: "danger" });
             }
         }
     };
 
-    // Fields CRUD
+    // ─── Fields CRUD ──────────────────────────────────────────────────────────────
     const addField = () => {
-        setFields([...fields, { id: String(Date.now()) + Math.random().toString(36).slice(2), title: "", description: "", type: 1, showInTable: false, order: fields.length + 1 }]);
+        setFields([...fields, {
+            id: String(Date.now()) + Math.random().toString(36).slice(2),
+            title: "", description: "", type: 1, showInTable: false,
+            order: fields.length + 1
+        }]);
     };
     const updateField = (id, key, value) => {
         setFields(fields.map(f => f.id === id ? { ...f, [key]: value } : f));
@@ -580,7 +612,7 @@ function InventoryPage() {
         setFields(fields.filter(f => f.id !== id));
     };
 
-    // Access Users CRUD
+    // ─── Access Users CRUD ────────────────────────────────────────────────────────
     const addAccessUsers = () => {
         setAccessUsers([...accessUsers, { emailOrUsername: "", userId: null, isExisting: false }]);
     };
@@ -625,7 +657,7 @@ function InventoryPage() {
         return () => clearTimeout(timer);
     }, [message.text]);
 
-    // Auto-Save
+    // ─── Auto-Save ────────────────────────────────────────────────────────────────
     useEffect(() => {
         if (activeTab !== "edit_inventory") {
             prevEditFormDataRef.current = null;
@@ -655,7 +687,7 @@ function InventoryPage() {
                 }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
 
                 let newVersion = editFormData.version;
-                if (response.data && response.data.data) {
+                if (response.data?.data) {
                     newVersion = parseInt(response.data.data);
                     setEditFormData(f => ({ ...f, version: newVersion }));
                 }
@@ -663,7 +695,10 @@ function InventoryPage() {
                 prevEditFormDataRef.current = JSON.stringify({ ...editFormData, version: newVersion });
             } catch (error) {
                 if (error.response?.status === 409) {
-                    setMessage({ text: t('inventory_conflict') || "Conflict: Modified by another user. Please close and reopen.", type: "danger" });
+                    setMessage({
+                        text: t('inventory_conflict') || "Conflict: Modified by another user. Please close and reopen.",
+                        type: "danger"
+                    });
                     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
                 } else {
                     setMessage({ text: "Auto-save failed.", type: "danger" });
@@ -672,33 +707,29 @@ function InventoryPage() {
         }, 8000);
 
         return () => clearTimeout(autoSaveTimerRef.current);
-    }, [editFormData, activeTab, api_url, inventoryId, t]);
+    }, [editFormData, activeTab, inventoryId, t]);
 
     const me = getUserIdFromToken();
     const admin = isAdmin();
 
     return (
         <>
+            {/* ─── Navbar ─────────────────────────────────────────────────────────── */}
             <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
                 <ul className="nav nav-pills w-100 gap-2 align-items-center">
                     <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/dashboard")}>{t('dashboard')}</button>
+                        <button type="button" className="nav-link active"
+                            onClick={() => navigate("/dashboard")}>{t('dashboard')}</button>
                     </li>
                     <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>{t('statistics')}</button>
+                        <button type="button" className="nav-link active"
+                            onClick={() => navigate("/statistics")}>{t('statistics')}</button>
                     </li>
                     <li className="ms-auto nav-item">
-                        <button
-                            type="button"
-                            className="nav-link p-0"
-                            onClick={() => navigate("/user-page")}
-                        >
+                        <button type="button" className="nav-link p-0" onClick={() => navigate("/user-page")}>
                             {profileData?.profileImage
-                                ? <img
-                                    src={profileData.profileImage}
-                                    alt="avatar"
-                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }}
-                                />
+                                ? <img src={profileData.profileImage} alt="avatar"
+                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }} />
                                 : <div style={{
                                     width: 35, height: 35, borderRadius: "50%",
                                     background: "#0d6efd", color: "white",
@@ -711,34 +742,31 @@ function InventoryPage() {
                         </button>
                     </li>
                     <li className="nav-item">
-                        <button
-                            type="button"
-                            className="nav-link"
-                            onClick={toggleTheme}
-                            title="Toggle theme"
-                        >
+                        <button type="button" className="nav-link" onClick={toggleTheme} title="Toggle theme">
                             {theme === "light" ? "🌙" : "☀️"}
                         </button>
                     </li>
                     <li>
-                        <button
-                            onClick={logout}
-                            className="btn btn-outline-danger btn-sm fw-bold px-3"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
+                        <button onClick={logout} className="btn btn-outline-danger btn-sm fw-bold px-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red"
+                                className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
                                 <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
                                 <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
                             </svg>
                         </button>
                     </li>
                 </ul>
-            </div >
+            </div>
 
             <div className="container-fluid d-flex justify-content-start gap-3 w-100 p-0">
-                {/* Sidebar */}
+                {/* ─── Sidebar ──────────────────────────────────────────────────────── */}
                 <div className="col-sm-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4">
                     <ul className="nav nav-underline nav-fill flex-column mt-4">
-                        {[["items", t('inventory_items')], ["discussion", t('inventory_discussion')], ["about", t('inventory_about_tab')]].map(([tab, label]) => (
+                        {[
+                            ["items", t('inventory_items')],
+                            ["discussion", t('inventory_discussion')],
+                            ["about", t('inventory_about_tab')]
+                        ].map(([tab, label]) => (
                             <li className="nav-item" key={tab}>
                                 <button
                                     type="button"
@@ -752,12 +780,13 @@ function InventoryPage() {
                     </ul>
                 </div>
 
-                {/* Main content */}
+                {/* ─── Main Content ─────────────────────────────────────────────────── */}
                 <div className="mt-4 shadow-lg rounded-4 p-4 mb-2 col-sm-9">
                     {message.text && (
                         <div className={`alert alert-${message.type} alert-dismissible`}>
                             {message.text}
-                            <button type="button" className="btn-close" onClick={() => setMessage({ text: "", type: "" })} />
+                            <button type="button" className="btn-close"
+                                onClick={() => setMessage({ text: "", type: "" })} />
                         </div>
                     )}
 
@@ -766,7 +795,8 @@ function InventoryPage() {
                     </div>
 
                     <div className="pt-3">
-                        {/* ── Items Tab ── */}
+
+                        {/* ── Items Tab ────────────────────────────────────────────────── */}
                         {activeTab === "items" && (
                             <>
                                 <div className="d-flex justify-content-end mt-2 gap-2 mb-4">
@@ -785,12 +815,17 @@ function InventoryPage() {
                                         disabled={loading || checkedItems.length === 0}
                                         title={t('inventory_deleteSelected')}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
                                             <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
                                         </svg>
                                     </button>
-                                    <button className="btn btn-primary" onClick={openEditModal}>{t('inventory_editInventory')}</button>
-                                    <button className="btn btn-success" onClick={() => setActiveTab("create_item")}>{t('inventory_newItem')}</button>
+                                    <button className="btn btn-primary" onClick={openEditModal}>
+                                        {t('inventory_editInventory')}
+                                    </button>
+                                    <button className="btn btn-success" onClick={() => setActiveTab("create_item")}>
+                                        {t('inventory_newItem')}
+                                    </button>
                                 </div>
 
                                 <table className="table table-striped table-hover">
@@ -817,10 +852,15 @@ function InventoryPage() {
                                                         onChange={() => handleCheckingItems(item.id)}
                                                     />
                                                 </td>
-                                                <td onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>{item.customId}</td>
-                                                <td onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>{item.name}</td>
+                                                <td onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>
+                                                    {item.customId}
+                                                </td>
+                                                <td onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>
+                                                    {item.name}
+                                                </td>
                                                 {inventoryFields.map(f => (
-                                                    <td key={f.id} onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>
+                                                    <td key={f.id}
+                                                        onClick={() => { setSelectedItem(item); setActiveTab("view_item"); }}>
                                                         {item.fieldValues?.find(v => v.fieldId === f.id)?.value || "-"}
                                                     </td>
                                                 ))}
@@ -832,7 +872,8 @@ function InventoryPage() {
                                                         disabled={!!likeBusy[item.id]}
                                                         title={likedByMe[item.id] ? t('inventory_unlike') : t('inventory_like')}
                                                     >
-                                                        <ThumbsUpIcon filled={!!likedByMe[item.id]} /> {likeCounts[item.id] ?? 0}
+                                                        <ThumbsUpIcon filled={!!likedByMe[item.id]} />
+                                                        {likeCounts[item.id] ?? 0}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -842,12 +883,13 @@ function InventoryPage() {
                             </>
                         )}
 
-                        {/* ── Discussion Tab ── */}
+                        {/* ── Discussion Tab ───────────────────────────────────────────── */}
                         {activeTab === "discussion" && (
                             <div className="card h-100">
                                 <div className="card-header d-flex justify-content-between align-items-center">
                                     <div>{t('inventory_discussion')}</div>
-                                    <button className="btn btn-sm btn-outline-secondary" onClick={fetchComments} disabled={commentsLoading}>
+                                    <button className="btn btn-sm btn-outline-secondary"
+                                        onClick={fetchComments} disabled={commentsLoading}>
                                         {t('inventory_refresh')}
                                     </button>
                                 </div>
@@ -861,18 +903,22 @@ function InventoryPage() {
                                             comments.map(c => {
                                                 const isAuthor = c.userId === me;
                                                 const canDelete = isAuthor || admin;
-                                                const author = isAuthor ? t('inventory_you') : `${t('inventory_userNum')} #${c.userId}`;
+                                                const author = isAuthor
+                                                    ? t('inventory_you')
+                                                    : `${t('inventory_userNum')} #${c.userId}`;
                                                 return (
                                                     <div key={c.id} className="border rounded p-2 mb-2">
                                                         <div className="d-flex justify-content-between">
                                                             <small className="text-muted">{author}</small>
-                                                            <small className="text-muted">{new Date(c.createdAt).toLocaleString()}</small>
+                                                            <small className="text-muted">
+                                                                {new Date(c.createdAt).toLocaleString()}
+                                                            </small>
                                                         </div>
                                                         <div style={{ whiteSpace: "pre-wrap" }}>{c.content}</div>
-                                                        {/* FIX: only show delete to author or admin */}
                                                         {canDelete && (
                                                             <div className="mt-2 d-flex justify-content-end">
-                                                                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteComment(c.id)}>
+                                                                <button className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() => deleteComment(c.id)}>
                                                                     {t('inventory_delete')}
                                                                 </button>
                                                             </div>
@@ -888,10 +934,16 @@ function InventoryPage() {
                                             placeholder={t('inventory_writeComment')}
                                             value={commentText}
                                             onChange={(e) => setCommentText(e.target.value)}
-                                            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); createComment(); } }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    createComment();
+                                                }
+                                            }}
                                             disabled={commentSubmitting}
                                         />
-                                        <button className="btn btn-primary" onClick={createComment} disabled={commentSubmitting || !commentText.trim()}>
+                                        <button className="btn btn-primary" onClick={createComment}
+                                            disabled={commentSubmitting || !commentText.trim()}>
                                             {t('inventory_send')}
                                         </button>
                                     </div>
@@ -899,21 +951,27 @@ function InventoryPage() {
                             </div>
                         )}
 
-                        {/* ── About Tab ── */}
+                        {/* ── About Tab ────────────────────────────────────────────────── */}
                         {activeTab === "about" && (
                             <div className="d-flex flex-column p-3 shadow-lg m-4 rounded-3">
                                 <h5>{inventoryData?.title || `Inventory ${inventoryId}`}</h5>
                                 <div className="mb-3">
                                     <label className="fw-bold">{t('description')}</label>
-                                    <p className="text-muted">{inventoryData?.description || t('inventory_noDescription')}</p>
+                                    <p className="text-muted">
+                                        {inventoryData?.description || t('inventory_noDescription')}
+                                    </p>
                                 </div>
                                 <div className="mb-3">
                                     <label className="fw-bold">{t('category')}</label>
-                                    <p className="text-muted">{categoryLabels[inventoryData?.category] || inventoryData?.category}</p>
+                                    <p className="text-muted">
+                                        {categoryLabels[inventoryData?.category] || inventoryData?.category}
+                                    </p>
                                 </div>
                                 <div className="mb-3">
                                     <label className="fw-bold">{t('inventory_visibility')}</label>
-                                    <p className="text-muted">{inventoryData?.isPublic ? t('public') : t('private')}</p>
+                                    <p className="text-muted">
+                                        {inventoryData?.isPublic ? t('public') : t('private')}
+                                    </p>
                                 </div>
                                 <hr />
                                 <h6>{t('inventory_fields')}</h6>
@@ -924,8 +982,14 @@ function InventoryPage() {
                                         {allFields.map(field => (
                                             <div key={field.id} className="border rounded p-2">
                                                 <span className="badge bg-secondary me-2">{field.title}</span>
-                                                {field.showInTable && <span className="badge bg-info text-dark me-2">{t('inventory_shownInTable')}</span>}
-                                                <p className="text-muted small mb-0 mt-1">{field.description || t('inventory_noDescription')}</p>
+                                                {field.showInTable && (
+                                                    <span className="badge bg-info text-dark me-2">
+                                                        {t('inventory_shownInTable')}
+                                                    </span>
+                                                )}
+                                                <p className="text-muted small mb-0 mt-1">
+                                                    {field.description || t('inventory_noDescription')}
+                                                </p>
                                             </div>
                                         ))}
                                     </div>
@@ -933,12 +997,13 @@ function InventoryPage() {
                             </div>
                         )}
 
-                        {/* ── Create Item Tab ── */}
+                        {/* ── Create Item Tab ──────────────────────────────────────────── */}
                         {activeTab === "create_item" && (
                             <div className="d-flex flex-column p-4 shadow-lg m-4 rounded-3 bg-body">
                                 <div className="d-flex justify-content-between mb-4">
                                     <h4 className="mb-0">{t('inventory_createNewItem')}</h4>
-                                    <button type="button" className="btn-close" aria-label="Close" onClick={() => { setActiveTab("items"); setFormData({ name: "", description: "" }); }} />
+                                    <button type="button" className="btn-close" aria-label="Close"
+                                        onClick={() => { setActiveTab("items"); setFormData({ name: "", description: "" }); }} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">{t('name')}</label>
@@ -951,17 +1016,20 @@ function InventoryPage() {
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                                 </div>
                                 <div className="d-flex justify-content-end mt-4">
-                                    <button className="btn btn-primary" onClick={createItem}>{t('inventory_create')}</button>
+                                    <button className="btn btn-primary" onClick={createItem}>
+                                        {t('inventory_create')}
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* ── Edit Inventory Tab ── */}
+                        {/* ── Edit Inventory Tab ───────────────────────────────────────── */}
                         {activeTab === "edit_inventory" && (
                             <div className="d-flex flex-column p-4 shadow-lg m-4 rounded-3 bg-body">
                                 <div className="d-flex justify-content-between mb-4">
                                     <h4 className="mb-0">{t('inventory_editInv')}</h4>
-                                    <button type="button" className="btn-close" aria-label="Close" onClick={() => { setActiveTab("items"); prevEditFormDataRef.current = null; }} />
+                                    <button type="button" className="btn-close" aria-label="Close"
+                                        onClick={() => { setActiveTab("items"); prevEditFormDataRef.current = null; }} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">{t('title')}</label>
@@ -983,7 +1051,8 @@ function InventoryPage() {
                                     </select>
                                 </div>
                                 <div className="mb-3 form-check">
-                                    <input type="checkbox" className="form-check-input" checked={editFormData.isPublic}
+                                    <input type="checkbox" className="form-check-input"
+                                        checked={editFormData.isPublic}
                                         onChange={(e) => setEditFormData({ ...editFormData, isPublic: e.target.checked })} />
                                     <label className="form-check-label">{t('public')}</label>
                                 </div>
@@ -998,26 +1067,38 @@ function InventoryPage() {
                                 </div>
                                 <hr />
                                 <h6 className="mb-3">{t('inventory_fields')}</h6>
-                                {fields.length === 0 && <p className="text-muted small">{t('inventory_noFieldsYet')}</p>}
-                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
-                                    <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                {fields.length === 0 && (
+                                    <p className="text-muted small">{t('inventory_noFieldsYet')}</p>
+                                )}
+                                <DndContext sensors={sensors} collisionDetection={closestCenter}
+                                    onDragEnd={handleFieldDragEnd}>
+                                    <SortableContext items={fields.map(f => f.id)}
+                                        strategy={verticalListSortingStrategy}>
                                         {fields.map((field) => (
-                                            <SortableItem key={field.id} id={field.id} onRemove={() => removeField(field.id)}>
-                                                {field.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
+                                            <SortableItem key={field.id} id={field.id}
+                                                onRemove={() => removeField(field.id)}>
+                                                {field.isExisting && (
+                                                    <span className="badge bg-secondary mb-2">
+                                                        {t('inventory_existing')}
+                                                    </span>
+                                                )}
                                                 <div className="mb-2">
                                                     <label className="form-label small">{t('title')}</label>
-                                                    <input type="text" className="form-control form-control-sm" value={field.title}
+                                                    <input type="text" className="form-control form-control-sm"
+                                                        value={field.title}
                                                         onChange={(e) => updateField(field.id, "title", e.target.value)} />
                                                 </div>
                                                 <div className="mb-2">
                                                     <label className="form-label small">{t('description')}</label>
-                                                    <input type="text" className="form-control form-control-sm" value={field.description}
+                                                    <input type="text" className="form-control form-control-sm"
+                                                        value={field.description}
                                                         onChange={(e) => updateField(field.id, "description", e.target.value)} />
                                                 </div>
                                                 <div className="mb-2">
                                                     <label className="form-label small">{t('inventory_fieldType')}</label>
                                                     <select className="form-select form-select-sm" value={field.type}
-                                                        onChange={(e) => updateField(field.id, "type", e.target.value)} disabled={field.isExisting}>
+                                                        onChange={(e) => updateField(field.id, "type", e.target.value)}
+                                                        disabled={field.isExisting}>
                                                         <option value={1}>{t('inventory_singleLinedText')}</option>
                                                         <option value={2}>{t('inventory_multiLinedText')}</option>
                                                         <option value={3}>{t('inventory_number')}</option>
@@ -1026,9 +1107,12 @@ function InventoryPage() {
                                                     </select>
                                                 </div>
                                                 <div className="form-check">
-                                                    <input type="checkbox" className="form-check-input" checked={field.showInTable}
+                                                    <input type="checkbox" className="form-check-input"
+                                                        checked={field.showInTable}
                                                         onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
-                                                    <label className="form-check-label small">{t('inventory_showInTable')}</label>
+                                                    <label className="form-check-label small">
+                                                        {t('inventory_showInTable')}
+                                                    </label>
                                                 </div>
                                             </SortableItem>
                                         ))}
@@ -1036,11 +1120,19 @@ function InventoryPage() {
                                 </DndContext>
                                 <hr />
                                 <h6 className="mb-3">{t('inventory_usersWithAccess')}</h6>
-                                {accessUsers.length === 0 && <p className="text-muted small">{t('inventory_noUsersYet')}</p>}
+                                {accessUsers.length === 0 && (
+                                    <p className="text-muted small">{t('inventory_noUsersYet')}</p>
+                                )}
                                 {accessUsers.map((user, index) => (
                                     <div key={index} className="border rounded p-3 mb-2 position-relative">
-                                        <button type="button" className="btn-close position-absolute top-0 end-0 m-2" onClick={() => removeAccessUser(index)} />
-                                        {user.isExisting && <span className="badge bg-secondary mb-2">{t('inventory_existing')}</span>}
+                                        <button type="button"
+                                            className="btn-close position-absolute top-0 end-0 m-2"
+                                            onClick={() => removeAccessUser(index)} />
+                                        {user.isExisting && (
+                                            <span className="badge bg-secondary mb-2">
+                                                {t('inventory_existing')}
+                                            </span>
+                                        )}
                                         <div style={{ position: "relative" }}>
                                             <div className="input-group">
                                                 <input type="text" className="form-control"
@@ -1049,15 +1141,23 @@ function InventoryPage() {
                                                     disabled={user.isExisting}
                                                     onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
                                                     onBlur={() => setTimeout(() => {
-                                                        if (activeSuggestionIndex === index) { setUserSuggestions([]); setActiveSuggestionIndex(-1); }
+                                                        if (activeSuggestionIndex === index) {
+                                                            setUserSuggestions([]);
+                                                            setActiveSuggestionIndex(-1);
+                                                        }
                                                     }, 200)}
                                                 />
-                                                {user.userId && !user.isExisting && <span className="input-group-text text-success">✓</span>}
+                                                {user.userId && !user.isExisting && (
+                                                    <span className="input-group-text text-success">✓</span>
+                                                )}
                                             </div>
                                             {activeSuggestionIndex === index && userSuggestions.length > 0 && (
-                                                <ul className="list-group position-absolute w-100" style={{ zIndex: 1050, maxHeight: "200px", overflowY: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.15)" }}>
+                                                <ul className="list-group position-absolute w-100"
+                                                    style={{ zIndex: 1050, maxHeight: "200px", overflowY: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.15)" }}>
                                                     {userSuggestions.map((s) => (
-                                                        <li key={s.id} className="list-group-item list-group-item-action" style={{ cursor: "pointer" }}
+                                                        <li key={s.id}
+                                                            className="list-group-item list-group-item-action"
+                                                            style={{ cursor: "pointer" }}
                                                             onMouseDown={() => selectSuggestion(index, s)}>
                                                             <strong>{s.userName}</strong>
                                                             <small className="text-muted ms-2">{s.email}</small>
@@ -1069,19 +1169,26 @@ function InventoryPage() {
                                     </div>
                                 ))}
                                 <div className="d-flex justify-content-end gap-2 mt-4">
-                                    <button className="btn btn-outline-secondary" onClick={addField}>{t('inventory_addField')}</button>
-                                    <button className="btn btn-outline-secondary" onClick={addAccessUsers}>{t('inventory_addUser')}</button>
-                                    <button className="btn btn-primary" onClick={updateInventory}>{t('save')}</button>
+                                    <button className="btn btn-outline-secondary" onClick={addField}>
+                                        {t('inventory_addField')}
+                                    </button>
+                                    <button className="btn btn-outline-secondary" onClick={addAccessUsers}>
+                                        {t('inventory_addUser')}
+                                    </button>
+                                    <button className="btn btn-primary" onClick={updateInventory}>
+                                        {t('save')}
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* ── View Item Tab ── */}
+                        {/* ── View Item Tab ────────────────────────────────────────────── */}
                         {activeTab === "view_item" && selectedItem && (
                             <div className="d-flex flex-column p-4 shadow-lg m-4 rounded-3 bg-body">
                                 <div className="d-flex justify-content-between mb-4">
                                     <h4 className="mb-0">{selectedItem?.name || t('inventory_itemDetails')}</h4>
-                                    <button type="button" className="btn-close" aria-label="Close" onClick={() => { setActiveTab("items"); setSelectedItem(null); }} />
+                                    <button type="button" className="btn-close" aria-label="Close"
+                                        onClick={() => { setActiveTab("items"); setSelectedItem(null); }} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="fw-bold">{t('description')}</label>
@@ -1109,13 +1216,18 @@ function InventoryPage() {
                                 <div className="row g-3">
                                     <div className="col-12 col-md-6">
                                         <div className="border rounded p-3">
-                                            <label className="fw-bold mb-1 d-block text-muted">{t('inventory_createdAt')}</label>
+                                            <label className="fw-bold mb-1 d-block text-muted">
+                                                {t('inventory_createdAt')}
+                                            </label>
+                                            {/* FIX: use actual stored timestamp, not DateTime.UtcNow */}
                                             <p className="mb-0">{new Date(selectedItem.createdAt).toLocaleString()}</p>
                                         </div>
                                     </div>
                                     <div className="col-12 col-md-6">
                                         <div className="border rounded p-3">
-                                            <label className="fw-bold mb-1 d-block text-muted">{t('inventory_updatedAt')}</label>
+                                            <label className="fw-bold mb-1 d-block text-muted">
+                                                {t('inventory_updatedAt')}
+                                            </label>
                                             <p className="mb-0">{new Date(selectedItem.updatedAt).toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -1129,20 +1241,27 @@ function InventoryPage() {
                                         disabled={!!likeBusy[selectedItem.id]}
                                         title={likedByMe[selectedItem.id] ? t('inventory_unlike') : t('inventory_like')}
                                     >
-                                        <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} /> {likeCounts[selectedItem.id] ?? 0}
+                                        <ThumbsUpIcon filled={!!likedByMe[selectedItem.id]} />
+                                        {likeCounts[selectedItem.id] ?? 0}
                                     </button>
-                                    <button className="btn btn-primary" onClick={openEditItemModal}>{t('inventory_edit')}</button>
-                                    <button className="btn btn-secondary" onClick={() => { setActiveTab("items"); setSelectedItem(null); }}>{t('inventory_close')}</button>
+                                    <button className="btn btn-primary" onClick={openEditItemModal}>
+                                        {t('inventory_edit')}
+                                    </button>
+                                    <button className="btn btn-secondary"
+                                        onClick={() => { setActiveTab("items"); setSelectedItem(null); }}>
+                                        {t('inventory_close')}
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* ── Edit Item Tab ── */}
+                        {/* ── Edit Item Tab ────────────────────────────────────────────── */}
                         {activeTab === "edit_item" && selectedItem && (
                             <div className="d-flex flex-column p-4 shadow-lg m-4 rounded-3 bg-body">
                                 <div className="d-flex justify-content-between mb-4">
                                     <h4 className="mb-0">{`Edit: ${selectedItem?.name || ""}`}</h4>
-                                    <button type="button" className="btn-close" aria-label="Close" onClick={() => { setActiveTab("items"); setSelectedItem(null); }} />
+                                    <button type="button" className="btn-close" aria-label="Close"
+                                        onClick={() => { setActiveTab("items"); setSelectedItem(null); }} />
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">{t('name')}</label>
@@ -1186,7 +1305,8 @@ function InventoryPage() {
                                                             setEditItemData({ ...editItemData, fieldValues: updated });
                                                         }} />
                                                 ) : (
-                                                    <input type={fv.fieldType === 3 ? "number" : "text"} className="form-control" value={fv.value}
+                                                    <input type={fv.fieldType === 3 ? "number" : "text"}
+                                                        className="form-control" value={fv.value}
                                                         onChange={(e) => {
                                                             const updated = [...editItemData.fieldValues];
                                                             updated[index].value = e.target.value;
@@ -1199,37 +1319,51 @@ function InventoryPage() {
                                 )}
                                 <div className="d-flex justify-content-end gap-2 mt-4">
                                     <button className="btn btn-primary" onClick={updateItem}>{t('save')}</button>
-                                    <button className="btn btn-secondary" onClick={() => { setActiveTab("items"); setSelectedItem(null); }}>{t('cancel')}</button>
+                                    <button className="btn btn-secondary"
+                                        onClick={() => { setActiveTab("items"); setSelectedItem(null); }}>
+                                        {t('cancel')}
+                                    </button>
                                 </div>
                             </div>
                         )}
+
                     </div>
                 </div>
             </div>
 
-            {/* Pagination */}
-            {
-                activeTab === "items" && totalPages > 1 && (
-                    <nav>
-                        <ul className="pagination d-flex justify-content-center">
-                            <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))} disabled={filter.pageNumber <= 1}>{t('previous')}</button>
-                            </li>
-                            {[...Array(totalPages)].map((_, index) => {
-                                const pageNum = index + 1;
-                                return (
-                                    <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? "active" : ""}`}>
-                                        <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>{pageNum}</button>
-                                    </li>
-                                );
-                            })}
-                            <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))} disabled={filter.pageNumber >= totalPages}>{t('next')}</button>
-                            </li>
-                        </ul>
-                    </nav>
-                )
-            }
+            {/* ─── Pagination ──────────────────────────────────────────────────────── */}
+            {activeTab === "items" && totalPages > 1 && (
+                <nav>
+                    <ul className="pagination d-flex justify-content-center">
+                        <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
+                            <button className="page-link"
+                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))}
+                                disabled={filter.pageNumber <= 1}>
+                                {t('previous')}
+                            </button>
+                        </li>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const pageNum = index + 1;
+                            return (
+                                <li key={pageNum}
+                                    className={`page-item ${filter.pageNumber === pageNum ? "active" : ""}`}>
+                                    <button className="page-link"
+                                        onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>
+                                        {pageNum}
+                                    </button>
+                                </li>
+                            );
+                        })}
+                        <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
+                            <button className="page-link"
+                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))}
+                                disabled={filter.pageNumber >= totalPages}>
+                                {t('next')}
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            )}
         </>
     );
 }

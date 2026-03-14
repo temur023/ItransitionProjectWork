@@ -14,7 +14,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var response = await authService.Login(dto);
         if (response.StatusCode != 200)
-            return StatusCode(response.StatusCode, new { message = response.Message }); // ✅ JSON object
+            return StatusCode(response.StatusCode, new { message = response.Message }); // JSON object
         return Ok(new { token = response.Data });
     }
 }
