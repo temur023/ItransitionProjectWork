@@ -1,25 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import TagInput from "./TagInput";
-import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
 import AvatarUpload from "./AvatarUpload";
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
+    DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    arrayMove,
+    SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
+import api from "./useApi";
+import useAuth from "./useAuth";
+import useProfile from "./useProfile";
+import Navbar from "./Navbar";
+import Pagination from "./Pagination";
+import UserSearch from "./UserSearch";
+import { getCategoryLabels } from "./constants";
 
 function UserPage() {
     const [inventories, setInventories] = useState([]);
@@ -27,13 +24,9 @@ function UserPage() {
         title: "", description: "", category: 1,
         Version: 1, CreatedById: 0, isPublic: true, creatorName: ""
     });
-    const { theme, toggleTheme, setPreferredTheme } = useTheme();
     const { t, i18n } = useTranslation();
     const langMap = { 1: 'en', 2: 'ru' };
-    const categoryLabels = {
-        1: t('equipment'), 2: t('furniture'), 3: t('book'),
-        4: t('technology'), 5: t('other'),
-    };
+    const categoryLabels = getCategoryLabels(t);
 
     const [checkedInvs, setCheckedInvs] = useState([]);
     const [customIdElements, setCustomIdElements] = useState([]);
@@ -46,45 +39,22 @@ function UserPage() {
     const [filter, setFilter] = useState({ pageNumber: 1, pageSize: 10 });
     const [total, setTotal] = useState(0);
     const [message, setMessage] = useState({ text: "", type: "" });
-    const [profileData, setProfileData] = useState(null);
     const savedLang = localStorage.getItem('userLanguage') || 'ru';
     const initLangId = savedLang === 'en' ? 1 : 2;
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const initThemeId = savedTheme === 'dark' ? 2 : 1;
-    const [profileForm, setProfileForm] = useState({ fullName: "", language: initLangId, theme: initThemeId, password: "" });
+    const [profileForm, setProfileForm] = useState({ fullName: "", language: initLangId, theme: 1, password: "" });
     const [profileSaving, setProfileSaving] = useState(false);
     const [accessUsers, setAccessUsers] = useState([]);
-    const [userSuggestions, setUserSuggestions] = useState([]);
-    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
-    const searchTimerRef = React.useRef(null);
-    const api_url = "https://itransitionprojectwork-production.up.railway.app";
-    // const api_url = "http://localhost:5137";
-    const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
+    const totalPages = Math.ceil(total / filter.pageSize);
+
+    const { getUserIdFromToken, logout } = useAuth();
+    const { profileData, setProfileData, fetchProfile, theme, toggleTheme, setPreferredTheme } = useProfile();
 
     // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
-
-    // Token helper
-    const getUserIdFromToken = useCallback(() => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return null;
-        try {
-            const payloadB64 = token.split(".")[1];
-            const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
-            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
-            const payload = JSON.parse(atob(padded));
-            const id =
-                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
-                payload.nameid ?? payload.sub;
-            const cleanId = String(id).split(":")[0];
-            const parsed = parseInt(cleanId, 10);
-            return Number.isFinite(parsed) ? parsed : null;
-        } catch { return null; }
-    }, []);
 
     // DnD handlers
     function handleIdElementDragEnd(event) {
@@ -107,7 +77,7 @@ function UserPage() {
         });
     }
 
-    // Close create tab and reset all form state
+    // Close create tab and reset
     const closeCreateTab = () => {
         setActiveTab("own");
         setNewInventoryId(null);
@@ -118,25 +88,16 @@ function UserPage() {
         setCustomIdElements([]);
     };
 
-    // Profile
-    const fetchProfile = useCallback(async () => {
-        try {
-            const token = localStorage.getItem("userToken");
-            if (!token) return;
-            const userId = getUserIdFromToken();
-            if (!userId) return;
-            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const user = response.data.data;
-            setProfileData(user);
-            const themeVal = user.theme ?? user.Theme ?? 1;
-            const langVal = user.language ?? user.Language ?? 1;
+    // Sync profile form when profileData loads
+    useEffect(() => {
+        if (profileData) {
+            const themeVal = profileData.theme ?? profileData.Theme ?? 1;
+            const langVal = profileData.language ?? profileData.Language ?? 1;
             const langStr = langVal === 1 ? 'en' : 'ru';
 
             setProfileForm({
-                fullName: user.fullName || "",
-                userName: user.userName || "",
+                fullName: profileData.fullName || "",
+                userName: profileData.userName || "",
                 language: langVal,
                 theme: themeVal,
                 password: ""
@@ -144,23 +105,19 @@ function UserPage() {
             setPreferredTheme(themeVal);
             i18n.changeLanguage(langStr);
             localStorage.setItem('userLanguage', langStr);
-        } catch (error) {
-            if (error.response?.status === 401) navigate("/login");
         }
-    }, [api_url, navigate, getUserIdFromToken, setPreferredTheme]);
+    }, [profileData]);
 
     const updateProfile = async () => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         try {
             setProfileSaving(true);
             const userId = getUserIdFromToken();
             if (!userId) throw new Error("Cannot determine current user id from token.");
             if (profileForm.userName !== profileData.userName) {
                 try {
-                    await axios.put(
-                        `${api_url}/api/User/update-username/${userId}?username=${encodeURIComponent(profileForm.userName)}`,
-                        {}, { headers: { Authorization: `Bearer ${token}` } }
+                    await api.put(
+                        `/api/User/update-username/${userId}?username=${encodeURIComponent(profileForm.userName)}`,
+                        {}
                     );
                 } catch (usernameError) {
                     if (usernameError.response?.status === 400) {
@@ -176,9 +133,7 @@ function UserPage() {
                 language: Number(profileForm.language),
                 theme: Number(profileForm.theme),
             };
-            const response = await axios.put(`${api_url}/api/User/update/${userId}`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.put(`/api/User/update/${userId}`, payload);
             setMessage({ text: response.data.message || "Profile updated", type: "success" });
             setProfileForm(f => ({ ...f, password: "" }));
             setPreferredTheme(Number(profileForm.theme));
@@ -196,10 +151,8 @@ function UserPage() {
     // Inventories
     const fetchInventories = useCallback(async () => {
         try {
-            const token = localStorage.getItem("userToken");
             const endpoint = activeTab === "own" ? "get-own" : "get-with-access";
-            const response = await axios.get(`${api_url}/api/UserPage/${endpoint}`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/api/UserPage/${endpoint}`, {
                 params: { PageNumber: filter.pageNumber, PageSize: filter.pageSize }
             });
             setInventories(response.data.data || []);
@@ -212,12 +165,9 @@ function UserPage() {
     }, [filter, activeTab]);
 
     const deleteSelected = async () => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         try {
             setLoading(true);
-            const response = await axios.delete(`${api_url}/api/UserPage/delete-own`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.delete(`/api/UserPage/delete-own`, {
                 data: checkedInvs
             });
             setMessage({ text: response.data.message || "Inventories deleted", type: "success" });
@@ -282,10 +232,8 @@ function UserPage() {
             id: String(Date.now()) + Math.random().toString(36).slice(2),
             title: "", description: "", type: 1,
             showInTable: false, order: fields.length + 1,
-            maxSingleLineLength: null,
-            maxMultiLineLength: null,
-            minNumberLength: null,
-            maxNumberLength: null,
+            maxSingleLineLength: null, maxMultiLineLength: null,
+            minNumberLength: null, maxNumberLength: null,
         }]);
     };
 
@@ -310,7 +258,6 @@ function UserPage() {
     // Create inventory
     const createInventory = async () => {
         try {
-            const token = localStorage.getItem("userToken");
             const payload = {
                 Title: formData.title,
                 Description: formData.description,
@@ -327,9 +274,7 @@ function UserPage() {
                     }))
                 ),
             };
-            const response = await axios.post(`${api_url}/api/Inventory/create`, payload, {
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-            });
+            const response = await api.post(`/api/Inventory/create`, payload);
             setNewInventoryId(response.data.data?.id ?? response.data.id);
             setMessage({ text: "Inventory created! Now add fields.", type: "success" });
         } catch (error) {
@@ -340,9 +285,8 @@ function UserPage() {
     // Save fields
     const saveAllFields = async (inventoryId) => {
         try {
-            const token = localStorage.getItem("userToken");
             await Promise.all(fields.map(field =>
-                axios.post(`${api_url}/api/InventoryField/create`, {
+                api.post(`/api/InventoryField/create`, {
                     InvId: inventoryId,
                     Title: field.title,
                     Description: field.description,
@@ -353,7 +297,7 @@ function UserPage() {
                     Type: parseInt(field.type),
                     ShowInTable: field.showInTable,
                     Order: field.order
-                }, { headers: { Authorization: `Bearer ${token}` } })
+                })
             ));
         } catch (error) {
             const msg = error.response?.data?.message || "Failed to save fields";
@@ -362,64 +306,21 @@ function UserPage() {
         }
     };
 
-    // Access users
-    const searchUsers = async (searchTerm) => {
-        if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
-        try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios.get(`${api_url}/api/User/get-all`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { SearchTerm: searchTerm, PageSize: 5, PageNumber: 1 }
-            });
-            setUserSuggestions(response.data.data || []);
-        } catch { setUserSuggestions([]); }
-    };
-
-    const addAccessUsers = () => {
-        setAccessUsers([...accessUsers, { emailOrUsername: "", userId: null }]);
-    };
-    const updateAccessUsers = (index, key, value) => {
-        const updated = [...accessUsers];
-        updated[index][key] = value;
-        setAccessUsers(updated);
-        if (key === "emailOrUsername") {
-            setActiveSuggestionIndex(index);
-            if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-            searchTimerRef.current = setTimeout(() => searchUsers(value), 300);
-        }
-    };
-    const selectSuggestion = (index, user) => {
-        const updated = [...accessUsers];
-        updated[index] = { emailOrUsername: user.email || user.userName, userId: user.id };
-        setAccessUsers(updated);
-        setUserSuggestions([]);
-        setActiveSuggestionIndex(-1);
-    };
-    const removeAccessUser = (index) => {
-        setAccessUsers(accessUsers.filter((_, i) => i !== index));
-        setUserSuggestions([]);
-        setActiveSuggestionIndex(-1);
-    };
+    // Save access users
     const saveAllAccessUsers = async () => {
         try {
-            const token = localStorage.getItem("userToken");
             for (const user of accessUsers) {
-                await axios.post(`${api_url}/api/InventoryUserAccess/create`, {
+                await api.post(`/api/InventoryUserAccess/create`, {
                     InventoryId: newInventoryId,
                     UserId: user.userId,
                     EmailOrUsername: user.emailOrUsername
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                });
             }
         } catch (error) {
             const msg = error.response?.data?.message || "Failed to save access users";
             setMessage({ text: msg, type: "danger" });
             throw error;
         }
-    };
-
-    const logout = () => {
-        localStorage.removeItem("userToken");
-        navigate("/login");
     };
 
     // Effects
@@ -436,88 +337,16 @@ function UserPage() {
         return () => clearTimeout(timer);
     }, [message]);
 
-    useEffect(() => { fetchProfile(); }, [fetchProfile]);
-
-    useEffect(() => {
-        const autoSaveTheme = async () => {
-            const token = localStorage.getItem("userToken");
-            const userId = getUserIdFromToken();
-            if (!token || !userId || !profileData) return;
-
-            const currentDbTheme = profileData.theme ?? profileData.Theme ?? 1;
-            const newThemeVal = theme === "dark" ? 2 : 1;
-
-            if (currentDbTheme !== newThemeVal) {
-                try {
-                    const payload = {
-                        fullName: profileData.fullName,
-                        passwordHash: "",
-                        language: profileData.language ?? profileData.Language ?? 1,
-                        theme: newThemeVal,
-                    };
-                    await axios.put(`${api_url}/api/User/update/${userId}`, payload, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    setProfileData(prev => ({ ...prev, theme: newThemeVal }));
-                } catch (e) { console.error("Auto-saving theme failed", e); }
-            }
-        };
-        autoSaveTheme();
-    }, [theme, profileData, getUserIdFromToken, api_url]);
-
     useEffect(() => {
         setProfileForm(prev => ({ ...prev, theme: theme === "dark" ? 2 : 1 }));
     }, [theme]);
 
     return (
         <>
-            {/* ── Navbar ── */}
-            <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-                <ul className="nav nav-pills w-100 gap-2 align-items-center">
-                    <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/dashboard")}>
-                            {t('dashboard')}
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button type="button" className="nav-link active" onClick={() => navigate("/statistics")}>
-                            {t('statistics')}
-                        </button>
-                    </li>
-                    <li className="ms-auto nav-item">
-                        <button type="button" className="nav-link p-0" onClick={() => navigate("/user-page")}>
-                            {profileData?.profileImage
-                                ? <img src={profileData.profileImage} alt="avatar"
-                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }} />
-                                : <div style={{
-                                    width: 35, height: 35, borderRadius: "50%", background: "#0d6efd",
-                                    color: "white", display: "flex", alignItems: "center",
-                                    justifyContent: "center", fontSize: 14, fontWeight: "bold"
-                                }}>
-                                    {profileData?.fullName?.[0]?.toUpperCase() || "U"}
-                                </div>
-                            }
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button type="button" className="nav-link" onClick={toggleTheme} title="Toggle theme">
-                            {theme === "light" ? "🌙" : "☀️"}
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={logout} className="btn btn-outline-danger btn-sm fw-bold px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red"
-                                className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
-                                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
-                                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
-                            </svg>
-                        </button>
-                    </li>
-                </ul>
-            </div>
+            <Navbar profileData={profileData} theme={theme} toggleTheme={toggleTheme} logout={logout} />
 
             <div className="container-fluid d-flex">
-                {/* ── Sidebar ── */}
+                {/* Sidebar */}
                 <div className="col-md-2 vh-100 m-3 mt-4 shadow-lg rounded-4 p-4">
                     <ul className="nav nav-underline nav-fill flex-column mt-4">
                         {[
@@ -526,11 +355,9 @@ function UserPage() {
                             { key: "profile", label: t('user_myProfile') },
                         ].map(({ key, label }) => (
                             <li key={key} className="nav-item">
-                                <button
-                                    type="button"
+                                <button type="button"
                                     className={`nav-link fw-bolder ${activeTab === key ? "active" : ""}`}
-                                    onClick={() => setActiveTab(key)}
-                                >
+                                    onClick={() => setActiveTab(key)}>
                                     {label}
                                 </button>
                             </li>
@@ -538,7 +365,7 @@ function UserPage() {
                     </ul>
                 </div>
 
-                {/* ── Main content ── */}
+                {/* Main content */}
                 <div className="col-md-9 mt-4 shadow-lg rounded-4 p-4">
                     {message.text && (
                         <div className={`alert alert-${message.type} alert-dismissible mb-3`}>
@@ -548,7 +375,7 @@ function UserPage() {
                         </div>
                     )}
 
-                    {/* ── Profile Tab ── */}
+                    {/* Profile Tab */}
                     {activeTab === "profile" && (
                         <>
                             <h4 className="mb-4">{t('user_myProfile')}</h4>
@@ -556,7 +383,7 @@ function UserPage() {
                                 <div className="row g-3" style={{ maxWidth: 600 }}>
                                     <div className="col-12 d-flex justify-content-center">
                                         <AvatarUpload
-                                            uploadUrl={`${api_url}/api/Upload/profile-image/${getUserIdFromToken()}`}
+                                            uploadUrl={`${api.defaults.baseURL}/api/Upload/profile-image/${getUserIdFromToken()}`}
                                             currentImage={profileData?.profileImage}
                                             onUpload={(url) => setProfileData(p => ({ ...p, profileImage: url }))}
                                         />
@@ -616,20 +443,17 @@ function UserPage() {
                         </>
                     )}
 
-                    {/* ── Own / Access Inventories Tab ── */}
+                    {/* Own / Access Inventories Tab */}
                     {(activeTab === "own" || activeTab === "access") && (
                         <>
                             <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
                                 <div style={{ maxWidth: "250px", width: "100%" }}>
-                                    <input
-                                        type="search"
-                                        className="form-control"
+                                    <input type="search" className="form-control"
                                         placeholder={activeTab === "own"
                                             ? t('user_searchMyInventories')
                                             : t('user_searchSharedInventories')}
                                         value={inventorySearch}
-                                        onChange={(e) => setInventorySearch(e.target.value)}
-                                    />
+                                        onChange={(e) => setInventorySearch(e.target.value)} />
                                 </div>
                                 <div className="d-flex gap-2">
                                     <button className="btn btn-danger" onClick={deleteSelected}
@@ -700,7 +524,7 @@ function UserPage() {
                         </>
                     )}
 
-                    {/* ── Create Inventory Tab ── */}
+                    {/* Create Inventory Tab */}
                     {activeTab === "create" && (
                         <div>
                             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -709,7 +533,6 @@ function UserPage() {
                                     onClick={closeCreateTab} />
                             </div>
 
-                            {/* Inventory form — locked after creation */}
                             <fieldset disabled={!!newInventoryId}>
                                 <div className="mb-3">
                                     <label className="form-label">{t('title')}</label>
@@ -741,7 +564,7 @@ function UserPage() {
                                 <div className="mb-3">
                                     <label className="form-label">{t('tags')}</label>
                                     <TagInput value={selectedTags} onChange={setSelectedTags}
-                                        apiUrl={api_url} placeholder={t('inventory_tagsPlaceholder')} />
+                                        apiUrl={api.defaults.baseURL} placeholder={t('inventory_tagsPlaceholder')} />
                                 </div>
 
                                 {/* Custom ID Format Builder */}
@@ -808,7 +631,7 @@ function UserPage() {
                                 </div>
                             </fieldset>
 
-                            {/* Fields section — shown after inventory is created */}
+                            {/* Fields section */}
                             {newInventoryId && (
                                 <div className="mt-2">
                                     <hr />
@@ -847,9 +670,7 @@ function UserPage() {
                                                         </div>
                                                         {parseInt(field.type) === 1 && (
                                                             <div className="mb-2">
-                                                                <label className="form-label">
-                                                                    {t('inventory_maxSingleLineLength')}
-                                                                </label>
+                                                                <label className="form-label">{t('inventory_maxSingleLineLength')}</label>
                                                                 <input type="number" className="form-control"
                                                                     value={field.maxSingleLineLength || ""}
                                                                     onChange={(e) => updateField(field.id, "maxSingleLineLength",
@@ -858,9 +679,7 @@ function UserPage() {
                                                         )}
                                                         {parseInt(field.type) === 2 && (
                                                             <div className="mb-2">
-                                                                <label className="form-label">
-                                                                    {t('inventory_maxMultiLineLength')}
-                                                                </label>
+                                                                <label className="form-label">{t('inventory_maxMultiLineLength')}</label>
                                                                 <input type="number" className="form-control"
                                                                     value={field.maxMultiLineLength || ""}
                                                                     onChange={(e) => updateField(field.id, "maxMultiLineLength",
@@ -870,18 +689,14 @@ function UserPage() {
                                                         {parseInt(field.type) === 3 && (
                                                             <div className="row mb-2">
                                                                 <div className="col">
-                                                                    <label className="form-label">
-                                                                        {t('inventory_minNumber')}
-                                                                    </label>
+                                                                    <label className="form-label">{t('inventory_minNumber')}</label>
                                                                     <input type="number" className="form-control"
                                                                         value={field.minNumberLength || ""}
                                                                         onChange={(e) => updateField(field.id, "minNumberLength",
                                                                             e.target.value ? parseInt(e.target.value) : null)} />
                                                                 </div>
                                                                 <div className="col">
-                                                                    <label className="form-label">
-                                                                        {t('inventory_maxNumber')}
-                                                                    </label>
+                                                                    <label className="form-label">{t('inventory_maxNumber')}</label>
                                                                     <input type="number" className="form-control"
                                                                         value={field.maxNumberLength || ""}
                                                                         onChange={(e) => updateField(field.id, "maxNumberLength",
@@ -893,9 +708,7 @@ function UserPage() {
                                                             <input type="checkbox" className="form-check-input"
                                                                 checked={field.showInTable}
                                                                 onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
-                                                            <label className="form-check-label">
-                                                                {t('inventory_showInTable')}
-                                                            </label>
+                                                            <label className="form-check-label">{t('inventory_showInTable')}</label>
                                                         </div>
                                                     </div>
                                                 </SortableItem>
@@ -905,56 +718,12 @@ function UserPage() {
                                 </div>
                             )}
 
-                            {/* Access users section — shown after inventory is created and not public */}
+                            {/* Access users section */}
                             {newInventoryId && !formData.isPublic && (
                                 <div className="mt-2">
                                     <hr />
                                     <h6 className="mb-3">{t('user_usersWithWriteAccess')}</h6>
-                                    {accessUsers.length === 0 && (
-                                        <p className="text-muted small">{t('user_noUsersYet')}</p>
-                                    )}
-                                    {accessUsers.map((user, index) => (
-                                        <div key={index} className="border rounded p-3 mb-3 position-relative">
-                                            <button type="button"
-                                                className="btn-close position-absolute top-0 end-0 m-2"
-                                                onClick={() => removeAccessUser(index)} />
-                                            <div className="mb-2" style={{ position: "relative" }}>
-                                                <label className="form-label">{t('user_userLabel')}</label>
-                                                <div className="input-group">
-                                                    <input type="text" className="form-control"
-                                                        placeholder={t('inventory_searchUserPlaceholder')}
-                                                        value={user.emailOrUsername}
-                                                        onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
-                                                        onBlur={() => setTimeout(() => {
-                                                            if (activeSuggestionIndex === index) {
-                                                                setUserSuggestions([]);
-                                                                setActiveSuggestionIndex(-1);
-                                                            }
-                                                        }, 200)} />
-                                                    {user.userId && (
-                                                        <span className="input-group-text text-success">✓</span>
-                                                    )}
-                                                </div>
-                                                {activeSuggestionIndex === index && userSuggestions.length > 0 && (
-                                                    <ul className="list-group" style={{
-                                                        position: "absolute", zIndex: 1050, width: "100%",
-                                                        maxHeight: "200px", overflowY: "auto",
-                                                        boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
-                                                    }}>
-                                                        {userSuggestions.map((s) => (
-                                                            <li key={s.id}
-                                                                className="list-group-item list-group-item-action"
-                                                                style={{ cursor: "pointer" }}
-                                                                onMouseDown={() => selectSuggestion(index, s)}>
-                                                                <strong>{s.userName}</strong>
-                                                                <small className="text-muted ms-2">{s.email}</small>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <UserSearch accessUsers={accessUsers} setAccessUsers={setAccessUsers} />
                                 </div>
                             )}
 
@@ -968,9 +737,6 @@ function UserPage() {
                                     <div className="d-flex gap-2">
                                         <button className="btn btn-success" onClick={addField}>
                                             {t('user_newField')}
-                                        </button>
-                                        <button className="btn btn-secondary" onClick={addAccessUsers}>
-                                            {t('user_accessUser')}
                                         </button>
                                         <button className="btn btn-primary" onClick={async () => {
                                             try {
@@ -990,38 +756,10 @@ function UserPage() {
                 </div>
             </div>
 
-            {/* ── Pagination ── */}
-            {(activeTab === "own" || activeTab === "access") && totalPages > 1 && (
-                <nav>
-                    <ul className="pagination d-flex justify-content-center mt-3">
-                        <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
-                            <button className="page-link"
-                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))}
-                                disabled={filter.pageNumber <= 1}>
-                                {t('previous')}
-                            </button>
-                        </li>
-                        {[...Array(totalPages)].map((_, index) => {
-                            const pageNum = index + 1;
-                            return (
-                                <li key={pageNum}
-                                    className={`page-item ${filter.pageNumber === pageNum ? 'active' : ''}`}>
-                                    <button className="page-link"
-                                        onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>
-                                        {pageNum}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                        <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
-                            <button className="page-link"
-                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))}
-                                disabled={filter.pageNumber >= totalPages}>
-                                {t('next')}
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+            {/* Pagination */}
+            {(activeTab === "own" || activeTab === "access") && (
+                <Pagination currentPage={filter.pageNumber} totalPages={totalPages}
+                    onPageChange={(page) => setFilter(p => ({ ...p, pageNumber: page }))} />
             )}
         </>
     );

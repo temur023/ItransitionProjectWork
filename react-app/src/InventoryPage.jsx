@@ -1,27 +1,23 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import axios from 'axios';
 import { useNavigate, useParams } from "react-router-dom";
 import TagInput from "./TagInput";
-import useTheme from "./useTheme";
 import { useTranslation } from "react-i18next";
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
+    DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    arrayMove,
+    SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
+import api from "./useApi";
+import useAuth from "./useAuth";
+import useProfile from "./useProfile";
+import Navbar from "./Navbar";
+import Pagination from "./Pagination";
+import UserSearch from "./UserSearch";
+import { getCategoryLabels, API_URL } from "./constants";
 
 function InventoryPage() {
-    const { theme, toggleTheme } = useTheme();
     const { t } = useTranslation();
     const [items, setItems] = useState([]);
     const [checkedItems, setCheckedItems] = useState([]);
@@ -37,14 +33,11 @@ function InventoryPage() {
 
     const [selectedItem, setSelectedItem] = useState(null);
 
-    const api_url = "https://itransitionprojectwork-production.up.railway.app";
-    // const api_url = "http://localhost:5137";
-
     const navigate = useNavigate();
-    const logout = () => {
-        localStorage.removeItem("userToken");
-        navigate("/login");
-    };
+    const { getUserIdFromToken, isAdmin, logout } = useAuth();
+    const { profileData, theme, toggleTheme } = useProfile();
+    const categoryLabels = getCategoryLabels(t);
+    const totalPages = Math.ceil(total / filter.pageSize);
 
     // Comments
     const [comments, setComments] = useState([]);
@@ -82,35 +75,6 @@ function InventoryPage() {
 
     // Access Users
     const [accessUsers, setAccessUsers] = useState([]);
-    const [userSuggestions, setUserSuggestions] = useState([]);
-    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
-    const searchTimerRef = useRef(null);
-
-    const categoryLabels = {
-        1: t('equipment'), 2: t('furniture'), 3: t('book'), 4: t('technology'), 5: t('other')
-    };
-    const totalPages = Math.ceil(total / filter.pageSize);
-    const [profileData, setProfileData] = useState(null);
-
-    const getUserIdFromToken = useCallback(() => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return null;
-        try {
-            const payloadB64 = token.split(".")[1];
-            if (!payloadB64) return null;
-            const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
-            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
-            const payload = JSON.parse(atob(padded));
-            const id =
-                payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
-                payload.nameid ??
-                payload.sub;
-            const parsed = parseInt(id, 10);
-            return Number.isFinite(parsed) ? parsed : null;
-        } catch {
-            return null;
-        }
-    }, []);
 
     // ─── DnD sensors ─────────────────────────────────────────────────────────────
     const sensors = useSensors(
@@ -128,42 +92,10 @@ function InventoryPage() {
         });
     }
 
-    const fetchProfile = useCallback(async () => {
-        try {
-            const token = localStorage.getItem("userToken");
-            const userId = getUserIdFromToken();
-            if (!token || !userId) return;
-            const response = await axios.get(`${api_url}/api/User/get/${userId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProfileData(response.data.data);
-        } catch { }
-    }, [getUserIdFromToken]);
-
-    useEffect(() => { fetchProfile(); }, [fetchProfile]);
-
-    const isAdmin = useCallback(() => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return false;
-        try {
-            const payloadB64 = token.split(".")[1];
-            const base64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
-            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
-            const payload = JSON.parse(atob(padded));
-            let role = payload.role ?? payload.Role ??
-                payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-            if (role == null && Array.isArray(payload.roles)) role = payload.roles[0];
-            if (role == null && Array.isArray(payload.role)) role = payload.role[0];
-            return role === "Admin" || role === "admin" || Number(role) === 0;
-        } catch {
-            return false;
-        }
-    }, []);
-
     // ─── Likes ────────────────────────────────────────────────────────────────────
     const fetchLikeMetaForItem = useCallback(async (itemId) => {
         try {
-            const countRes = await axios.get(`${api_url}/api/ItemLike/get-all`, {
+            const countRes = await api.get(`/api/ItemLike/get-all`, {
                 params: { ItemId: itemId, PageNumber: 1, PageSize: 1 }
             });
             setLikeCounts(prev => ({ ...prev, [itemId]: countRes.data.totalRecords ?? 0 }));
@@ -175,7 +107,7 @@ function InventoryPage() {
         if (!me) { setLikedByMe(prev => ({ ...prev, [itemId]: false })); return; }
 
         try {
-            await axios.get(`${api_url}/api/ItemLike/get/${itemId}/${me}`);
+            await api.get(`/api/ItemLike/get/${itemId}/${me}`);
             setLikedByMe(prev => ({ ...prev, [itemId]: true }));
         } catch (e) {
             if (e.response?.status === 404) {
@@ -189,25 +121,10 @@ function InventoryPage() {
         await Promise.all(items.map(i => fetchLikeMetaForItem(i.id)));
     }, [items, fetchLikeMetaForItem]);
 
-    // ─── Search Users ─────────────────────────────────────────────────────────────
-    const searchUsers = async (searchTerm) => {
-        if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
-        try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios.get(`${api_url}/api/User/get-all`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { SearchTerm: searchTerm, PageSize: 5, PageNumber: 1 }
-            });
-            setUserSuggestions(response.data.data || []);
-        } catch { setUserSuggestions([]); }
-    };
-
     // ─── Fetch Fields ─────────────────────────────────────────────────────────────
     const fetchFields = useCallback(async () => {
         try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios.get(`${api_url}/api/InventoryField/get-all`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/api/InventoryField/get-all`, {
                 params: { InvId: inventoryId }
             });
             const data = response.data.data || [];
@@ -221,10 +138,7 @@ function InventoryPage() {
 
     const fetchInventory = useCallback(async () => {
         try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios.get(`${api_url}/api/Inventory/get/${inventoryId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get(`/api/Inventory/get/${inventoryId}`);
             setInventoryData(response.data.data || null);
         } catch {
             setInventoryData(null);
@@ -247,9 +161,7 @@ function InventoryPage() {
     // ─── Fetch Items ──────────────────────────────────────────────────────────────
     const fetchItems = useCallback(async () => {
         try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios.get(`${api_url}/api/Item/get-all`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/api/Item/get-all`, {
                 params: {
                     PageNumber: filter.pageNumber,
                     PageSize: filter.pageSize,
@@ -279,7 +191,7 @@ function InventoryPage() {
     const fetchComments = useCallback(async () => {
         try {
             setCommentsLoading(true);
-            const response = await axios.get(`${api_url}/api/InventoryComment/get-all`, {
+            const response = await api.get(`/api/InventoryComment/get-all`, {
                 params: { InventoryId: parseInt(inventoryId), PageNumber: 1, PageSize: 50 }
             });
             const list = response.data.data || [];
@@ -295,19 +207,17 @@ function InventoryPage() {
     useEffect(() => { fetchComments(); }, [fetchComments]);
 
     const createComment = async () => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         const userId = getUserIdFromToken();
         if (!userId) { setMessage({ text: "Could not determine current user.", type: "danger" }); return; }
         const content = commentText.trim();
         if (!content) { setMessage({ text: "Comment cannot be empty.", type: "danger" }); return; }
         try {
             setCommentSubmitting(true);
-            await axios.post(`${api_url}/api/InventoryComment/create`, {
+            await api.post(`/api/InventoryComment/create`, {
                 InvId: parseInt(inventoryId),
                 UserId: userId,
                 Content: content
-            }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+            });
             setCommentText("");
             await fetchComments();
         } catch (error) {
@@ -318,12 +228,8 @@ function InventoryPage() {
     };
 
     const deleteComment = async (commentId) => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         try {
-            await axios.delete(`${api_url}/api/InventoryComment/delete/${commentId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/api/InventoryComment/delete/${commentId}`);
             await fetchComments();
         } catch (error) {
             setMessage({ text: error.response?.data?.message || "Failed to delete comment", type: "danger" });
@@ -332,8 +238,6 @@ function InventoryPage() {
 
     // ─── Likes Toggle ─────────────────────────────────────────────────────────────
     const toggleLike = async (itemId) => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         const me = getUserIdFromToken();
         if (!me) { setMessage({ text: "Could not determine current user.", type: "danger" }); return; }
 
@@ -341,15 +245,13 @@ function InventoryPage() {
             setLikeBusy(prev => ({ ...prev, [itemId]: true }));
             const isLiked = !!likedByMe[itemId];
             if (isLiked) {
-                await axios.delete(`${api_url}/api/ItemLike/delete/${itemId}/${me}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await api.delete(`/api/ItemLike/delete/${itemId}/${me}`);
                 setLikedByMe(prev => ({ ...prev, [itemId]: false }));
                 setLikeCounts(prev => ({ ...prev, [itemId]: Math.max(0, (prev[itemId] ?? 0) - 1) }));
             } else {
-                await axios.post(`${api_url}/api/ItemLike/create`, {
+                await api.post(`/api/ItemLike/create`, {
                     ItemId: itemId, UserId: me
-                }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+                });
                 setLikedByMe(prev => ({ ...prev, [itemId]: true }));
                 setLikeCounts(prev => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }));
             }
@@ -373,13 +275,11 @@ function InventoryPage() {
     // ─── Create Item ──────────────────────────────────────────────────────────────
     const createItem = async () => {
         try {
-            const token = localStorage.getItem("userToken");
-            if (!token) return navigate("/login");
-            const response = await axios.post(`${api_url}/api/Item/create`, {
+            const response = await api.post(`/api/Item/create`, {
                 InvId: parseInt(inventoryId),
                 Name: formData.name,
                 Description: formData.description,
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            });
             setMessage({ text: response.data.message || "Item created!", type: "success" });
             setActiveTab("items");
             setFormData({ name: "", description: "" });
@@ -392,12 +292,9 @@ function InventoryPage() {
 
     // ─── Delete Selected ──────────────────────────────────────────────────────────
     const deleteSelected = async () => {
-        const token = localStorage.getItem("userToken");
-        if (!token) return navigate("/login");
         try {
             setLoading(true);
-            const response = await axios.delete(`${api_url}/api/Item/delete-selected`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.delete(`/api/Item/delete-selected`, {
                 params: { invId: parseInt(inventoryId) },
                 data: checkedItems
             });
@@ -441,25 +338,21 @@ function InventoryPage() {
 
     const updateItem = async () => {
         try {
-            const token = localStorage.getItem("userToken");
-            // FIX: send Version in request body
-            await axios.put(`${api_url}/api/Item/update/${selectedItem.id}`, {
+            await api.put(`/api/Item/update/${selectedItem.id}`, {
                 Name: editItemData.name,
                 Description: editItemData.description,
                 Version: editItemData.version,
-            }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+            });
 
             const nonEmptyValues = editItemData.fieldValues.filter(fv => fv.value !== "");
             if (nonEmptyValues.length > 0) {
-                await axios.post(`${api_url}/api/ItemFieldValue/set-bulk`, {
+                await api.post(`/api/ItemFieldValue/set-bulk`, {
                     ItemId: selectedItem.id,
                     FieldValues: nonEmptyValues.map(fv => ({ FieldId: fv.fieldId, Value: fv.value }))
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                });
             }
 
-            // FIX: update local selectedItem version after success
             setSelectedItem(prev => ({ ...prev, version: prev.version + 1 }));
-
             setMessage({ text: "Item updated!", type: "success" });
             setActiveTab("items");
             setSelectedItem(null);
@@ -475,20 +368,11 @@ function InventoryPage() {
 
     // ─── Edit Inventory ───────────────────────────────────────────────────────────
     const openEditModal = async () => {
-        const token = localStorage.getItem("userToken");
         try {
             const [invRes, fieldsRes, accessRes] = await Promise.all([
-                axios.get(`${api_url}/api/Inventory/get/${inventoryId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                axios.get(`${api_url}/api/InventoryField/get-all`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    params: { InvId: inventoryId }
-                }),
-                axios.get(`${api_url}/api/InventoryUserAccess/get-all`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    params: { InvId: inventoryId }
-                })
+                api.get(`/api/Inventory/get/${inventoryId}`),
+                api.get(`/api/InventoryField/get-all`, { params: { InvId: inventoryId } }),
+                api.get(`/api/InventoryUserAccess/get-all`, { params: { InvId: inventoryId } })
             ]);
             const inv = invRes.data.data;
             setEditFormData({
@@ -504,7 +388,16 @@ function InventoryPage() {
                 type: f.type, showInTable: f.showInTable, order: f.order, isExisting: true
             })));
             setAccessUsers((accessRes.data.data || []).map(a => ({
-                userId: a.userId, emailOrUsername: a.emailOrUsername, isExisting: true
+                userId: a.userId, emailOrUsername: a.emailOrUsername, isExisting: true,
+                onRemove: async () => {
+                    try {
+                        await api.delete(`/api/InventoryUserAccess/delete/${inventoryId}/${a.userId}`);
+                        return true;
+                    } catch {
+                        setMessage({ text: "Failed to remove user access", type: "danger" });
+                        return false;
+                    }
+                }
             })));
             setActiveTab("edit_inventory");
         } catch {
@@ -514,55 +407,53 @@ function InventoryPage() {
 
     const updateInventory = async () => {
         try {
-            const token = localStorage.getItem("userToken");
-
-            await axios.put(`${api_url}/api/Inventory/update/${inventoryId}`, {
+            await api.put(`/api/Inventory/update/${inventoryId}`, {
                 Title: editFormData.title,
                 Description: editFormData.description,
                 Category: parseInt(editFormData.category),
                 IsPublic: editFormData.isPublic,
                 Tags: editFormData.tags || [],
                 Version: editFormData.version
-            }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+            });
 
             const updatedFields = fields.map((f, index) => ({ ...f, order: index + 1 }));
 
             const newFields = updatedFields.filter(f => !f.isExisting);
             if (newFields.length > 0) {
                 await Promise.all(newFields.map(f =>
-                    axios.post(`${api_url}/api/InventoryField/create`, {
+                    api.post(`/api/InventoryField/create`, {
                         InvId: parseInt(inventoryId),
                         Title: f.title,
                         Description: f.description,
                         Type: parseInt(f.type),
                         ShowInTable: f.showInTable,
                         Order: f.order
-                    }, { headers: { Authorization: `Bearer ${token}` } })
+                    })
                 ));
             }
 
             const existingFields = updatedFields.filter(f => f.isExisting);
             if (existingFields.length > 0) {
                 await Promise.all(existingFields.map(f =>
-                    axios.put(`${api_url}/api/InventoryField/update`, {
+                    api.put(`/api/InventoryField/update`, {
                         Id: parseInt(f.id),
                         Title: f.title,
                         Description: f.description,
                         Type: parseInt(f.type),
                         ShowInTable: f.showInTable,
                         Order: f.order
-                    }, { headers: { Authorization: `Bearer ${token}` } })
+                    })
                 ));
             }
 
             const newUsers = accessUsers.filter(u => !u.isExisting);
             if (newUsers.length > 0) {
                 await Promise.all(newUsers.map(u =>
-                    axios.post(`${api_url}/api/InventoryUserAccess/create`, {
+                    api.post(`/api/InventoryUserAccess/create`, {
                         InvId: parseInt(inventoryId),
                         UserId: u.userId,
                         EmailOrUsername: u.emailOrUsername
-                    }, { headers: { Authorization: `Bearer ${token}` } })
+                    })
                 ));
             }
 
@@ -599,55 +490,13 @@ function InventoryPage() {
         if (!field) return;
         if (field.isExisting) {
             try {
-                const token = localStorage.getItem("userToken");
-                await axios.delete(`${api_url}/api/InventoryField/delete/${field.id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await api.delete(`/api/InventoryField/delete/${field.id}`);
             } catch {
                 setMessage({ text: "Failed to delete field", type: "danger" });
                 return;
             }
         }
         setFields(fields.filter(f => f.id !== id));
-    };
-
-    // ─── Access Users CRUD ────────────────────────────────────────────────────────
-    const addAccessUsers = () => {
-        setAccessUsers([...accessUsers, { emailOrUsername: "", userId: null, isExisting: false }]);
-    };
-    const updateAccessUsers = (index, key, value) => {
-        const updated = [...accessUsers];
-        updated[index][key] = value;
-        setAccessUsers(updated);
-        if (key === "emailOrUsername") {
-            setActiveSuggestionIndex(index);
-            if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-            searchTimerRef.current = setTimeout(() => searchUsers(value), 300);
-        }
-    };
-    const selectSuggestion = (index, user) => {
-        const updated = [...accessUsers];
-        updated[index] = { emailOrUsername: user.email || user.userName, userId: user.id, isExisting: false };
-        setAccessUsers(updated);
-        setUserSuggestions([]);
-        setActiveSuggestionIndex(-1);
-    };
-    const removeAccessUser = async (index) => {
-        const user = accessUsers[index];
-        if (user.isExisting) {
-            try {
-                const token = localStorage.getItem("userToken");
-                await axios.delete(`${api_url}/api/InventoryUserAccess/delete/${inventoryId}/${user.userId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            } catch {
-                setMessage({ text: "Failed to remove user access", type: "danger" });
-                return;
-            }
-        }
-        setAccessUsers(accessUsers.filter((_, i) => i !== index));
-        setUserSuggestions([]);
-        setActiveSuggestionIndex(-1);
     };
 
     useEffect(() => {
@@ -675,15 +524,14 @@ function InventoryPage() {
 
         autoSaveTimerRef.current = setTimeout(async () => {
             try {
-                const token = localStorage.getItem("userToken");
-                const response = await axios.put(`${api_url}/api/Inventory/update/${inventoryId}`, {
+                const response = await api.put(`/api/Inventory/update/${inventoryId}`, {
                     Title: editFormData.title,
                     Description: editFormData.description,
                     Category: parseInt(editFormData.category),
                     IsPublic: editFormData.isPublic,
                     Tags: editFormData.tags || [],
                     Version: editFormData.version
-                }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+                });
 
                 let newVersion = editFormData.version;
                 if (response.data?.data) {
@@ -714,48 +562,7 @@ function InventoryPage() {
     return (
         <>
             {/* ─── Navbar ─────────────────────────────────────────────────────────── */}
-            <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
-                <ul className="nav nav-pills w-100 gap-2 align-items-center">
-                    <li className="nav-item">
-                        <button type="button" className="nav-link active"
-                            onClick={() => navigate("/dashboard")}>{t('dashboard')}</button>
-                    </li>
-                    <li className="nav-item">
-                        <button type="button" className="nav-link active"
-                            onClick={() => navigate("/statistics")}>{t('statistics')}</button>
-                    </li>
-                    <li className="ms-auto nav-item">
-                        <button type="button" className="nav-link p-0" onClick={() => navigate("/user-page")}>
-                            {profileData?.profileImage
-                                ? <img src={profileData.profileImage} alt="avatar"
-                                    style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover" }} />
-                                : <div style={{
-                                    width: 35, height: 35, borderRadius: "50%",
-                                    background: "#0d6efd", color: "white",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 14, fontWeight: "bold"
-                                }}>
-                                    {profileData?.fullName?.[0]?.toUpperCase() || "U"}
-                                </div>
-                            }
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button type="button" className="nav-link" onClick={toggleTheme} title="Toggle theme">
-                            {theme === "light" ? "🌙" : "☀️"}
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={logout} className="btn btn-outline-danger btn-sm fw-bold px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red"
-                                className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
-                                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
-                                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
-                            </svg>
-                        </button>
-                    </li>
-                </ul>
-            </div>
+            <Navbar profileData={profileData} theme={theme} toggleTheme={toggleTheme} logout={logout} />
 
             <div className="container-fluid d-flex justify-content-start gap-3 w-100 p-0">
                 {/* ─── Sidebar ──────────────────────────────────────────────────────── */}
@@ -1060,7 +867,7 @@ function InventoryPage() {
                                     <TagInput
                                         value={editFormData.tags || []}
                                         onChange={(tags) => setEditFormData({ ...editFormData, tags })}
-                                        apiUrl={api_url}
+                                        apiUrl={API_URL}
                                         placeholder={t('inventory_tagsPlaceholder')}
                                     />
                                 </div>
@@ -1119,60 +926,10 @@ function InventoryPage() {
                                 </DndContext>
                                 <hr />
                                 <h6 className="mb-3">{t('inventory_usersWithAccess')}</h6>
-                                {accessUsers.length === 0 && (
-                                    <p className="text-muted small">{t('inventory_noUsersYet')}</p>
-                                )}
-                                {accessUsers.map((user, index) => (
-                                    <div key={index} className="border rounded p-3 mb-2 position-relative">
-                                        <button type="button"
-                                            className="btn-close position-absolute top-0 end-0 m-2"
-                                            onClick={() => removeAccessUser(index)} />
-                                        {user.isExisting && (
-                                            <span className="badge bg-secondary mb-2">
-                                                {t('inventory_existing')}
-                                            </span>
-                                        )}
-                                        <div style={{ position: "relative" }}>
-                                            <div className="input-group">
-                                                <input type="text" className="form-control"
-                                                    placeholder={t('inventory_searchUserPlaceholder')}
-                                                    value={user.emailOrUsername}
-                                                    disabled={user.isExisting}
-                                                    onChange={(e) => updateAccessUsers(index, "emailOrUsername", e.target.value)}
-                                                    onBlur={() => setTimeout(() => {
-                                                        if (activeSuggestionIndex === index) {
-                                                            setUserSuggestions([]);
-                                                            setActiveSuggestionIndex(-1);
-                                                        }
-                                                    }, 200)}
-                                                />
-                                                {user.userId && !user.isExisting && (
-                                                    <span className="input-group-text text-success">✓</span>
-                                                )}
-                                            </div>
-                                            {activeSuggestionIndex === index && userSuggestions.length > 0 && (
-                                                <ul className="list-group position-absolute w-100"
-                                                    style={{ zIndex: 1050, maxHeight: "200px", overflowY: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.15)" }}>
-                                                    {userSuggestions.map((s) => (
-                                                        <li key={s.id}
-                                                            className="list-group-item list-group-item-action"
-                                                            style={{ cursor: "pointer" }}
-                                                            onMouseDown={() => selectSuggestion(index, s)}>
-                                                            <strong>{s.userName}</strong>
-                                                            <small className="text-muted ms-2">{s.email}</small>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                <UserSearch accessUsers={accessUsers} setAccessUsers={setAccessUsers} />
                                 <div className="d-flex justify-content-end gap-2 mt-4">
                                     <button className="btn btn-outline-secondary" onClick={addField}>
                                         {t('inventory_addField')}
-                                    </button>
-                                    <button className="btn btn-outline-secondary" onClick={addAccessUsers}>
-                                        {t('inventory_addUser')}
                                     </button>
                                     <button className="btn btn-primary" onClick={updateInventory}>
                                         {t('save')}
@@ -1218,7 +975,6 @@ function InventoryPage() {
                                             <label className="fw-bold mb-1 d-block text-muted">
                                                 {t('inventory_createdAt')}
                                             </label>
-                                            {/* FIX: use actual stored timestamp, not DateTime.UtcNow */}
                                             <p className="mb-0">{new Date(selectedItem.createdAt).toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -1331,37 +1087,9 @@ function InventoryPage() {
             </div>
 
             {/* ─── Pagination ──────────────────────────────────────────────────────── */}
-            {activeTab === "items" && totalPages > 1 && (
-                <nav>
-                    <ul className="pagination d-flex justify-content-center">
-                        <li className={`page-item ${filter.pageNumber <= 1 ? "disabled" : ""}`}>
-                            <button className="page-link"
-                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))}
-                                disabled={filter.pageNumber <= 1}>
-                                {t('previous')}
-                            </button>
-                        </li>
-                        {[...Array(totalPages)].map((_, index) => {
-                            const pageNum = index + 1;
-                            return (
-                                <li key={pageNum}
-                                    className={`page-item ${filter.pageNumber === pageNum ? "active" : ""}`}>
-                                    <button className="page-link"
-                                        onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>
-                                        {pageNum}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                        <li className={`page-item ${filter.pageNumber >= totalPages ? "disabled" : ""}`}>
-                            <button className="page-link"
-                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))}
-                                disabled={filter.pageNumber >= totalPages}>
-                                {t('next')}
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+            {activeTab === "items" && (
+                <Pagination currentPage={filter.pageNumber} totalPages={totalPages}
+                    onPageChange={(page) => setFilter(p => ({ ...p, pageNumber: page }))} />
             )}
         </>
     );
