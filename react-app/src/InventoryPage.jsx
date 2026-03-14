@@ -154,7 +154,7 @@ function InventoryPage() {
                 payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
             if (role == null && Array.isArray(payload.roles)) role = payload.roles[0];
             if (role == null && Array.isArray(payload.role)) role = payload.role[0];
-            return role === "Admin" || role === "admin" || Number(role) === 0 || Number(role) === 1;
+            return role === "Admin" || role === "admin" || Number(role) === 0;
         } catch {
             return false;
         }

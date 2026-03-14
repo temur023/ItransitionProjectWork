@@ -62,13 +62,13 @@ function UserPage() {
     const totalPages = Math.ceil(total / filter.pageSize);
     const navigate = useNavigate();
 
-    //DnD sensors
+    // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-    //Token helper
+    // Token helper
     const getUserIdFromToken = useCallback(() => {
         const token = localStorage.getItem("userToken");
         if (!token) return null;
@@ -107,7 +107,18 @@ function UserPage() {
         });
     }
 
-    //Profile
+    // Close create tab and reset all form state
+    const closeCreateTab = () => {
+        setActiveTab("own");
+        setNewInventoryId(null);
+        setFormData({ title: "", description: "", category: 1, isPublic: true });
+        setFields([]);
+        setAccessUsers([]);
+        setSelectedTags([]);
+        setCustomIdElements([]);
+    };
+
+    // Profile
     const fetchProfile = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -182,7 +193,7 @@ function UserPage() {
         } finally { setProfileSaving(false); }
     };
 
-    //Inventories
+    // Inventories
     const fetchInventories = useCallback(async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -222,7 +233,7 @@ function UserPage() {
         } finally { setLoading(false); }
     };
 
-    //Checkbox helpers
+    // Checkbox helpers
     function handleCheckingInvs(id) {
         setCheckedInvs(c => c.includes(id) ? c.filter(i => i !== id) : [...c, id]);
     }
@@ -266,7 +277,6 @@ function UserPage() {
     };
 
     // Fields
-    // addField now initializes all 4 length constraint properties as null
     const addField = () => {
         setFields([...fields, {
             id: String(Date.now()) + Math.random().toString(36).slice(2),
@@ -279,7 +289,6 @@ function UserPage() {
         }]);
     };
 
-    // updateField resets length constraints when type changes
     const updateField = (id, key, value) => {
         setFields(prev => prev.map(f => {
             if (f.id !== id) return f;
@@ -298,7 +307,7 @@ function UserPage() {
         setFields(prev => prev.filter(f => f.id !== id));
     };
 
-    //Create inventory 
+    // Create inventory
     const createInventory = async () => {
         try {
             const token = localStorage.getItem("userToken");
@@ -328,7 +337,7 @@ function UserPage() {
         }
     };
 
-    //Save fields
+    // Save fields
     const saveAllFields = async (inventoryId) => {
         try {
             const token = localStorage.getItem("userToken");
@@ -352,7 +361,8 @@ function UserPage() {
             throw error;
         }
     };
-    //Access users
+
+    // Access users
     const searchUsers = async (searchTerm) => {
         if (!searchTerm || searchTerm.length < 2) { setUserSuggestions([]); return; }
         try {
@@ -456,13 +466,9 @@ function UserPage() {
     }, [theme, profileData, getUserIdFromToken, api_url]);
 
     useEffect(() => {
-        setProfileForm(prev => ({
-            ...prev,
-            theme: theme === "dark" ? 2 : 1
-        }));
+        setProfileForm(prev => ({ ...prev, theme: theme === "dark" ? 2 : 1 }));
     }, [theme]);
 
-    //Render
     return (
         <>
             {/* ── Navbar ── */}
@@ -500,7 +506,8 @@ function UserPage() {
                     </li>
                     <li>
                         <button onClick={logout} className="btn btn-outline-danger btn-sm fw-bold px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red"
+                                className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
                                 <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
                                 <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
                             </svg>
@@ -534,7 +541,11 @@ function UserPage() {
                 {/* ── Main content ── */}
                 <div className="col-md-9 mt-4 shadow-lg rounded-4 p-4">
                     {message.text && (
-                        <div className={`alert alert-${message.type} mb-3`}>{message.text}</div>
+                        <div className={`alert alert-${message.type} alert-dismissible mb-3`}>
+                            {message.text}
+                            <button type="button" className="btn-close"
+                                onClick={() => setMessage({ text: "", type: "" })} />
+                        </div>
                     )}
 
                     {/* ── Profile Tab ── */}
@@ -605,33 +616,43 @@ function UserPage() {
                         </>
                     )}
 
-                    {/* ── Inventories Tab ── */}
+                    {/* ── Own / Access Inventories Tab ── */}
                     {(activeTab === "own" || activeTab === "access") && (
                         <>
-                            <div className="d-flex align-items-center" style={{ maxWidth: "250px", width: "100%" }}>
-                                <input
-                                    type="search"
-                                    className="form-control"
-                                    placeholder={activeTab === "own" ? t('user_searchMyInventories') : t('user_searchSharedInventories')}
-                                    value={inventorySearch}
-                                    onChange={(e) => setInventorySearch(e.target.value)}
-                                />
+                            <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                                <div style={{ maxWidth: "250px", width: "100%" }}>
+                                    <input
+                                        type="search"
+                                        className="form-control"
+                                        placeholder={activeTab === "own"
+                                            ? t('user_searchMyInventories')
+                                            : t('user_searchSharedInventories')}
+                                        value={inventorySearch}
+                                        onChange={(e) => setInventorySearch(e.target.value)}
+                                    />
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button className="btn btn-danger" onClick={deleteSelected}
+                                        disabled={loading || checkedInvs.length === 0} title="Delete selected">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                                        </svg>
+                                    </button>
+                                    <button className="btn btn-success" onClick={() => {
+                                        setFormData({ title: "", description: "", category: 1, isPublic: true });
+                                        setNewInventoryId(null);
+                                        setFields([]);
+                                        setAccessUsers([]);
+                                        setSelectedTags([]);
+                                        setCustomIdElements([]);
+                                        setActiveTab("create");
+                                    }}>
+                                        {t('user_newInventory')}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="d-flex justify-content-end mt-2 gap-2">
-                                <button className="btn btn-danger" onClick={deleteSelected}
-                                    disabled={loading || checkedInvs.length === 0} title="Delete selected">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
-                                    </svg>
-                                </button>
-                                <button className="btn btn-success" onClick={() => {
-                                    setActiveTab("create");
-                                    setFormData({ title: "", description: "", category: 1, isPublic: true });
-                                    setNewInventoryId(null);
-                                }}>
-                                    {t('user_newInventory')}
-                                </button>
-                            </div>
+
                             <table className="table table-striped table-hover mb-3">
                                 <thead>
                                     <tr>
@@ -664,9 +685,14 @@ function UserPage() {
                                                         checked={checkedInvs.includes(inv.id)}
                                                         onChange={() => handleCheckingInvs(inv.id)} />
                                                 </td>
-                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.title}</td>
-                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{categoryLabels[inv.category] || inv.category}</td>
-                                                <td onClick={() => navigate(`/inventory/${inv.id}`)} style={{ cursor: "pointer" }}>{inv.creatorName}</td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)}
+                                                    style={{ cursor: "pointer" }}>{inv.title}</td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)}
+                                                    style={{ cursor: "pointer" }}>
+                                                    {categoryLabels[inv.category] || inv.category}
+                                                </td>
+                                                <td onClick={() => navigate(`/inventory/${inv.id}`)}
+                                                    style={{ cursor: "pointer" }}>{inv.creatorName}</td>
                                             </tr>
                                         ))}
                                 </tbody>
@@ -679,10 +705,11 @@ function UserPage() {
                         <div>
                             <div className="d-flex justify-content-between align-items-center mb-4">
                                 <h4 className="mb-0">{t('user_createNewInventory')}</h4>
-                                <button type="button" className="btn-close" aria-label="Close" onClick={handleCloseModal} />
+                                <button type="button" className="btn-close" aria-label="Close"
+                                    onClick={closeCreateTab} />
                             </div>
 
-                            {/* ── Inventory form (locked after creation) ── */}
+                            {/* Inventory form — locked after creation */}
                             <fieldset disabled={!!newInventoryId}>
                                 <div className="mb-3">
                                     <label className="form-label">{t('title')}</label>
@@ -696,7 +723,8 @@ function UserPage() {
                                 </div>
                                 <div className="mb-3">
                                     <label className="form-label">{t('category')}</label>
-                                    <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
+                                    <select className="form-select" name="category"
+                                        value={formData.category} onChange={handleChange}>
                                         <option value={1}>{t('equipment')}</option>
                                         <option value={2}>{t('furniture')}</option>
                                         <option value={3}>{t('book')}</option>
@@ -716,18 +744,18 @@ function UserPage() {
                                         apiUrl={api_url} placeholder={t('inventory_tagsPlaceholder')} />
                                 </div>
 
-                                {/* ── Custom ID Format Builder ── */}
+                                {/* Custom ID Format Builder */}
                                 <div className="mb-3">
                                     <label className="form-label fw-bold">{t('user_customIdFormat')}</label>
                                     <p className="text-muted small mb-2">{t('user_customIdDescription')}</p>
 
-                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleIdElementDragEnd}>
-                                        <SortableContext
-                                            items={customIdElements.map(el => el.id)}
-                                            strategy={verticalListSortingStrategy}
-                                        >
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter}
+                                        onDragEnd={handleIdElementDragEnd}>
+                                        <SortableContext items={customIdElements.map(el => el.id)}
+                                            strategy={verticalListSortingStrategy}>
                                             {customIdElements.map((el) => (
-                                                <SortableItem key={el.id} id={el.id} onRemove={() => removeIdElement(el.id)}>
+                                                <SortableItem key={el.id} id={el.id}
+                                                    onRemove={() => removeIdElement(el.id)}>
                                                     <div className="row g-2 align-items-end ps-2">
                                                         <div className="col">
                                                             <label className="form-label small">{t('user_type')}</label>
@@ -766,7 +794,8 @@ function UserPage() {
                                         </SortableContext>
                                     </DndContext>
 
-                                    <button type="button" className="btn btn-outline-secondary btn-sm mt-1" onClick={addIdElement}>
+                                    <button type="button" className="btn btn-outline-secondary btn-sm mt-1"
+                                        onClick={addIdElement}>
                                         {t('user_addElement')}
                                     </button>
 
@@ -779,7 +808,7 @@ function UserPage() {
                                 </div>
                             </fieldset>
 
-                            {/* ── Fields section ── */}
+                            {/* Fields section — shown after inventory is created */}
                             {newInventoryId && (
                                 <div className="mt-2">
                                     <hr />
@@ -787,13 +816,13 @@ function UserPage() {
                                     {fields.length === 0 && (
                                         <p className="text-muted small">{t('user_noFieldsYet')}</p>
                                     )}
-                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
-                                        <SortableContext
-                                            items={fields.map(f => f.id)}
-                                            strategy={verticalListSortingStrategy}
-                                        >
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter}
+                                        onDragEnd={handleFieldDragEnd}>
+                                        <SortableContext items={fields.map(f => f.id)}
+                                            strategy={verticalListSortingStrategy}>
                                             {fields.map((field) => (
-                                                <SortableItem key={field.id} id={field.id} onRemove={() => removeField(field.id)}>
+                                                <SortableItem key={field.id} id={field.id}
+                                                    onRemove={() => removeField(field.id)}>
                                                     <div className="ps-2">
                                                         <div className="mb-2">
                                                             <label className="form-label">{t('title')}</label>
@@ -816,41 +845,43 @@ function UserPage() {
                                                                 <option value={5}>{t('inventory_link')}</option>
                                                             </select>
                                                         </div>
-
-                                                        {/* Single line max length */}
                                                         {parseInt(field.type) === 1 && (
                                                             <div className="mb-2">
-                                                                <label className="form-label">{t('inventory_maxSingleLineLength')}</label>
+                                                                <label className="form-label">
+                                                                    {t('inventory_maxSingleLineLength')}
+                                                                </label>
                                                                 <input type="number" className="form-control"
                                                                     value={field.maxSingleLineLength || ""}
                                                                     onChange={(e) => updateField(field.id, "maxSingleLineLength",
                                                                         e.target.value ? parseInt(e.target.value) : null)} />
                                                             </div>
                                                         )}
-
-                                                        {/* Multi line max length */}
                                                         {parseInt(field.type) === 2 && (
                                                             <div className="mb-2">
-                                                                <label className="form-label">{t('inventory_maxMultiLineLength')}</label>
+                                                                <label className="form-label">
+                                                                    {t('inventory_maxMultiLineLength')}
+                                                                </label>
                                                                 <input type="number" className="form-control"
                                                                     value={field.maxMultiLineLength || ""}
                                                                     onChange={(e) => updateField(field.id, "maxMultiLineLength",
                                                                         e.target.value ? parseInt(e.target.value) : null)} />
                                                             </div>
                                                         )}
-
-                                                        {/* Number min/max */}
                                                         {parseInt(field.type) === 3 && (
                                                             <div className="row mb-2">
                                                                 <div className="col">
-                                                                    <label className="form-label">{t('inventory_minNumber')}</label>
+                                                                    <label className="form-label">
+                                                                        {t('inventory_minNumber')}
+                                                                    </label>
                                                                     <input type="number" className="form-control"
                                                                         value={field.minNumberLength || ""}
                                                                         onChange={(e) => updateField(field.id, "minNumberLength",
                                                                             e.target.value ? parseInt(e.target.value) : null)} />
                                                                 </div>
                                                                 <div className="col">
-                                                                    <label className="form-label">{t('inventory_maxNumber')}</label>
+                                                                    <label className="form-label">
+                                                                        {t('inventory_maxNumber')}
+                                                                    </label>
                                                                     <input type="number" className="form-control"
                                                                         value={field.maxNumberLength || ""}
                                                                         onChange={(e) => updateField(field.id, "maxNumberLength",
@@ -858,12 +889,13 @@ function UserPage() {
                                                                 </div>
                                                             </div>
                                                         )}
-
                                                         <div className="form-check">
                                                             <input type="checkbox" className="form-check-input"
                                                                 checked={field.showInTable}
                                                                 onChange={(e) => updateField(field.id, "showInTable", e.target.checked)} />
-                                                            <label className="form-check-label">{t('inventory_showInTable')}</label>
+                                                            <label className="form-check-label">
+                                                                {t('inventory_showInTable')}
+                                                            </label>
                                                         </div>
                                                     </div>
                                                 </SortableItem>
@@ -873,7 +905,7 @@ function UserPage() {
                                 </div>
                             )}
 
-                            {/* ── Access users section ── */}
+                            {/* Access users section — shown after inventory is created and not public */}
                             {newInventoryId && !formData.isPublic && (
                                 <div className="mt-2">
                                     <hr />
@@ -883,7 +915,8 @@ function UserPage() {
                                     )}
                                     {accessUsers.map((user, index) => (
                                         <div key={index} className="border rounded p-3 mb-3 position-relative">
-                                            <button type="button" className="btn-close position-absolute top-0 end-0 m-2"
+                                            <button type="button"
+                                                className="btn-close position-absolute top-0 end-0 m-2"
                                                 onClick={() => removeAccessUser(index)} />
                                             <div className="mb-2" style={{ position: "relative" }}>
                                                 <label className="form-label">{t('user_userLabel')}</label>
@@ -898,7 +931,9 @@ function UserPage() {
                                                                 setActiveSuggestionIndex(-1);
                                                             }
                                                         }, 200)} />
-                                                    {user.userId && <span className="input-group-text text-success">✓</span>}
+                                                    {user.userId && (
+                                                        <span className="input-group-text text-success">✓</span>
+                                                    )}
                                                 </div>
                                                 {activeSuggestionIndex === index && userSuggestions.length > 0 && (
                                                     <ul className="list-group" style={{
@@ -907,7 +942,8 @@ function UserPage() {
                                                         boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
                                                     }}>
                                                         {userSuggestions.map((s) => (
-                                                            <li key={s.id} className="list-group-item list-group-item-action"
+                                                            <li key={s.id}
+                                                                className="list-group-item list-group-item-action"
                                                                 style={{ cursor: "pointer" }}
                                                                 onMouseDown={() => selectSuggestion(index, s)}>
                                                                 <strong>{s.userName}</strong>
@@ -922,7 +958,7 @@ function UserPage() {
                                 </div>
                             )}
 
-                            {/* ── Bottom actions ── */}
+                            {/* Bottom actions */}
                             <div className="d-flex justify-content-end mt-4">
                                 {!newInventoryId ? (
                                     <button className="btn btn-primary" onClick={createInventory}>
@@ -930,13 +966,18 @@ function UserPage() {
                                     </button>
                                 ) : (
                                     <div className="d-flex gap-2">
-                                        <button className="btn btn-success" onClick={addField}>{t('user_newField')}</button>
-                                        <button className="btn btn-secondary" onClick={addAccessUsers}>{t('user_accessUser')}</button>
+                                        <button className="btn btn-success" onClick={addField}>
+                                            {t('user_newField')}
+                                        </button>
+                                        <button className="btn btn-secondary" onClick={addAccessUsers}>
+                                            {t('user_accessUser')}
+                                        </button>
                                         <button className="btn btn-primary" onClick={async () => {
                                             try {
                                                 await saveAllFields(newInventoryId);
                                                 await saveAllAccessUsers();
-                                                handleCloseModal();
+                                                await fetchInventories();
+                                                closeCreateTab();
                                             } catch { }
                                         }}>
                                             {t('user_done')}
@@ -950,35 +991,38 @@ function UserPage() {
             </div>
 
             {/* ── Pagination ── */}
-            <nav>
-                <ul className="pagination d-flex justify-content-center mt-3">
-                    <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
-                        <button className="page-link"
-                            onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))}
-                            disabled={filter.pageNumber <= 1}>
-                            {t('previous')}
-                        </button>
-                    </li>
-                    {[...Array(totalPages)].map((_, index) => {
-                        const pageNum = index + 1;
-                        return (
-                            <li key={pageNum} className={`page-item ${filter.pageNumber === pageNum ? 'active' : ''}`}>
-                                <button className="page-link"
-                                    onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>
-                                    {pageNum}
-                                </button>
-                            </li>
-                        );
-                    })}
-                    <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
-                        <button className="page-link"
-                            onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))}
-                            disabled={filter.pageNumber >= totalPages}>
-                            {t('next')}
-                        </button>
-                    </li>
-                </ul>
-            </nav>
+            {(activeTab === "own" || activeTab === "access") && totalPages > 1 && (
+                <nav>
+                    <ul className="pagination d-flex justify-content-center mt-3">
+                        <li className={`page-item ${filter.pageNumber <= 1 ? 'disabled' : ''}`}>
+                            <button className="page-link"
+                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber - 1 }))}
+                                disabled={filter.pageNumber <= 1}>
+                                {t('previous')}
+                            </button>
+                        </li>
+                        {[...Array(totalPages)].map((_, index) => {
+                            const pageNum = index + 1;
+                            return (
+                                <li key={pageNum}
+                                    className={`page-item ${filter.pageNumber === pageNum ? 'active' : ''}`}>
+                                    <button className="page-link"
+                                        onClick={() => setFilter(p => ({ ...p, pageNumber: pageNum }))}>
+                                        {pageNum}
+                                    </button>
+                                </li>
+                            );
+                        })}
+                        <li className={`page-item ${filter.pageNumber >= totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link"
+                                onClick={() => setFilter(p => ({ ...p, pageNumber: p.pageNumber + 1 }))}
+                                disabled={filter.pageNumber >= totalPages}>
+                                {t('next')}
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            )}
         </>
     );
 }
