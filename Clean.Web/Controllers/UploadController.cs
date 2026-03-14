@@ -7,18 +7,8 @@ namespace ProjectWork.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UploadController : ControllerBase
+public class UploadController(IHttpClientFactory _httpClientFactory,DataContext _db,IConfiguration _config ) : ControllerBase
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly DataContext _db;
-    private readonly IConfiguration _config;
-
-    public UploadController(IHttpClientFactory httpClientFactory, DataContext db, IConfiguration config)
-    {
-        _httpClientFactory = httpClientFactory;
-        _db = db;
-        _config = config;
-    }
 
     [HttpPost("profile-image/{userId}")]
     public async Task<IActionResult> UploadProfileImage(int userId, [FromForm] IFormFile file)
