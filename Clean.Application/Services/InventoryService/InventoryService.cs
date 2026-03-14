@@ -39,26 +39,26 @@ public class InventoryService(IInvetoryRepository repository
                 InvId = a.InventoryId, 
                 UserId = a.UserId, 
                 EmailOrUsername = a.UserName ?? a.Email 
-            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
+            }).ToList() ?? new List<InventoryUserAccessGetDto>(), // User with write access
             Tags = u.Tags?.Select(t => t.Name).ToList()
         });
         if (GetCurrentUserId() == null)
         {
             return new PagedResponse<InventoryGetDto>(dto.Where(i => i.IsPublic).ToList()
                 ,filter.PageNumber, filter.PageSize,invs.Total,"Success");
-        }
+        } // if not authorized 
         var usr = await userRepository.GetById((int)GetCurrentUserId());
 
         if (usr.Role == UserRole.Admin)
         {
             return new PagedResponse<InventoryGetDto>(dto.ToList()
                 , filter.PageNumber, filter.PageSize, invs.Total, "Success");
-        }
+        } //gets everything 
         
         return new PagedResponse<InventoryGetDto>(dto.Where(i=>i.IsPublic == true 
                                                                ||i.UserAccesses.Any(i=>i.UserId==usr.Id)).ToList()
             ,filter.PageNumber, filter.PageSize,invs.Total,"Success");
-    }
+    } //gets public or if he has useraccess.  CHECK IF USER GETS HIS PRIVATE INVENTORIES 
 
     public async Task<Response<InventoryGetDto>> GetById(int id)
     {
@@ -122,7 +122,7 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         foreach (var name in dto.Tags.Where(n => !string.IsNullOrWhiteSpace(n)))
         {
             var tag = await tagRepository.GetByName(name.Trim());
-            if (tag == null)
+            if (tag == null) // if tag not found than a new tag will be created
             {
                 tag = new Tag { Name = name.Trim() };
                 tagRepository.Add(tag);
@@ -164,7 +164,7 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
     if (inventory.CreatedById != currentUser && user.Role != UserRole.Admin && inventory.UserAccesses.All(u => u.UserId != currentUser))
         return new Response<string>(403, "Forbidden");
 
-    if (inventory.Version != dto.Version)
+    if (inventory.Version != dto.Version) 
         return new Response<string>(409, "Conflict: The inventory was modified by another user.");
 
     inventory.Title = dto.Title;
@@ -173,7 +173,7 @@ public async Task<Response<string>> Update(InventoryUpdateDto dto)
     inventory.IsPublic = dto.IsPublic;
     inventory.ImageUrl = dto.ImageUrl;
 
-    inventory.Tags.Clear();
+    inventory.Tags.Clear(); // Clearing existing tags and readding them below
     if (dto.Tags != null && dto.Tags.Count > 0)
     {
         foreach (var name in dto.Tags.Where(n => !string.IsNullOrWhiteSpace(n)))
