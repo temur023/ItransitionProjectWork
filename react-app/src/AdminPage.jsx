@@ -282,7 +282,6 @@ function AdminPage() {
 
         try {
             setSaving(true);
-
             // Handle username update if changed
             if (editForm.userName !== selectedUser.userName) {
                 try {
@@ -359,11 +358,10 @@ function AdminPage() {
         if (!token) return navigate("/login");
         try {
             setLoading(true);
-            for (const id of checkedInvs) {
-                await axios.delete(`${api_url}/api/Inventory/delete/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
+            await axios.delete(`${api_url}/api/Inventory/delete-selected`, {
+                headers: { Authorization: `Bearer ${token}` },
+                data: checkedInvs
+            });
             setMessage({ text: "Inventories deleted", type: "success" });
             setCheckedInvs([]);
             await fetchInventories();

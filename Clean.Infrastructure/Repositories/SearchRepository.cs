@@ -9,8 +9,8 @@ public class SearchRepository(DataContext context):ISearchRepository
 {
     private static string BuildTsQueryString(string query)
     {
-        var words = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return string.Join(" & ", words.Select(w => w + ":*"));
+        var words = query.Split(' ', StringSplitOptions.RemoveEmptyEntries); // ensures not creating of empty string " "
+        return string.Join(" & ", words.Select(w => w + ":*")); // joins and makes run match running runner
     }
 
     public async Task<List<Item>> SearchItems(string query, int? tagId = null)
@@ -21,7 +21,7 @@ public class SearchRepository(DataContext context):ISearchRepository
             .AsNoTracking()
             .Include(i => i.Inventory)
             .Where(i => i.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQuery)))
-            .OrderByDescending(i => i.SearchVector.RankCoverDensity(EF.Functions.ToTsQuery("english", tsQuery)))
+            .OrderByDescending(i => i.SearchVector.RankCoverDensity(EF.Functions.ToTsQuery("english", tsQuery)))//ranks by how the exact word is matching
             .Take(50)
             .ToListAsync();
 

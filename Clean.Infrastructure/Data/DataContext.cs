@@ -66,10 +66,14 @@ public class DataContext : DbContext, IDbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
+        
+        modelBuilder.Entity<User>()
+            .Property(u => u.ProfileImage)
+            .HasDefaultValue("");
         modelBuilder.Entity<Tag>()
             .HasIndex(t => t.Name)
             .IsUnique();
-
+        
         modelBuilder.Entity<ItemFieldValue>()
             .HasIndex(v => new { v.ItemId, v.FieldId })
             .IsUnique();

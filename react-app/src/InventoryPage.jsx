@@ -425,7 +425,6 @@ function InventoryPage() {
 
     // ─── Edit Item ────────────────────────────────────────────────────────────────
     const openEditItemModal = () => {
-        // FIX: include version so optimistic locking works
         setEditItemData({
             name: selectedItem.name,
             description: selectedItem.description,
