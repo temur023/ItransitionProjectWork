@@ -210,21 +210,34 @@ function UserPage() {
         setCustomIdElements(prev => prev.filter(el => el.id !== id));
     };
     const generatePreview = () => {
-        return customIdElements.map(el => {
-            const type = parseInt(el.type);
-            switch (type) {
-                case 1: return el.value || "TEXT";
-                case 2: return "A1B2C";
-                case 3: return "F3E2D1A0";
-                case 4: return "123456";
-                case 5: return "123456789";
-                case 6: return "a1b2c3d4";
-                case 7: return new Date().toISOString().slice(0, 10).replace(/-/g, "");
-                case 8: return el.format ? "1".padStart(parseInt(el.format.replace(/\D/g, "")) || 1, "0") : "1";
-                default: return "?";
+    return customIdElements.map(el => {
+        const type = parseInt(el.type);
+        switch (type) {
+            case 1: return el.value || "TEXT";
+            case 2: return "A1B2C";
+            case 3: return "F3E2D1A0";
+            case 4: return "123456";
+            case 5: return "123456789";
+            case 6: return "a1b2c3d4";
+            case 7: {
+                const now = new Date();
+                const fmt = el.format || "yyyyMMdd";
+                return fmt
+                    .replace("yyyy", now.getFullYear())
+                    .replace("MM", String(now.getMonth() + 1).padStart(2, "0"))
+                    .replace("dd", String(now.getDate()).padStart(2, "0"))
+                    .replace("HH", String(now.getHours()).padStart(2, "0"))
+                    .replace("mm", String(now.getMinutes()).padStart(2, "0"))
+                    .replace("ss", String(now.getSeconds()).padStart(2, "0"));
             }
-        }).join("");
-    };
+            case 8: {
+                const digits = parseInt(el.format?.replace(/\D/g, "")) || 1;
+                return "1".padStart(digits, "0");
+            }
+            default: return "?";
+        }
+    }).join("");
+};
 
     // Fields
     const addField = () => {

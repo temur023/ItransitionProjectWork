@@ -10,11 +10,12 @@ public class CustomIdGeneratorService
 {
     public string GenerateId(string formatJson, int nextSequence)
     {
-        var elements = JsonSerializer.Deserialize<List<CustomIdElement>>(formatJson) 
-                       ?? new List<CustomIdElement>();
+        var elements = JsonSerializer.Deserialize<List<CustomIdElement>>(formatJson)
+                       // converts json into a list of instructions like [{type:"saf", format:"adsfasd"}, {...}] 
+                       ?? new List<CustomIdElement>(); 
         
         if (elements.Count == 0)
-            return $"ITEM-{nextSequence}";
+            return $"ITEM-{nextSequence}"; //if no custom id added by user it creates ITEM-sequence number
         
         var sb = new StringBuilder();
         foreach (var element in elements)
