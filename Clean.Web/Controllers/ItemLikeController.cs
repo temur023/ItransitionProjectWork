@@ -23,8 +23,6 @@ public class ItemLikeController(IItemLikeService service) : ControllerBase
     public async Task<IActionResult> GetByItemAndUser(int itemId, int userId)
     {
         var response = await service.GetByItemAndUser(itemId, userId);
-        if (response.StatusCode != 200)
-            return StatusCode(response.StatusCode);
         return Ok(response);
     }
     [Authorize]
