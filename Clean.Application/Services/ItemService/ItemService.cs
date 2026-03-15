@@ -77,7 +77,6 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
 
     public async Task<Response<string>> Create(ItemCreateDto dto)
     {
-        Console.WriteLine($"DTO received: InventoryId={dto.InvId}, Name={dto.Name}");
         var currentUser = GetCurrentUserId();
         var inventory = await invetoryRepository.GetById(dto.InvId);
         if (currentUser == null)
