@@ -38,9 +38,9 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             Name = u.Name,
             Description = u.Description,
             CreatedById =  u.CreatedById,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = u.CreatedAt,
             UpdatedById =  u.UpdatedById,
-            UpdatedAt = DateTime.UtcNow,
+            UpdatedAt = u.UpdatedAt,
             Version = u.Version,
             FieldValues = u.FieldValues?.Select(fv => new ItemFieldValueDisplayDto
             {
@@ -62,7 +62,7 @@ public class ItemService(IItemRepository repository, IInvetoryRepository invetor
             Description = itm.Description,
             InvId = itm.InventoryId,
             CreatedById =  itm.CreatedById,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = itm.CreatedAt,
             UpdatedById =  itm.UpdatedById,
             UpdatedAt = itm.UpdatedAt,
             Version = itm.Version,

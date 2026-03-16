@@ -43,7 +43,7 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
         return new Response<ItemFieldValueGetDto>(200, "Success", dto);
     }
 
-    public async Task<Response<string>> Create(ItemFieldValueCreateDto dto)
+    public async Task<Response<string>> Create(ItemFieldValueCreateDto dto) 
     {
         var field = await fieldRepository.GetById(dto.FieldId);
         if (field == null) return new Response<string>(404, "Field not found");
@@ -74,7 +74,7 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
         });
     }
 
-    public async Task<Response<string>> SetBulk(ItemFieldValueSetBulkDto dto)
+    public async Task<Response<string>> SetBulk(ItemFieldValueSetBulkDto dto)// For creation and update
     {
         if (dto.FieldValues == null || dto.FieldValues.Count == 0)
             return new Response<string>(400, "No field values provided", null);
@@ -87,6 +87,7 @@ public class ItemFieldValueService(IItemFieldValueRepository repository, IInvent
             // Validation
             decimal? valNum = null;
             if (field.Type == FieldType.Number && decimal.TryParse(fv.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var n))
+                //parsing string innto decimal for checking
                 valNum = n;
             
             var validationResponse = ValidateValue(field, valNum, fv.Value);

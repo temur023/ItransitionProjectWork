@@ -39,10 +39,13 @@ export default function TagInput({ value = [], onChange, apiUrl, placeholder = "
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Selection Option 1: Add tag(s) — called when user presses Enter or clicks a suggestion
+    // Accepts either a suggestion name (clicked/arrow-selected) or the raw typed input
     const addTag = (name) => {
         const raw = (name ?? input).trim();
         if (!raw) return;
         // Split by comma or space so "iphone smart" or "iphone, smart" becomes two tags
+        // This allows users to add multiple tags at once by typing them separated by spaces or commas
         const parts = raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
         const next = [...value];
         let added = false;
@@ -64,20 +67,26 @@ export default function TagInput({ value = [], onChange, apiUrl, placeholder = "
         onChange(value.filter((_, i) => i !== index));
     };
 
+    // Selection Option 2: Keyboard-based selection and navigation
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
+            // If dropdown is open and user has highlighted a suggestion with arrows, select that suggestion
             if (showDropdown && activeIndex >= 0 && suggestions[activeIndex]) {
                 addTag(suggestions[activeIndex]);
                 return;
             }
+            // Otherwise, add whatever the user typed as a new tag (will be split by spaces/commas)
             addTag(input);
         } else if (e.key === "Backspace" && !input && value.length > 0) {
+            // If input is empty and Backspace is pressed, remove the last added tag
             removeTag(value.length - 1);
         } else if (e.key === "ArrowDown") {
+            // Navigate down through the suggestion dropdown list
             e.preventDefault();
             setActiveIndex((i) => (i < suggestions.length - 1 ? i + 1 : i));
         } else if (e.key === "ArrowUp") {
+            // Navigate up through the suggestion dropdown list
             e.preventDefault();
             setActiveIndex((i) => (i > 0 ? i - 1 : -1));
         }
@@ -115,13 +124,15 @@ export default function TagInput({ value = [], onChange, apiUrl, placeholder = "
             </div>
             {showDropdown && suggestions.length > 0 && (
                 <ul className="list-group position-absolute start-0 mt-1 shadow" style={{ zIndex: 1050, maxHeight: "200px", overflowY: "auto" }}>
+                    {/* Selection Option 3: Click to select — clicking a suggestion adds it as a tag */}
+                    {/* Mouse hover highlights the suggestion (sets activeIndex for keyboard combo) */}
                     {suggestions.filter((s) => !value.includes(s)).map((s, i) => (
                         <li
                             key={s}
                             className={`list-group-item list-group-item-action ${i === activeIndex ? "active" : ""}`}
                             style={{ cursor: "pointer" }}
-                            onMouseEnter={() => setActiveIndex(i)}
-                            onClick={() => addTag(s)}
+                            onMouseEnter={() => setActiveIndex(i)}  // Highlight on hover
+                            onClick={() => addTag(s)}              // Click to select suggestion
                         >
                             {s}
                         </li>

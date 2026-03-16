@@ -185,19 +185,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\irgas\\.nuget\\packages\\": {}
+    "/Users/fsdf/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
+      "projectUniqueName": "/Users/fsdf/ProjectWork/Clean.Domain/Clean.Domain.csproj",
       "projectName": "Clean.Domain",
-      "projectPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\Clean.Domain.csproj",
-      "packagesPath": "C:\\Users\\irgas\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\irgas\\RiderProjects\\ProjectWork\\Clean.Domain\\obj\\",
+      "projectPath": "/Users/fsdf/ProjectWork/Clean.Domain/Clean.Domain.csproj",
+      "packagesPath": "/Users/fsdf/.nuget/packages/",
+      "outputPath": "/Users/fsdf/ProjectWork/Clean.Domain/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\irgas\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/Users/fsdf/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -248,7 +248,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/Users/fsdf/.dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

@@ -114,6 +114,10 @@ const resources = {
       statistics_numOfItems: "Number of Items",
 
       // Inventory page
+      inventory_maxSingleLineLength :"Maximum Length",
+      inventory_maxMultiLineLength:"Maximum Length (Multi-line)",
+      inventory_minNumber: "Minimum Number",
+      inventory_maxNumber: "Maximum Number",
       inventory_itemsTab: "Items",
       inventory_discussionTab: "Discussion",
       inventory_settingsTab: "Settings",
@@ -313,6 +317,10 @@ const resources = {
 
       // Inventory page
       inventory_itemsTab: "Элементы",
+      inventory_maxSingleLineLength :"Максимальная длина",
+      inventory_maxMultiLineLength:"Максимальная длина (многострочный)",
+      inventory_minNumber: "Минимальное число",
+      inventory_maxNumber: "Максимальное число",
       inventory_discussionTab: "Обсуждение",
       inventory_settingsTab: "Настройки",
       inventory_customIdTab: "Пользовательский ID",
