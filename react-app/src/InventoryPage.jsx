@@ -381,7 +381,8 @@ function InventoryPage() {
                 category: inv.category,
                 isPublic: inv.isPublic,
                 tags: inv.tags || [],
-                version: inv.version || 0
+                version: inv.version || 0,
+                apiToken: inv.apiToken
             });
             setFields((fieldsRes.data.data || []).map(f => ({
                 id: String(f.id), title: f.title, description: f.description,
@@ -872,6 +873,29 @@ function InventoryPage() {
                                         placeholder={t('inventory_tagsPlaceholder')}
                                     />
                                 </div>
+                                {editFormData.apiToken && (
+                                    <div className="mb-3">
+                                        <label className="form-label">API Link for Aggregated Results</label>
+                                        <div className="input-group">
+                                            <input 
+                                                type="text" 
+                                                className="form-control" 
+                                                readOnly 
+                                                value={`${API_URL}/api/Inventory/stats?token=${editFormData.apiToken}`} 
+                                            />
+                                            <button 
+                                                className="btn btn-outline-secondary" 
+                                                type="button" 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`${API_URL}/api/Inventory/stats?token=${editFormData.apiToken}`);
+                                                    setMessage({ text: "API link copied to clipboard!", type: "success" });
+                                                }}
+                                            >
+                                                Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 <hr />
                                 <h6 className="mb-3">{t('inventory_fields')}</h6>
                                 {fields.length === 0 && (

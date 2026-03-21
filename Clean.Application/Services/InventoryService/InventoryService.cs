@@ -12,7 +12,8 @@ namespace Clean.Application.Services.InventoryService;
 public class InventoryService(IInvetoryRepository repository
     , IHttpContextAccessor httpContextAccessor
     , IUserRepository userRepository
-    , ITagRepository tagRepository) : IInvetoryService
+    , ITagRepository tagRepository,
+    IItemFieldValueRepository itemFieldValueRepository) : IInvetoryService
 {
     private int? GetCurrentUserId() =>
         int.TryParse(httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)
@@ -52,6 +53,33 @@ public class InventoryService(IInvetoryRepository repository
         {
             Id = inv.Id,
             CreatedAt = inv.CreatedAt.ToUniversalTime(),
+            ApiToken = inv.ApiToken,
+            Description = inv.Description,
+            Category = inv.Category,
+            CustomIdFormatJson = inv.CustomIdFormatJson,
+            IsPublic = inv.IsPublic,
+            CreatorName = inv.CreatedBy.UserName,
+            CreatedById = inv.CreatedById,
+            Version = inv.Version,
+            ImageUrl = inv.ImageUrl,
+            Title = inv.Title,
+            UserAccesses = inv.UserAccesses?.Select(a => new InventoryUserAccessGetDto { 
+                InvId = a.InventoryId, 
+                UserId = a.UserId, 
+                EmailOrUsername = a.UserName ?? a.Email 
+            }).ToList() ?? new List<InventoryUserAccessGetDto>(),
+            Tags = inv.Tags?.Select(t => t.Name).ToList()
+        };
+        return new Response<InventoryGetDto>(200, "Inventory found", dto);
+    }
+    public async Task<Response<InventoryGetDto>> GetByToken(string token)
+    {
+        var inv = await repository.GetByToken(token);
+        var dto = new InventoryGetDto()
+        {
+            Id = inv.Id,
+            CreatedAt = inv.CreatedAt.ToUniversalTime(),
+            ApiToken = inv.ApiToken,
             Description = inv.Description,
             Category = inv.Category,
             CustomIdFormatJson = inv.CustomIdFormatJson,
@@ -71,6 +99,57 @@ public class InventoryService(IInvetoryRepository repository
         return new Response<InventoryGetDto>(200, "Inventory found", dto);
     }
 
+    public async Task<Response<List<ItemStatisticsDto>>> GetAggregationStatistics(int invId)
+    {
+        var fields = await repository.GetAggregationStatistics(invId);
+        var allFieldValues = await itemFieldValueRepository.GetByInventory(invId);
+        var statisticsList = new List<ItemStatisticsDto>();
+
+        foreach (var field in fields)
+        {
+            var items = allFieldValues.Where(i => i.FieldId == field.Id).ToList();
+
+            if (field.Type == FieldType.Number)
+            {
+                var numbers = items
+                    .Where(i => i.ValueNumber.HasValue)
+                    .Select(i => i.ValueNumber!.Value)
+                    .ToList();
+
+                if (numbers.Any())
+                {
+                    statisticsList.Add(new ItemStatisticsDto()
+                    {
+                        FieldId = field.Id,
+                        FieldName = field.Title,
+                        MinNumber = (int)numbers.Min(),
+                        MaxNumber = (int)numbers.Max(),
+                        AvgNumber = (int)numbers.Average(),
+                    });
+                }
+            }
+
+            if (field.Type == FieldType.MultiLineText || field.Type == FieldType.SingleLineText)
+            {
+                var topValues = items
+                    .Where(f => !string.IsNullOrEmpty(f.ValueText))
+                    .GroupBy(f => f.ValueText)
+                    .OrderByDescending(g => g.Count())
+                    .Take(5)
+                    .Select(g => g.Key)
+                    .ToList();
+
+                statisticsList.Add(new ItemStatisticsDto()
+                {
+                    FieldId = field.Id,
+                    FieldName = field.Title,
+                    MostPopularValuesOfText = topValues
+                });
+            }
+        }
+
+        return new Response<List<ItemStatisticsDto>>(200, "Success", statisticsList);
+    }
 public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
 {
     var currentUser = GetCurrentUserId();
@@ -84,6 +163,7 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         Category = dto.Category,
         IsPublic = dto.IsPublic,
         CustomIdFormatJson = dto.CustomIdFormatJson,
+        ApiToken = Guid.NewGuid().ToString(),
         CreatedById = (int)currentUser,
         Version = 1,
         ImageUrl = dto.ImageUrl,
@@ -114,6 +194,7 @@ public async Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto)
         CustomIdFormatJson = model.CustomIdFormatJson,
         CreatorName = creator?.UserName,
         CreatedById = model.CreatedById,
+        ApiToken = model.ApiToken,
         Version = model.Version,
         ImageUrl = model.ImageUrl,
         Title = model.Title,

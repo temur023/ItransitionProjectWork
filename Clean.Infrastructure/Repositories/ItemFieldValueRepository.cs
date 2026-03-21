@@ -28,6 +28,13 @@ public class ItemFieldValueRepository(DataContext context) : IItemFieldValueRepo
         return await context.ItemFieldValues.FirstOrDefaultAsync(v => v.Id == id);
     }
 
+    public async Task<List<ItemFieldValue>> GetByInventory(int invId)
+    {
+        var items = await context.ItemFieldValues.Include(i => i.Item)
+            .Where(f => f.Item.InventoryId == invId).ToListAsync();
+        return items;
+    }
+
     public async Task<ItemFieldValue?> GetByItemAndField(int itemId, int fieldId)
     {
         return await context.ItemFieldValues

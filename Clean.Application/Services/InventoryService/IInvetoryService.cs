@@ -7,6 +7,8 @@ namespace Clean.Application.Services;
 public interface IInvetoryService
 {
     Task<PagedResponse<InventoryGetDto>> GetAll(InventoryFilter filter);
+    Task<Response<List<ItemStatisticsDto>>> GetAggregationStatistics(int invId);
+    Task<Response<InventoryGetDto>> GetByToken(string token);
     Task<Response<InventoryGetDto>> GetById(int id);
     Task<Response<InventoryGetDto>> Create(InventoryCreateDto dto);
     Task<Response<string>> Update(InventoryUpdateDto dto);

@@ -9,6 +9,7 @@ public class Inventory
     public NpgsqlTsVector SearchVector { get; set; }
     public string CustomIdFormatJson { get; set; } = "[]";
     public int CurrentSequence { get; set; } = 0;
+    public string? ApiToken { get; set; }
 
     public string Title { get; set; }
 

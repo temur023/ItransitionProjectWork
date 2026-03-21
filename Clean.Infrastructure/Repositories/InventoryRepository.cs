@@ -1,6 +1,7 @@
     using Clean.Application.Abstractions;
     using Clean.Application.Filters;
     using Clean.Domain.Entities;
+    using Clean.Domain.Entities.Enums;
     using Clean.Infrastructure.Data;
     using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +46,19 @@
                 .Take(filter.PageSize)
                 .ToListAsync();
             return (items, total);
+        }
+
+        public async Task<List<InventoryField>> GetAggregationStatistics(int invId)
+        {
+            var fields = await context.InventoryFields.Where(f => f.InventoryId == invId).ToListAsync();
+            return fields;
+        }
+
+        public async Task<Inventory> GetByToken(string token)
+        {
+            var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ApiToken == token);
+            if (inventory == null) return null;
+            return inventory;
         }
 
         public async Task<Inventory> GetById(int id)

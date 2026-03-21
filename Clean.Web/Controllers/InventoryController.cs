@@ -20,7 +20,17 @@ public class InventoryController(IInvetoryService service):ControllerBase
         }
         return Ok(response);
     }
-
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats([FromQuery] string token)
+    {
+        var inv = await service.GetByToken(token);
+        if (inv.StatusCode != 200)
+        {
+            return StatusCode(inv.StatusCode);
+        }
+        var stats = await service.GetAggregationStatistics(inv.Data.Id);
+        return Ok(stats);
+    }
     [HttpGet("get/{id}")]
     public async Task<IActionResult> GetById(int id)
     {
