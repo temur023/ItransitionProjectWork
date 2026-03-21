@@ -70,8 +70,7 @@ public static class RegisterDependencies
 
         services.AddScoped<ISearchRepository , SearchRepository>();
         
-        services.AddScoped<ISalesforceService, SalesforceService>();
-        services.AddHttpClient<SalesforceService>();
+        services.AddHttpClient<ISalesforceService, SalesforceService>();
         return services;
     }
 }

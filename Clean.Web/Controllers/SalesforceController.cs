@@ -11,7 +11,7 @@ namespace ProjectWork.Controllers;
 public class SalesforceController(ISalesforceService service) : ControllerBase
 {
     [HttpPost("create")]
-    public async Task<IActionResult> Create(SalesforceCreateDto dto)
+    public async Task<IActionResult> Create([FromBody] SalesforceCreateDto dto)
     {
         var response = await service.CreateAccountAndContact(dto);
         if (response.StatusCode != 200)
