@@ -99,25 +99,39 @@ public class SalesforceService(HttpClient httpClient, IConfiguration config):ISa
     {
         try
         {
+            Console.WriteLine("=== SALESFORCE: CreateAccountAndContact START ===");
+            Console.WriteLine($"DTO received - FirstName: {dto.FirstName}, LastName: {dto.LastName}, Email: {dto.Email}, Phone: {dto.Phone}, CompanyName: {dto.CompanyName}");
+            
+            Console.WriteLine("=== SALESFORCE: Calling GetAccessToken... ===");
             var authResponse = await GetAccessToken();
+            Console.WriteLine($"=== SALESFORCE: GetAccessToken returned StatusCode: {authResponse.StatusCode}, Message: {authResponse.Message} ===");
             if (authResponse.StatusCode != 200)
-                return new Response<string>(400, "Salesforce authentication failed");
+                return new Response<string>(400, $"Salesforce authentication failed: {authResponse.Message}");
 
             dto.AccessToken = authResponse.Data.AccessToken;
             dto.InstanceUrl = authResponse.Data.InstanceUrl;
+            Console.WriteLine($"=== SALESFORCE: Auth OK. InstanceUrl: {dto.InstanceUrl} ===");
 
+            Console.WriteLine("=== SALESFORCE: Creating Account... ===");
             var accountResponse = await CreateAccount(dto);
+            Console.WriteLine($"=== SALESFORCE: CreateAccount returned StatusCode: {accountResponse.StatusCode}, Message: {accountResponse.Message} ===");
             if (accountResponse.StatusCode != 200)
-                return new Response<string>(400, "Failed to create account");
+                return new Response<string>(400, $"Failed to create account: {accountResponse.Message}");
 
+            Console.WriteLine($"=== SALESFORCE: Account created with ID: {accountResponse.Data} ===");
+            Console.WriteLine("=== SALESFORCE: Creating Contact... ===");
             var contactResponse = await CreateContact(dto, accountResponse.Data);
+            Console.WriteLine($"=== SALESFORCE: CreateContact returned StatusCode: {contactResponse.StatusCode}, Message: {contactResponse.Message} ===");
             if (contactResponse.StatusCode != 200)
-                return new Response<string>(400, "Failed to create contact");
+                return new Response<string>(400, $"Failed to create contact: {contactResponse.Message}");
 
+            Console.WriteLine($"=== SALESFORCE: SUCCESS! Contact ID: {contactResponse.Data} ===");
             return new Response<string>(200, "Successfully created in Salesforce", contactResponse.Data);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"=== SALESFORCE: EXCEPTION: {ex.GetType().Name}: {ex.Message} ===");
+            Console.WriteLine($"=== SALESFORCE: StackTrace: {ex.StackTrace} ===");
             return new Response<string>(400, ex.Message);
         }
     }
