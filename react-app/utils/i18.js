@@ -81,6 +81,7 @@ const resources = {
       saving_dots: "Saving...",
 
       // Admin page
+      register_userExists:"Username already exists",
       admin_usersTab: "Users",
       admin_inventoriesTab: "Inventories",
       user_control: "Users Control",
@@ -285,6 +286,7 @@ const resources = {
       email: "Email",
 
       // Admin page
+      register_userExists:"Имя пользователя уже существует",
       users: "Пользователи",
       admin_usersTab: "Пользователи",
       admin_inventoriesTab: "Инвентари",

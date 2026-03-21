@@ -46,6 +46,10 @@ function UserPage() {
     const [accessUsers, setAccessUsers] = useState([]);
     const navigate = useNavigate();
     const totalPages = Math.ceil(total / filter.pageSize);
+    const [sfForm, setSfForm] = useState({
+    firstName: "", lastName: "", phone: "", companyName: ""
+    });
+    const [sfSaving, setSfSaving] = useState(false);
 
     const { getUserIdFromToken, logout } = useAuth();
     const { profileData, setProfileData, fetchProfile, theme, toggleTheme, setPreferredTheme } = useProfile();
@@ -147,7 +151,25 @@ function UserPage() {
             }
         } finally { setProfileSaving(false); }
     };
-
+    //Salesforce
+    const createSalesforceContact = async () => {
+    try {
+        setSfSaving(true);
+        const response = await api.post(`/api/Salesforce/create`, {
+            FirstName: sfForm.firstName,
+            LastName: sfForm.lastName,
+            Email: profileData.email,  // pre-filled from profile
+            Phone: sfForm.phone,
+            CompanyName: sfForm.companyName
+        });
+        setMessage({ text: response.data.message || "Successfully added to CRM!", type: "success" });
+        setActiveTab("profile");
+    } catch (error) {
+        setMessage({ text: error.response?.data?.message || "Failed to add to CRM", type: "danger" });
+    } finally {
+        setSfSaving(false);
+    }
+};
     // Inventories
     const fetchInventories = useCallback(async () => {
         try {
@@ -366,6 +388,7 @@ function UserPage() {
                             { key: "own", label: t('user_myInventories') },
                             { key: "access", label: t('user_sharedWithMe') },
                             { key: "profile", label: t('user_myProfile') },
+                            { key: "salesforce", label: "Add to CRM" }, 
                         ].map(({ key, label }) => (
                             <li key={key} className="nav-item">
                                 <button type="button"
@@ -766,8 +789,50 @@ function UserPage() {
                             </div>
                         </div>
                     )}
+                    {/* Salesforce Tab */}
+                    {activeTab === "salesforce" && (
+                        <div style={{ maxWidth: 600 }}>
+                            <h4 className="mb-4">Add to Salesforce CRM</h4>
+                            <p className="text-muted mb-4">
+                                This will create an Account and Contact in Salesforce CRM.
+                            </p>
+                            <div className="row g-3">
+                                <div className="col-md-6">
+                                    <label className="form-label">First Name</label>
+                                    <input className="form-control" value={sfForm.firstName}
+                                        onChange={(e) => setSfForm(f => ({ ...f, firstName: e.target.value }))} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label">Last Name</label>
+                                    <input className="form-control" value={sfForm.lastName}
+                                        onChange={(e) => setSfForm(f => ({ ...f, lastName: e.target.value }))} />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label">Email</label>
+                                    <input className="form-control" value={profileData?.email || ""} disabled />
+                                    <small className="text-muted">Email is taken from your profile</small>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label">Phone</label>
+                                    <input className="form-control" value={sfForm.phone}
+                                        onChange={(e) => setSfForm(f => ({ ...f, phone: e.target.value }))} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label">Company Name</label>
+                                    <input className="form-control" value={sfForm.companyName}
+                                        onChange={(e) => setSfForm(f => ({ ...f, companyName: e.target.value }))} />
+                                </div>
+                                <div className="col-12 mt-3">
+                                    <button className="btn btn-primary" onClick={createSalesforceContact} disabled={sfSaving}>
+                                        {sfSaving ? "Saving..." : "Add to CRM"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+            
 
             {/* Pagination */}
             {(activeTab === "own" || activeTab === "access") && (

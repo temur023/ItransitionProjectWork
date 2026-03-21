@@ -118,7 +118,7 @@ function InventoryPage() {
 
     const refreshLikesForVisibleItems = useCallback(async () => {
         if (!items || items.length === 0) return;
-        await Promise.all(items.map(i => fetchLikeMetaForItem(i.id)));
+        await Promise.all(items.map(i => fetchLikeMetaForItem(i.id)));//fetch likesfor all visible items
     }, [items, fetchLikeMetaForItem]);
 
     // ─── Fetch Fields ─────────────────────────────────────────────────────────────
@@ -410,6 +410,7 @@ function InventoryPage() {
             await api.put(`/api/Inventory/update/${inventoryId}`, {
                 Title: editFormData.title,
                 Description: editFormData.description,
+            
                 Category: parseInt(editFormData.category),
                 IsPublic: editFormData.isPublic,
                 Tags: editFormData.tags || [],

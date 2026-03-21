@@ -3,6 +3,7 @@ using Clean.Application.Services;
 using Clean.Application.Services.InventoryService;
 using Clean.Application.Services.InventoryStatiticsService;
 using Clean.Application.Services.MainPage;
+using Clean.Application.Services.SalesforceService;
 using Clean.Application.Services.UserPageService;
 using Clean.Infrastructure.Data;
 using Clean.Infrastructure.Repositories;
@@ -68,6 +69,9 @@ public static class RegisterDependencies
         services.AddScoped<IInventoryCommentNotifier, InventoryCommentNotifier>();
 
         services.AddScoped<ISearchRepository , SearchRepository>();
+        
+        services.AddScoped<ISalesforceService, SalesforceService>();
+        services.AddHttpClient<SalesforceService>();
         return services;
     }
 }

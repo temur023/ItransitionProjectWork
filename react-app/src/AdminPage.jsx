@@ -150,10 +150,11 @@ function AdminPage() {
 
     function handleCheckingUsers(id) {
         setCheckedUsers(c => c.includes(id) ? c.filter(i => i !== id) : [...c, id]);
+        //if id already in there uncheck else check
     }
     function handleCheckingAllUsers() {
-        if (checkedUsers.length === users.length && users.length > 0) setCheckedUsers([]);
-        else setCheckedUsers(users.map(i => i.id));
+        if (checkedUsers.length === users.length && users.length > 0) setCheckedUsers([]); //uncheck all
+        else setCheckedUsers(users.map(i => i.id));//check all
     }
 
     function openEditModal(user) {
@@ -178,7 +179,7 @@ function AdminPage() {
         setEditForm({
             id: "", fullName: "", userName: "", email: "",
             password: "", role: 1, isBlocked: false, language: 1, theme: 1
-        });
+        }); //setting default values
     }
 
     async function updateUser() {
@@ -190,7 +191,7 @@ function AdminPage() {
                     await api.put(`/api/User/update-username/${selectedUser.id}?username=${encodeURIComponent(editForm.userName)}`, {});
                 } catch (usernameError) {
                     if (usernameError.response?.status === 400 || usernameError.response?.status === 409) {
-                        setMessage({ text: t("register_userExists") || "Username already exists", type: "danger" });
+                        setMessage({ text: t("register_userExists"), type: "danger" });
                         return;
                     }
                     throw usernameError;
@@ -204,7 +205,7 @@ function AdminPage() {
                 IsBlocked: !!editForm.isBlocked,
                 Role: Number(editForm.role),
                 Language: Number(editForm.language),
-                Theme: Number(editForm.theme),
+                Theme: Number(editForm.theme),чычы
             };
 
             const response = await api.put(`/api/User/update/${selectedUser.id}`, payload);
