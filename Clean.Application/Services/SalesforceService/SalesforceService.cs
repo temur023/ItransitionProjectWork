@@ -25,11 +25,9 @@ public class SalesforceService(HttpClient httpClient, IConfiguration config):ISa
 
         var formData = new FormUrlEncodedContent(new []
         {
-            new KeyValuePair<string, string>("grant_type", "password"),
+            new KeyValuePair<string, string>("grant_type", "client_credentials"),
             new KeyValuePair<string, string>("client_id",clientId!),
-            new KeyValuePair<string, string>("client_secret", clientSecret!),
-            new KeyValuePair<string, string>("username", username!),
-            new KeyValuePair<string, string>("password",password!)
+            new KeyValuePair<string, string>("client_secret", clientSecret!)
         });
         var response = await httpClient.PostAsync(authUrl, formData);
         var content = await response.Content.ReadAsStringAsync();
