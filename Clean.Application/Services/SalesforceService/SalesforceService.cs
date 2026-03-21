@@ -12,11 +12,17 @@ public class SalesforceService(HttpClient httpClient, IConfiguration config):ISa
 {
     public async Task<Response<SalesforceDto>> GetAccessToken()
     {
+        Console.WriteLine("Attempting Salesforce authentication...");
+        Console.WriteLine($"AuthUrl: {config["Authentication:Salesforce:AuthUrl"]}");
+        Console.WriteLine($"ClientId: {config["Authentication:Salesforce:ClientId"]}");
+        Console.WriteLine($"Username: {config["Authentication:Salesforce:Username"]}");
         var authUrl = config["Authentication:Salesforce:AuthUrl"];
         var clientId = config["Authentication:Salesforce:ClientId"];
         var clientSecret = config["Authentication:Salesforce:ClientSecret"];
         var username = config["Authentication:Salesforce:Username"];
         var password = config["Authentication:Salesforce:Password"];
+        
+
         var formData = new FormUrlEncodedContent(new []
         {
             new KeyValuePair<string, string>("grant_type", "password"),
@@ -29,6 +35,7 @@ public class SalesforceService(HttpClient httpClient, IConfiguration config):ISa
         var content = await response.Content.ReadAsStringAsync();
         if (!response.IsSuccessStatusCode)
         {
+            Console.WriteLine($"Salesforce auth failed: {content}");
             return new Response<SalesforceDto>(400,$"Salesforce authentication failed: {content}");
         }
 
