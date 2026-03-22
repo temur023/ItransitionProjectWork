@@ -18,8 +18,8 @@ class InventoryImport(models.Model):
             
             # Use the local backend URL for Docker to host communication, or replace with Railway live URL.
             # Usually the user is running the C# backend on localhost:5178 (or similar) or deployed on Railway.
-            # Assuming Railway production URL based on previous contexts:
-            base_url = "https://lovely-energy-production.up.railway.app" 
+            # Assuming Railway production API Backend URL based on app structure
+            base_url = "https://itransitionprojectwork-production.up.railway.app" 
             
             endpoint = f"{base_url}/api/Inventory/stats?token={record.api_token}"
             
