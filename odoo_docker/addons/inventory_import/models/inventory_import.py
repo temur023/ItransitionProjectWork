@@ -18,10 +18,26 @@ class InventoryImport(models.Model):
             
             # Use the local backend URL for Docker to host communication, or replace with Railway live URL.
             # Usually the user is running the C# backend on localhost:5178 (or similar) or deployed on Railway.
+            import urllib.parse
+            
+            raw_token = record.api_token.strip()
+            # If the user accidentally pasted the entire URL instead of just the token, extract it smartly:
+            if "token=" in raw_token:
+                try:
+                    parsed = urllib.parse.urlparse(raw_token)
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    if 'token' in qs:
+                        raw_token = qs['token'][0]
+                    else:
+                        # Fallback simple split if urlparse fails or it was just a suffix
+                        raw_token = raw_token.split("token=")[-1]
+                except Exception:
+                    raw_token = raw_token.split("token=")[-1]
+            
             # Assuming Railway production API Backend URL based on app structure
             base_url = "https://itransitionprojectwork-production.up.railway.app" 
             
-            endpoint = f"{base_url}/api/Inventory/stats?token={record.api_token}"
+            endpoint = f"{base_url}/api/Inventory/stats?token={raw_token}"
             
             try:
                 response = requests.get(endpoint, timeout=10)
@@ -30,10 +46,16 @@ class InventoryImport(models.Model):
                 
                 data = response.json()
                 
-                # The C# backend returns { "inventoryTitle": "...", "inventoryDescription": "...", "statistics": [...] }
-                title = data.get('inventoryTitle', f"Imported Inventory {record.api_token[:5]}")
-                desc = data.get('inventoryDescription', '')
-                stats_data = data.get('statistics', [])
+                # Resilient parsing: Depending on whether the user pushed the C# changes to Railway
+                # data might be a List (old backend) or a Dict (new backend).
+                if isinstance(data, list):
+                    title = f"Imported Inventory {raw_token[:5]}"
+                    desc = ""
+                    stats_data = data
+                else:
+                    title = data.get('inventoryTitle', f"Imported Inventory {raw_token[:5]}")
+                    desc = data.get('inventoryDescription', '')
+                    stats_data = data.get('statistics', [])
                 
                 record.inventory_title = title
                 record.inventory_description = desc

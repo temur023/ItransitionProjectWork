@@ -75,6 +75,8 @@ public class InventoryService(IInvetoryRepository repository
     public async Task<Response<InventoryGetDto>> GetByToken(string token)
     {
         var inv = await repository.GetByToken(token);
+        if (inv == null) return new Response<InventoryGetDto>(404, "Inventory not found");
+        
         var dto = new InventoryGetDto()
         {
             Id = inv.Id,

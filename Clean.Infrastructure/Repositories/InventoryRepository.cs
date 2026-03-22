@@ -56,8 +56,12 @@
 
         public async Task<Inventory> GetByToken(string token)
         {
-            var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ApiToken == token);
-            if (inventory == null) return null;
+            var inventory = await context.Inventories
+                .Include(i => i.UserAccesses)
+                .Include(i => i.CreatedBy)
+                .Include(i => i.Fields)
+                .Include(i => i.Tags)
+                .FirstOrDefaultAsync(i => i.ApiToken == token);
             return inventory;
         }
 
