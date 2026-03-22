@@ -29,7 +29,11 @@ public class InventoryController(IInvetoryService service):ControllerBase
             return StatusCode(inv.StatusCode);
         }
         var stats = await service.GetAggregationStatistics(inv.Data.Id);
-        return Ok(stats);
+        return Ok(new {
+            InventoryTitle = inv.Data.Title,
+            InventoryDescription = inv.Data.Description,
+            Statistics = stats.Data
+        });
     }
     [HttpGet("get/{id}")]
     public async Task<IActionResult> GetById(int id)

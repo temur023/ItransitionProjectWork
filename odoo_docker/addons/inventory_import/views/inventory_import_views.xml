@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_inventory_import_form" model="ir.ui.view">
+        <field name="name">inventory.import.form</field>
+        <field name="model">inventory.import</field>
+        <field name="arch" type="xml">
+            <form string="Inventory Import">
+                <header>
+                    <button name="action_import_data" string="Import / Refresh Data" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="api_token" />
+                        <field name="inventory_title" readonly="1" />
+                        <field name="inventory_description" readonly="1" />
+                    </group>
+                    <notebook>
+                        <page string="Aggregated Statistics">
+                            <field name="statistic_ids" readonly="1">
+                                <tree string="Statistics">
+                                    <field name="field_id_ref" />
+                                    <field name="field_title" />
+                                    <field name="max_number" />
+                                    <field name="min_number" />
+                                    <field name="avg_number" />
+                                    <field name="popular_text_values" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_inventory_import_tree" model="ir.ui.view">
+        <field name="name">inventory.import.tree</field>
+        <field name="model">inventory.import</field>
+        <field name="arch" type="xml">
+            <tree string="Imported Inventories">
+                <field name="inventory_title" />
+                <field name="api_token" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_inventory_import" model="ir.actions.act_window">
+        <field name="name">Imported Inventories</field>
+        <field name="res_model">inventory.import</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_inventory_import_root" name="Course Analytics" sequence="10"/>
+    <menuitem id="menu_inventory_import_list" name="Imported Inventories" parent="menu_inventory_import_root" action="action_inventory_import" sequence="10"/>
+</odoo>
