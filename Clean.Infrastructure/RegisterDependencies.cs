@@ -74,7 +74,6 @@ public static class RegisterDependencies
         services.AddHttpClient<ISalesforceService, SalesforceService>();
         
         services.AddHttpClient<ISupportTicketService, SupportTicketService>();
-        services.AddScoped<ISupportTicketService, SupportTicketService>();
         return services;
     }
 }

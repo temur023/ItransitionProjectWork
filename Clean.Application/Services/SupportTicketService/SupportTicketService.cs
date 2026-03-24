@@ -14,6 +14,7 @@ public class SupportTicketService(IConfiguration configuration, HttpClient httpC
         try
         {
         var accessToken = configuration["Dropbox:AccessToken"];
+        Console.WriteLine($"=== DROPBOX: Token length: {accessToken?.Length}, starts with: {accessToken?[..Math.Min(10, accessToken?.Length ?? 0)]}... ===");
         var ticketJson = JsonSerializer.Serialize(new
         {
             reported_by = dto.ReportedBy,
@@ -24,6 +25,7 @@ public class SupportTicketService(IConfiguration configuration, HttpClient httpC
             admin_emails = dto.AdminEmails
         });
         var fileName = $"/SupportTickets/ticket_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+        Console.WriteLine($"=== DROPBOX: Uploading to path: {fileName} ===");
         var request = new HttpRequestMessage(HttpMethod.Post,
             "https://content.dropboxapi.com/2/files/upload");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -39,6 +41,7 @@ public class SupportTicketService(IConfiguration configuration, HttpClient httpC
             new MediaTypeHeaderValue("application/octet-stream");
         var response = await httpClient.SendAsync(request);
         var content = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"=== DROPBOX: Response status: {response.StatusCode}, body: {content} ===");
         if (!response.IsSuccessStatusCode)
             return new Response<string>(400, $"Error: {content}");
         return new Response<string>(200, "Ticket uploaded successfully");
