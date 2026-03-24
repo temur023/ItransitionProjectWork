@@ -10,6 +10,7 @@ public interface IUserRepository
     Task<User> GetById(int id);
     Task<int> GetByEmailOrUsername(string input);
     Task<bool> ExistsByUserNameOrEmail(string userName, string email);
+    Task<List<string>> GetAdminEmails();
     Task<int> Create(User user);
     Task<int> Delete(int id);
     Task<List<User>> SelectUsers(List<int> ids);

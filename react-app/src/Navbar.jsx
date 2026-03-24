@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import api from "./useApi";
 
 export default function Navbar({ profileData, theme, toggleTheme, logout }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+    const [ticketForm, setTicketForm] = useState({ summary: "", priority: "Average" });
+    const [ticketSaving, setTicketSaving] = useState(false);
+
+    const submitTicket = async () => {
+    try {
+        setTicketSaving(true);
+        await api.post('/api/SupportTicket/create', {
+            Summary: ticketForm.summary,
+            Priority: ticketForm.priority,
+            ReportedBy: profileData?.userName || profileData?.email,
+            InventoryTitle: null,
+            Link: window.location.href,
+        });
+        setIsTicketModalOpen(false);
+        setTicketForm({ summary: "", priority: "Average" });
+        alert("Support ticket submitted successfully!");
+    } catch (error) {
+        alert("Failed to submit ticket");
+    } finally {
+        setTicketSaving(false);
+    }
+};
 
     return (
         <div className="m-1 mt-2 d-flex justify-content-center align-items-center shadow-lg rounded-4 p-2 pe-5 ps-5">
@@ -39,6 +63,14 @@ export default function Navbar({ profileData, theme, toggleTheme, logout }) {
                     </button>
                 </li>
                 <li>
+                    <button
+                        className="btn btn-outline-warning btn-sm ms-2"
+                        onClick={() => setIsTicketModalOpen(true)}
+                        title="Create Support Ticket">
+                        Help
+                    </button>
+                </li>
+                <li>
                     <button onClick={logout} className="btn btn-outline-danger btn-sm fw-bold px-3">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red"
                             className="bi bi-box-arrow-right me-1" viewBox="0 0 16 16">
@@ -48,6 +80,61 @@ export default function Navbar({ profileData, theme, toggleTheme, logout }) {
                     </button>
                 </li>
             </ul>
+                {isTicketModalOpen && (
+                    <>
+                        <div className="modal-backdrop fade show" 
+                            onClick={() => setIsTicketModalOpen(false)} />
+                        <div className="modal fade show d-block" tabIndex="-1">
+                            <div className="modal-dialog modal-dialog-centered"
+                                onClick={e => e.stopPropagation()}>
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h5 className="modal-title">Create Support Ticket</h5>
+                                        <button type="button" className="btn-close"
+                                            onClick={() => setIsTicketModalOpen(false)} />
+                                    </div>
+                                    <div className="modal-body">
+                                        <div className="mb-3">
+                                            <label className="form-label">Summary</label>
+                                            <textarea className="form-control" rows={3}
+                                                value={ticketForm.summary}
+                                                onChange={e => setTicketForm(f => ({
+                                                    ...f, summary: e.target.value
+                                                }))} />
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label">Priority</label>
+                                            <select className="form-select"
+                                                value={ticketForm.priority}
+                                                onChange={e => setTicketForm(f => ({
+                                                    ...f, priority: e.target.value
+                                                }))}>
+                                                <option value="High">High</option>
+                                                <option value="Average">Average</option>
+                                                <option value="Low">Low</option>
+                                            </select>
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label">Page</label>
+                                            <input className="form-control"
+                                                value={window.location.href} disabled />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button className="btn btn-secondary"
+                                            onClick={() => setIsTicketModalOpen(false)}>
+                                            Cancel
+                                        </button>
+                                        <button className="btn btn-primary"
+                                            onClick={submitTicket} disabled={ticketSaving}>
+                                            {ticketSaving ? "Submitting..." : "Submit Ticket"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
         </div>
     );
 }

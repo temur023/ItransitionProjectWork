@@ -4,6 +4,7 @@ using Clean.Application.Services.InventoryService;
 using Clean.Application.Services.InventoryStatiticsService;
 using Clean.Application.Services.MainPage;
 using Clean.Application.Services.SalesforceService;
+using Clean.Application.Services.SupportTicketService;
 using Clean.Application.Services.UserPageService;
 using Clean.Infrastructure.Data;
 using Clean.Infrastructure.Repositories;
@@ -71,6 +72,9 @@ public static class RegisterDependencies
         services.AddScoped<ISearchRepository , SearchRepository>();
         
         services.AddHttpClient<ISalesforceService, SalesforceService>();
+        
+        services.AddHttpClient<ISupportTicketService, SupportTicketService>();
+        services.AddScoped<ISupportTicketService, SupportTicketService>();
         return services;
     }
 }

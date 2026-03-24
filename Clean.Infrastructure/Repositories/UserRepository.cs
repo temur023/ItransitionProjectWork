@@ -2,6 +2,7 @@ using Clean.Application.Abstractions;
 using Clean.Application.Dtos;
 using Clean.Application.Filters;
 using Clean.Domain.Entities;
+using Clean.Domain.Entities.Enums;
 using Clean.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,6 +44,14 @@ public class UserRepository(DataContext context):IUserRepository
     {
         return await context.Users
             .AnyAsync(u => u.UserName == userName || u.Email == email);
+    }
+
+    public async Task<List<string>> GetAdminEmails()
+    {
+        var query = await context.Users
+            .Where(u => u.Role == UserRole.Admin)
+            .Select(u=>u.Email).ToListAsync();
+        return query;
     }
 
     public async Task<int> Create(User user)
