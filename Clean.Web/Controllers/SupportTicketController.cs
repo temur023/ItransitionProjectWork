@@ -14,7 +14,7 @@ public class SupportTicketController(
 {
     [Authorize]
     [HttpPost("create")]
-    public async Task<IActionResult> Create(SupportTicketDto dto)
+    public async Task<IActionResult> Create([FromBody] SupportTicketDto dto)
     {
         // get admin emails from DB
         var adminEmails = await userRepository.GetAdminEmails();
